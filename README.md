@@ -13,6 +13,7 @@ React Native starter for an AI-assisted public transportation navigation and mon
 - Supabase client scaffold with persistent auth storage through expo-sqlite
 - Initial Postgres schema with row-level security and Realtime tables
 - Staged implementation milestones in BUILD_PLAN.md
+- Current fact-based progress checklist in CHECKLIST.md and repository history in CHANGELOG.md
 
 All route names, fares, travel times, vehicle counts, and notices in the UI are mock content. Confirm these with transport operators and local authorities before presenting them as live information.
 
@@ -62,6 +63,8 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     metro.config.js                  Bundles .html files as app assets
     supabase/migrations/             Database schema, policies, and Realtime setup
     BUILD_PLAN.md                    Product and implementation milestones
+    CHECKLIST.md                     Current status against the build plan
+    CHANGELOG.md                     Dated record of repository changes
 
 ## Next implementation step
 
