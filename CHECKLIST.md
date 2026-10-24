@@ -1,25 +1,44 @@
 # eGABAY project checklist
 
-**Status snapshot:** 2026-10-24, `main` at `4ed2920`  
+**Status snapshot:** 2026-10-24
+
+**Local workspace:** `main` at `93a6bda`
+
+**Public GitHub branch:** `origin/main` at `00a1107`
+
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
 
-This checklist compares the build plan with what is present in the repository. “Done” means there is code or documentation for it; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
+The local branch includes the latest public app changes and is 2 commits ahead of `origin/main`; those two commits have not been pushed. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
 
 ## Current state
 
-- [x] **Done** — Expo + React Native + TypeScript project scaffold, with an Expo web script (`npm run web`).
-- [x] **Done** — Onboarding, welcome, Home, Plan, Updates, Profile, and Settings screens.
-- [x] **Done** — Local demo sign-in/guest flow and saved app preferences/session state.
-- [x] **Done** — Sample route and service notice data, identified in the app as demo content.
-- [x] **Done** — Map view using Leaflet with OpenStreetMap tiles and Nominatim search.
-- [x] **Done** — Supabase client scaffold and an initial SQL migration with tables, row-level security policies, and Realtime publication setup.
-- [~] **Partial** — Offline mode exists in the app, but route/notice content is still bundled demo data; a Supabase-backed cache and sync flow are not present.
-- [~] **Partial** — Supabase schema and client code exist, but this repository does not show a linked/deployed project, verified seed data, or app data queries.
-- [~] **Partial** — The map is implemented, but provider suitability for local coverage, offline use, licensing, and cost has not been documented as decided.
-- [ ] **Not started** — Real Supabase authentication, operator/admin account workflows, and role verification.
-- [ ] **Not started** — Pilot route facts and named owners for fares, schedules, stops, and service notices.
-- [ ] **Not started** — Live vehicle location sharing and operator notice publishing.
-- [ ] **Not started** — Pilot evaluation and AI-assisted route ranking.
+- [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
+- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen.
+- [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
+- [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
+- [x] **Done in local workspace** — Map view using Leaflet, OpenStreetMap tiles, and Nominatim search.
+- [x] **Done in current local workspace** — Native and browser Supabase client scaffolds plus initial migration defining tables, row-level security, and Realtime publication entries.
+- [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
+- [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
+- [~] **Partial** — Map provider is implemented, but local coverage, offline support, licensing, and cost are not documented as evaluated.
+- [ ] **Not started** — Supabase-backed authentication and real operator/admin role workflows.
+- [ ] **Not started** — Verified pilot route data and named data/update owners.
+- [ ] **Not started** — Live vehicle sharing and operator notice publishing.
+- [ ] **Not started** — Field pilot, measures, and AI route ranking.
+
+### Latest public app changes (now merged into the local checkout)
+
+- [x] **Done** — Home travel dashboard and browser-specific Supabase client (`src/lib/supabase.web.ts`) were added in `3121b49`.
+- [x] **Done** — Plan and Updates tabs/screens were removed in `b874c4e`; current navigation is Home, Map, and Profile, with Settings as a sub-screen.
+- [x] **Done** — The newer public app code is now included in local `main` by merge commit `93a6bda`.
+- [x] **Confirmed** — `HomeScreen` imports `demoRoutes` and `demoAlerts`; dashboard counts and previews are sample data, not Supabase results.
+- [ ] Decide whether to keep the Home/Map/Profile structure or restore separate Plan and Updates screens.
+
+### Public documentation path status
+
+- [x] **Local workspace** — `CHECKLIST.md`, `CHANGELOG.md`, and README links are at the repository root.
+- [ ] **Public `origin/main`** — The checklist currently exists at `CHECKLIST.md/CHECKLIST.md` (nested); there is no root `CHECKLIST.md` or `CHANGELOG.md`, and the public README does not link these docs.
+- [ ] Push the local merge and root documentation commits so the public repo matches this workspace.
 
 ## Build plan progress
 
@@ -41,8 +60,8 @@ This checklist compares the build plan with what is present in the repository. �
 
 ### 2. Deliver the commuter MVP — Partial
 
-- [x] Route planning screen and sample result cards exist.
-- [x] Service notice screen and filters exist.
+- [x] Home dashboard presents sample route and service notice previews.
+- [ ] No separate Plan or Updates screen exists in current code; add/restore them if needed for the MVP.
 - [ ] Replace sample routes and notices with Supabase reads.
 - [ ] Add destination search and locality/mode filtering backed by verified route records.
 - [ ] Add confirmed fare ranges, transfers, and source/freshness details.
@@ -71,8 +90,10 @@ This checklist compares the build plan with what is present in the repository. �
 
 ## Next work in dependency order
 
-1. Confirm the pilot data and its trusted owners (Milestone 0).
-2. Configure Supabase, apply and review the migration, then add verified seed records (Milestone 1).
-3. Replace demo route and notice arrays with typed Supabase reads and useful cached reads (Milestone 2).
-4. Add real sign-in and staff workflows, then consider driver tracking and a field pilot.
+1. Decide whether to keep the current Home/Map/Profile navigation or restore separate planning and updates screens.
+2. Confirm pilot route data and its trusted owners (Milestone 0).
+3. Configure Supabase, apply/review the migration, and add verified seed records (Milestone 1).
+4. Replace demo content with typed Supabase reads and add useful cached reads (Milestone 2).
+5. Push the local merge and root docs so public `main` matches the workspace.
+6. Add real sign-in and staff workflows, then consider driver tracking and a field pilot.
 

@@ -5,11 +5,11 @@ React Native starter for an AI-assisted public transportation navigation and mon
 ## Current starter
 
 - Guided first-run flow: onboarding slides → welcome → mock login/sign-up or "Continue offline" → main app
-- Four tabs inside the app shell: Home, Plan, Updates, and Profile, plus a Settings sub-screen (appearance, two-tap reset)
+- Three tabs inside the app shell: Home, Map, and Profile, plus a Settings sub-screen (appearance, two-tap reset)
 - Mock auth and guest sessions persisted locally (expo-sqlite localStorage); demo account `demo@egabay.ph`
 - Online/offline connection modes; guests run offline and can create an account later from Profile
 - Sample routes and service notices across Marinduque towns, clearly labeled as demo content
-- Route planning interactions backed by clearly marked sample data
+- Home dashboard route and service notice previews backed by clearly marked sample data
 - Supabase client scaffold with persistent auth storage through expo-sqlite
 - Initial Postgres schema with row-level security and Realtime tables
 - Staged implementation milestones in BUILD_PLAN.md
@@ -44,7 +44,7 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/screens/LoginScreen.tsx      Mock login with demo account hint
     src/screens/SignUpScreen.tsx     Mock account creation with validation
     src/screens/MainShell.tsx        Header, bottom tabs, Settings sub-screen
-    src/screens/HomeScreen.tsx       Greeting, status, search entry, quick actions
+    src/screens/HomeScreen.tsx       Travel dashboard with sample routes and notices
     src/screens/ProfileScreen.tsx    Account/guest profile, mode switch, log out
     src/screens/SettingsScreen.tsx   Appearance picker and reset
     src/components/ui.tsx            Shared UI kit (Button, TextField, Card, Chip, Badge)
@@ -55,6 +55,7 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/lib/appMode.ts               Online/offline mode persistence
     src/lib/appearance.ts            Appearance setting persistence
     src/lib/supabase.ts              Supabase client and session persistence
+    src/lib/supabase.web.ts          Browser Supabase client using localStorage
     src/data/demo.ts                 Explicitly non-live sample routes and notices
     src/theme.ts                     Shared visual tokens
     assets/marinduque-map.html       Marinduque-only Leaflet page (OSM + Nominatim)
