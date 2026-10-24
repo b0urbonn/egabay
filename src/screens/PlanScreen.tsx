@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { MapPreview } from '../components/MapPreview';
+import { MarinduqueMap } from '../components/MarinduqueMap';
 import { RouteCard } from '../components/RouteCard';
 import { Badge, ScreenHeader } from '../components/ui';
 import { demoRoutes, type CommuteRoute } from '../data/demo';
@@ -75,7 +75,7 @@ export function PlanScreen({ mode }: { mode: AppMode }) {
         <ScreenHeader eyebrow={hasSearched ? 'Results' : 'Suggested'} title={hasSearched ? `${results.length} route${results.length === 1 ? '' : 's'} found` : 'A popular trip'} />
         <View style={styles.badgeWrap}><Badge label="SAMPLE" tone="orange" /></View>
       </View>
-      <MapPreview topLabel="BOAC" bottomLabel={results[0]?.to.split(' ')[0].toUpperCase() ?? 'GASAN'} />
+      <MarinduqueMap height={200} />
       {results.map((route) => (
         <RouteCard key={route.id} route={route} onPress={() => setHasSearched(true)} />
       ))}

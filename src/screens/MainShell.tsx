@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
+import { MarinduqueMap } from '../components/MarinduqueMap';
 import { Badge, BrandMark } from '../components/ui';
 import type { AppMode } from '../lib/appMode';
 import type { AppearanceSetting } from '../lib/appearance';
@@ -13,14 +14,19 @@ import { ProfileScreen } from './ProfileScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { UpdatesScreen } from './UpdatesScreen';
 
-export type Tab = 'Home' | 'Plan' | 'Updates' | 'Profile';
+export type Tab = 'Home' | 'Map' | 'Plan' | 'Updates' | 'Profile';
 
 const tabs: { label: Tab; glyph: string }[] = [
   { label: 'Home', glyph: '⌂' },
+  { label: 'Map', glyph: '◈' },
   { label: 'Plan', glyph: '↗' },
   { label: 'Updates', glyph: '◉' },
   { label: 'Profile', glyph: '○' },
 ];
+
+function MapScreen() {
+  return <MarinduqueMap fullscreen />;
+}
 
 export function MainShell({
   session,
@@ -77,6 +83,7 @@ export function MainShell({
         ) : (
           <>
             {activeTab === 'Home' && <HomeScreen session={session} mode={mode} onNavigate={setActiveTab} />}
+            {activeTab === 'Map' && <MapScreen />}
             {activeTab === 'Plan' && <PlanScreen mode={mode} />}
             {activeTab === 'Updates' && <UpdatesScreen mode={mode} />}
             {activeTab === 'Profile' && (

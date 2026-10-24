@@ -49,7 +49,7 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/screens/ProfileScreen.tsx    Account/guest profile, mode switch, log out
     src/screens/SettingsScreen.tsx   Appearance picker and reset
     src/components/ui.tsx            Shared UI kit (Button, TextField, Card, Chip, Badge)
-    src/components/MapPreview.tsx    Stylized sample map
+    src/components/MarinduqueMap.tsx Leaflet map embed (WebView native / iframe web)
     src/components/RouteCard.tsx     Route summary card
     src/lib/session.ts               Mock auth, session, and onboarding persistence
     src/lib/storage.ts               Safe localStorage wrappers
@@ -58,6 +58,8 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/lib/supabase.ts              Supabase client and session persistence
     src/data/demo.ts                 Explicitly non-live sample routes and notices
     src/theme.ts                     Shared visual tokens
+    assets/marinduque-map.html       Marinduque-only Leaflet page (OSM + Nominatim)
+    metro.config.js                  Bundles .html files as app assets
     supabase/migrations/             Database schema, policies, and Realtime setup
     BUILD_PLAN.md                    Product and implementation milestones
 

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>eGABAY · Marinduque Map</title>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<style>
+  :root {
+    --ink: #18231E;
+    --muted: #8aa093;
+    --canvas: #F4F6F2;
+    --card: #FFFFFF;
+    --line: #E5EAE4;
+    --green: #176B4B;
+    --green-dark: #10543A;
+    --lime: #C6F06A;
+    --orange: #E9813F;
+    --hud: rgba(11, 22, 17, 0.92);
+    --hud-line: rgba(198, 240, 106, 0.35);
+    --sea: #aad3df;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--sea);
+  }
+  #map { position: fixed; inset: 0; background: var(--sea); }
+
+  /* ---- game-ified tiles: punchier colors ---- */
+  .leaflet-tile-pane {
+    filter: saturate(1.4) contrast(1.07) hue-rotate(-8deg) brightness(0.98);
+  }
+
+  /* ---- HUD chrome over the map ---- */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 900;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.014) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 52%, rgba(6, 16, 12, 0.45) 100%);
+  }
+  .compass {
+    width: 34px;
+    height: 40px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--green);
+    font-size: 9px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1;
+    padding-top: 5px;
+    pointer-events: none;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(24, 35, 30, 0.14);
+    clear: both;
+  }
+  .compass .arrow { display: block; font-size: 13px; margin-bottom: 2px; }
+
+  /* ---- Panel (app theme) ---- */
+  .panel {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1000;
+    width: min(230px, calc(100vw - 96px));
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(24, 35, 30, 0.14);
+    padding: 14px;
+  }
+  .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .panel-eyebrow {
+    color: var(--green);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+    margin: 0 0 3px;
+  }
+  .panel-title {
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin: 0 0 2px;
+  }
+  .panel-sub { color: var(--muted); font-size: 11px; margin: 0 0 11px; }
+
+  .collapse-btn {
+    display: none;
+    border: 1px solid var(--line);
+    background: #FBFCFA;
+    color: var(--ink);
+    border-radius: 9px;
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Floating search bar, top-center */
+  .search-float {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: min(340px, calc(100vw - 220px));
+  }
+  .search-wrap { position: relative; }
+  #search {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 0 16px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--card);
+    box-shadow: 0 6px 20px rgba(24, 35, 30, 0.14);
+    outline: none;
+  }
+  #search::placeholder { color: var(--muted); }
+  #search:focus { border-color: var(--green); }
+  #results {
+    position: absolute;
+    top: 42px;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    box-shadow: 0 10px 24px rgba(24, 35, 30, 0.16);
+    overflow: hidden;
+    display: none;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  #results.open { display: block; }
+  #results button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: none;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--ink);
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  #results button:last-child { border-bottom: 0; }
+  #results button:hover { background: #E5F3EA; }
+  #results .hint { padding: 9px 12px; font-size: 11px; color: var(--muted); }
+
+  .locate-fab {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--green);
+    font-size: 19px;
+    line-height: 38px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(24, 35, 30, 0.18);
+    padding: 0;
+  }
+  .locate-fab:hover { background: #E5F3EA; }
+  .locate-fab.busy { opacity: 0.6; }
+
+  .panel-foot { margin-top: 8px; font-size: 9.5px; color: var(--muted); line-height: 14px; }
+
+  /* Compact mode when embedded in the app */
+  body.embedded .panel { top: 8px; left: 8px; width: auto; min-width: 128px; padding: 8px 11px; border-radius: 12px; }
+  body.embedded .panel-title { font-size: 14px; margin: 0; }
+  body.embedded .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
+  body.embedded .panel-sub { display: none; }
+  body.embedded .panel-foot { display: none; }
+  body.embedded .collapse-btn { display: block; }
+  body.embedded .panel.collapsed .panel-body { display: none; }
+  body.embedded .panel-body { margin-top: 6px; }
+  body.embedded .search-float { top: auto; bottom: 74px; left: 8px; transform: none; width: min(230px, calc(100vw - 76px)); }
+  body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; }
+  body.embedded #results { top: auto; bottom: 36px; }
+  body.embedded .locate-fab { width: 34px; height: 34px; font-size: 16px; line-height: 32px; }
+
+  /* Narrow screens (phones): search on top, compact title chip below it */
+  @media (max-width: 860px) {
+    body:not(.embedded) .search-float { top: 12px; left: 12px; right: 58px; transform: none; width: auto; }
+    body:not(.embedded) .panel { top: 62px; left: 12px; width: auto; padding: 8px 12px; border-radius: 12px; }
+    body:not(.embedded) .panel-title { font-size: 14px; margin: 0; }
+    body:not(.embedded) .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
+    body:not(.embedded) .panel-sub, body:not(.embedded) .panel-body { display: none; }
+  }
+
+  /* ---- waypoint markers & labels ---- */
+  .waypoint {
+    width: 13px;
+    height: 13px;
+    transform: rotate(45deg);
+    border: 2px solid #fff;
+    background: var(--green);
+    border-radius: 3px;
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+  }
+  .poi-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--orange);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+  }
+
+  .town-label {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--green-dark);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 3px 7px;
+    box-shadow: 0 2px 6px rgba(24, 35, 30, 0.18);
+  }
+  .town-label::before { display: none; }
+  .island-label {
+    background: none;
+    border: 0;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-shadow: 0 1px 5px rgba(24, 35, 30, 0.65), 0 0 2px rgba(24, 35, 30, 0.5);
+    box-shadow: none;
+  }
+  .island-label::before { display: none; }
+
+  /* ---- Leaflet chrome (app theme) ---- */
+  .leaflet-bar a, .expand-btn {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-bottom: 1px solid var(--line) !important;
+    background: #fff !important;
+    color: var(--ink) !important;
+    font-size: 16px;
+    line-height: 30px;
+    cursor: pointer;
+    padding: 0;
+    text-align: center;
+  }
+  .leaflet-bar a:hover, .expand-btn:hover { background: #f4f4f4 !important; }
+  .leaflet-bar { border: 1px solid var(--line) !important; border-radius: 8px !important; box-shadow: 0 4px 14px rgba(24, 35, 30, 0.15) !important; }
+  .leaflet-bar a:last-child { border-bottom: 0 !important; }
+
+  .leaflet-control-layers {
+    background: var(--card) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px rgba(24, 35, 30, 0.15) !important;
+    color: var(--ink);
+    font-size: 11px;
+  }
+  .leaflet-control-layers-expanded { padding: 8px 12px 8px 30px; }
+  .leaflet-control-layers label { color: var(--ink); }
+
+  .leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: var(--muted) !important;
+    font-size: 9px !important;
+    padding: 2px 7px;
+    border-radius: 6px 0 0 0;
+  }
+  .leaflet-control-attribution a { color: var(--green) !important; }
+
+  .leaflet-control-scale-line {
+    background: rgba(255, 255, 255, 0.78) !important;
+    color: var(--ink) !important;
+    border-color: #9db3a7 !important;
+    font-size: 9px !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    background: var(--card) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line);
+    border-radius: 12px !important;
+    box-shadow: 0 8px 22px rgba(24, 35, 30, 0.2) !important;
+  }
+  .leaflet-popup-tip { background: var(--card) !important; border: 1px solid var(--line); }
+  .leaflet-popup-close-button { color: var(--muted) !important; }
+  .popup-title { font-size: 13px; font-weight: 800; color: var(--ink); margin: 0 0 2px; }
+  .popup-sub { font-size: 11px; color: var(--muted); margin: 0; }
+
+  #toast {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 1000;
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    padding: 9px 16px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 0.95; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="vignette"></div>
+
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <div>
+      <p class="panel-eyebrow">EGABAY MAP</p>
+      <p class="panel-title">Marinduque</p>
+      <p class="panel-sub">Coverage is limited to the island province.</p>
+    </div>
+    <button class="collapse-btn" id="collapse-btn" aria-label="Toggle panel">▾</button>
+  </div>
+  <div class="panel-body">
+    <p class="panel-foot">Tip: double-click or double-tap the map to reset the view.</p>
+    <p class="panel-foot">Boundary &amp; search via Nominatim · Tiles © OpenStreetMap contributors</p>
+  </div>
+</div>
+
+<div class="search-float">
+  <div class="search-wrap">
+    <input id="search" type="text" placeholder="Search places in Marinduque…" autocomplete="off" />
+    <div id="results"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+<script>
+// Compact UI when loaded with #embed (app card). #full or no hash = full UI.
+const EMBEDDED = /#embed/.test(location.hash);
+if (EMBEDDED) document.body.classList.add('embedded');
+
+// ---------- Coverage area (Marinduque island province, PH) ----------
+const ISLAND_VIEW = L.latLngBounds([[13.15, 121.74], [13.63, 122.22]]); // initial frame
+const HARD_BOUNDS = L.latLngBounds([[13.05, 121.62], [13.72, 122.32]]);   // panning limit
+
+const map = L.map('map', {
+  zoomControl: false,
+  scrollWheelZoom: !EMBEDDED, // don't trap page scroll when embedded
+  doubleClickZoom: false,     // double-click/tap resets the view instead
+  minZoom: 10,
+  maxZoom: 18,
+  maxBounds: HARD_BOUNDS,
+  maxBoundsViscosity: 1.0,
+});
+map.fitBounds(ISLAND_VIEW);
+
+// Sea layer sits above tiles but below vectors/markers and shares the same
+// CSS filter as the tile pane, so masked water matches tile water exactly.
+const seaPane = map.createPane('seaPane');
+seaPane.style.zIndex = 350;
+seaPane.style.filter = 'saturate(1.4) contrast(1.07) hue-rotate(-8deg) brightness(0.98)';
+
+L.control.zoom({ position: 'topright' }).addTo(map);
+L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+// ---------- Free base layers (no API keys), each with its water color ----------
+const baseLayers = {
+  'Standard': {
+    sea: '#aad3df',
+    layer: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      bounds: HARD_BOUNDS,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }),
+  },
+  'Dark': {
+    sea: '#101216',
+    layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      bounds: HARD_BOUNDS,
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    }),
+  },
+  'Satellite': {
+    sea: '#123b52',
+    layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      bounds: HARD_BOUNDS,
+      attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
+    }),
+  },
+};
+baseLayers['Standard'].layer.addTo(map);
+let seaColor = baseLayers['Standard'].sea;
+
+// ---------- Towns & points of interest ----------
+const townsLayer = L.layerGroup();
+const poisLayer = L.layerGroup();
+
+const TOWNS = [
+  { name: 'Boac',       lat: 13.4463, lng: 121.8406, note: 'Provincial capital' },
+  { name: 'Mogpog',     lat: 13.4745, lng: 121.8610, note: 'Northern gateway' },
+  { name: 'Gasan',      lat: 13.3224, lng: 121.8465, note: 'West coast' },
+  { name: 'Buenavista', lat: 13.2407, lng: 121.9377, note: 'Southern coast' },
+  { name: 'Torrijos',   lat: 13.3197, lng: 122.0849, note: 'East coast' },
+  { name: 'Santa Cruz', lat: 13.4756, lng: 122.0525, note: 'Northeast' },
+];
+
+const POIS = [
+  { name: 'Balanacan Port',       lat: 13.5334, lng: 121.8673, note: 'Main ferry gateway · Mogpog' },
+  { name: 'Cawit Port',           lat: 13.4316, lng: 121.8326, note: 'RoRo/ferry pier · Boac' },
+  { name: 'Marinduque Airport',   lat: 13.3607, lng: 121.8257, note: 'Masiga · Gasan' },
+  { name: 'Buyabod Port',         lat: 13.4412, lng: 122.0443, note: 'Ferry pier · Santa Cruz' },
+  { name: 'Poctoy White Beach',   lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos' },
+];
+
+function dotIcon(cls, size) {
+  return L.divIcon({
+    className: '',
+    html: '<div class="' + cls + '"></div>',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
+for (const t of TOWNS) {
+  L.marker([t.lat, t.lng], { icon: dotIcon('waypoint', 13) })
+    .bindPopup('<p class="popup-title">' + t.name + '</p><p class="popup-sub">' + t.note + ' · Marinduque</p>')
+    .bindTooltip(t.name.toUpperCase(), {
+      permanent: true, direction: 'top', offset: [0, -10], className: 'town-label',
+    })
+    .addTo(townsLayer);
+}
+for (const p of POIS) {
+  L.marker([p.lat, p.lng], { icon: dotIcon('poi-dot', 10) })
+    .bindPopup('<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>')
+    .addTo(poisLayer);
+}
+townsLayer.addTo(map);
+poisLayer.addTo(map);
+
+const overlayLayers = {};
+for (const name of Object.keys(baseLayers)) overlayLayers[name] = baseLayers[name].layer;
+L.control.layers(
+  overlayLayers,
+  { 'Waypoints': townsLayer, 'Ports & POIs': poisLayer },
+  { position: 'topright' }
+).addTo(map);
+
+// Sea follows the active basemap's water color.
+let seaMask = null;
+map.on('baselayerchange', (e) => {
+  const cfg = baseLayers[e.name];
+  if (!cfg) return;
+  seaColor = cfg.sea;
+  if (seaMask) seaMask.setStyle({ fillColor: seaColor });
+  document.getElementById('map').style.background = seaColor;
+});
+
+// ---------- Province boundary + sea mask via free Nominatim API ----------
+// Everything that is not Marinduque renders as open sea so the island reads
+// like land on a game chart, with nothing else on the map.
+let provinceBounds = HARD_BOUNDS;
+const WORLD = [[-89, -180], [-89, 180], [89, 180], [89, -180]];
+
+// Temporary sea cover hides surrounding land while the boundary loads.
+const seaCover = L.polygon(WORLD, {
+  stroke: false, fillColor: seaColor, fillOpacity: 1, interactive: false, pane: 'seaPane',
+}).addTo(map);
+
+async function loadBoundary() {
+  const url = 'https://nominatim.openstreetmap.org/search?format=geojson&polygon_geojson=1&limit=1&q='
+    + encodeURIComponent('Marinduque, Mimaropa, Philippines');
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(9000) });
+    const gj = await res.json();
+    const feat = (gj.features || []).find((f) => f.geometry && /Polygon/.test(f.geometry.type));
+    if (!feat) return;
+
+    const geom = feat.geometry;
+    const outerRings = geom.type === 'Polygon'
+      ? [geom.coordinates[0]]
+      : geom.coordinates.map((poly) => poly[0]);
+    const holes = outerRings.map((ring) => ring.map((c) => [c[1], c[0]]));
+
+    // Swap the temp cover for a sea sheet with a Marinduque-shaped opening:
+    // only the province renders, the rest is water. A hairline highlight on
+    // the coastline hides sub-pixel seams between mask and tiles.
+    seaCover.remove();
+    seaMask = L.polygon([WORLD, ...holes], {
+      color: 'rgba(255,255,255,0.55)', weight: 1,
+      fillColor: seaColor, fillOpacity: 1, interactive: false, pane: 'seaPane',
+    }).addTo(map);
+
+    // Invisible outline keeps province bounds + center label.
+    const outline = L.geoJSON(feat, { style: { opacity: 0, fill: false } }).addTo(map);
+    outline.bindTooltip('MARINDUQUE', { permanent: true, direction: 'center', className: 'island-label' });
+
+    provinceBounds = outline.getBounds();
+    map.setMaxBounds(provinceBounds.pad(0.12));
+    map.fitBounds(provinceBounds);
+  } catch (err) {
+    console.warn('Province boundary could not be loaded; using preset bounds.', err);
+  } finally {
+    if (map.hasLayer(seaCover)) seaCover.remove();
+  }
+}
+loadBoundary();
+
+// ---------- Expand-to-fullscreen bridge (embedded mode) ----------
+function notifyHost(msg) {
+  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(msg);
+  else if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+}
+if (EMBEDDED) {
+  const ExpandControl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd: function () {
+      const btn = L.DomUtil.create('button', 'expand-btn leaflet-bar');
+      btn.textContent = '⛶';
+      btn.title = 'Open fullscreen map';
+      L.DomEvent.disableClickPropagation(btn);
+      L.DomEvent.disableScrollPropagation(btn);
+      btn.addEventListener('click', () => notifyHost('egabay:expand'));
+      return btn;
+    },
+  });
+  map.addControl(new ExpandControl());
+}
+
+// ---------- Bottom-right stack: compass chip + locate FAB ----------
+const CompassControl = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd: function () {
+    const chip = L.DomUtil.create('div', 'compass');
+    chip.innerHTML = '<span class="arrow">▲</span>N';
+    return chip;
+  },
+});
+map.addControl(new CompassControl());
+
+const LocateControl = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd: function () {
+    const btn = L.DomUtil.create('button', 'locate-fab');
+    btn.textContent = '⌖';
+    btn.title = 'Locate me';
+    L.DomEvent.disableClickPropagation(btn);
+    L.DomEvent.disableScrollPropagation(btn);
+    btn.addEventListener('click', () => {
+      btn.classList.add('busy');
+      map.locate({ enableHighAccuracy: true });
+      setTimeout(() => btn.classList.remove('busy'), 2500);
+    });
+    return btn;
+  },
+});
+map.addControl(new LocateControl());
+
+// ---------- Double-click / double-tap resets the view ----------
+map.on('dblclick', () => {
+  map.flyToBounds(provinceBounds === HARD_BOUNDS ? ISLAND_VIEW : provinceBounds, { duration: 0.8 });
+});
+
+// ---------- Panel collapse (embedded mode) ----------
+const panel = document.getElementById('panel');
+const collapseBtn = document.getElementById('collapse-btn');
+if (EMBEDDED) panel.classList.add('collapsed');
+collapseBtn.addEventListener('click', () => {
+  panel.classList.toggle('collapsed');
+  collapseBtn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
+});
+
+// ---------- Search restricted to Marinduque (Nominatim, free) ----------
+const searchInput = document.getElementById('search');
+const resultsBox = document.getElementById('results');
+let debounceTimer;
+let searchMarker = null;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 3) { closeResults(); return; }
+  debounceTimer = setTimeout(() => runSearch(q), 350);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const first = resultsBox.querySelector('button');
+    if (first) first.click();
+  }
+  if (e.key === 'Escape') closeResults();
+});
+
+async function runSearch(q) {
+  resultsBox.innerHTML = '<div class="hint">Searching…</div>';
+  resultsBox.classList.add('open');
+  const b = provinceBounds.pad(0.2);
+  const viewbox = b.getWest() + ',' + b.getNorth() + ',' + b.getEast() + ',' + b.getSouth();
+  const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=ph'
+    + '&bounded=1&viewbox=' + viewbox + '&q=' + encodeURIComponent(q);
+  try {
+    const res = await fetch(url);
+    const places = await res.json();
+    if (!places.length) {
+      resultsBox.innerHTML = '<div class="hint">No results inside Marinduque.</div>';
+      return;
+    }
+    resultsBox.innerHTML = '';
+    for (const place of places) {
+      const btn = document.createElement('button');
+      btn.textContent = place.display_name.replace(', Marinduque', '').split(',').slice(0, 3).join(',');
+      btn.onclick = () => goToPlace(place);
+      resultsBox.appendChild(btn);
+    }
+  } catch {
+    resultsBox.innerHTML = '<div class="hint">Search unavailable right now.</div>';
+  }
+}
+
+function goToPlace(place) {
+  const ll = [Number(place.lat), Number(place.lon)];
+  if (searchMarker) searchMarker.remove();
+  searchMarker = L.circleMarker(ll, {
+    radius: 8, color: '#E9813F', weight: 3, fillColor: '#E9813F', fillOpacity: 0.25,
+  }).addTo(map);
+  searchMarker.bindPopup(
+    '<p class="popup-title">' + place.display_name.split(',')[0] + '</p>'
+    + '<p class="popup-sub">' + place.display_name + '</p>'
+  ).openPopup();
+  map.flyTo(ll, 15, { duration: 0.9 });
+  closeResults();
+}
+
+function closeResults() { resultsBox.classList.remove('open'); }
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) closeResults();
+});
+
+// ---------- Locate me ----------
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+let locateMarker = null;
+map.on('locationfound', (e) => {
+  if (!provinceBounds.pad(0.2).contains(e.latlng)) {
+    showToast('You appear to be outside the Marinduque coverage area.');
+    return;
+  }
+  if (locateMarker) locateMarker.remove();
+  locateMarker = L.layerGroup([
+    L.circle(e.latlng, { radius: e.accuracy, color: '#176B4B', weight: 1, fillOpacity: 0.08 }),
+    L.circleMarker(e.latlng, { radius: 7, color: '#fff', weight: 3, fillColor: '#176B4B', fillOpacity: 1 }),
+  ]).addTo(map);
+  map.flyTo(e.latlng, 14, { duration: 0.9 });
+});
+map.on('locationerror', () => showToast('Location unavailable — check browser permission.'));
+</script>
+</body>
+</html>
