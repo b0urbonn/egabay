@@ -111,7 +111,7 @@ export default function App() {
             </View>
           </View>
         )}
-        <View style={isWideWeb && styles.appFrame}>
+        <View style={[styles.appFrameFill, isWideWeb && styles.appFrame]}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           {stage === 'onboarding' && <OnboardingScreen onDone={finishOnboarding} />}
           {stage === 'welcome' && (
@@ -167,6 +167,7 @@ function createAppStyles(colors: typeof lightColors) {
     introBody: { color: colors.muted, fontSize: 15, lineHeight: 24, marginTop: 18, maxWidth: 390 },
     introTags: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, marginTop: 28 },
     introTag: { color: colors.greenDark, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 18, overflow: 'hidden' as const, paddingVertical: 9, paddingHorizontal: 13, fontSize: 11, fontWeight: '700' as const },
-    appFrame: { width: 420, height: '94%' as const, maxHeight: 940, borderRadius: 28, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' as const, backgroundColor: colors.canvas, shadowColor: '#173322', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.13, shadowRadius: 30, elevation: 8 },
+    appFrameFill: { flex: 1, width: '100%' as const },
+    appFrame: { width: 420, flex: 0, height: '94%' as const, maxHeight: 940, borderRadius: 28, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' as const, backgroundColor: colors.canvas, shadowColor: '#173322', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.13, shadowRadius: 30, elevation: 8 },
   };
 }
