@@ -9,18 +9,14 @@ import type { Session } from '../lib/session';
 import { useThemeStyles } from '../lib/theme';
 import { spacing, type ThemeColors } from '../theme';
 import { HomeScreen } from './HomeScreen';
-import { PlanScreen } from './PlanScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SettingsScreen } from './SettingsScreen';
-import { UpdatesScreen } from './UpdatesScreen';
 
-export type Tab = 'Home' | 'Map' | 'Plan' | 'Updates' | 'Profile';
+export type Tab = 'Home' | 'Map' | 'Profile';
 
 const tabs: { label: Tab; glyph: string }[] = [
   { label: 'Home', glyph: '⌂' },
   { label: 'Map', glyph: '◈' },
-  { label: 'Plan', glyph: '↗' },
-  { label: 'Updates', glyph: '◉' },
   { label: 'Profile', glyph: '○' },
 ];
 
@@ -84,8 +80,6 @@ export function MainShell({
           <>
             {activeTab === 'Home' && <HomeScreen session={session} mode={mode} onNavigate={setActiveTab} />}
             {activeTab === 'Map' && <MapScreen />}
-            {activeTab === 'Plan' && <PlanScreen mode={mode} />}
-            {activeTab === 'Updates' && <UpdatesScreen mode={mode} />}
             {activeTab === 'Profile' && (
               <ProfileScreen
                 session={session}

@@ -8,11 +8,11 @@ import type { Session } from '../lib/session';
 import { useThemeStyles } from '../lib/theme';
 import { radius, spacing, type ThemeColors } from '../theme';
 
-const quickActions: { glyph: string; label: string; tab: 'Plan' | 'Updates' }[] = [
-  { glyph: '↗', label: 'Plan trip', tab: 'Plan' },
-  { glyph: '◉', label: 'Updates', tab: 'Updates' },
-  { glyph: '▤', label: 'Saved routes', tab: 'Plan' },
-  { glyph: '₱', label: 'Fares', tab: 'Plan' },
+const quickActions: { glyph: string; label: string; tab: 'Map' | 'Profile' }[] = [
+  { glyph: '◈', label: 'Island map', tab: 'Map' },
+  { glyph: '↗', label: 'Plan trip', tab: 'Map' },
+  { glyph: '▤', label: 'Saved routes', tab: 'Map' },
+  { glyph: '○', label: 'My profile', tab: 'Profile' },
 ];
 
 function greeting(): string {
@@ -29,7 +29,7 @@ export function HomeScreen({
 }: {
   session: Session;
   mode: AppMode;
-  onNavigate: (tab: 'Plan' | 'Updates' | 'Profile') => void;
+  onNavigate: (tab: 'Map' | 'Profile') => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const name = session.kind === 'account' ? session.name.split(' ')[0] : null;
@@ -60,14 +60,14 @@ export function HomeScreen({
       </Card>
 
       <View style={styles.searchBlock}>
-        <Pressable style={styles.destinationField} onPress={() => onNavigate('Plan')}>
+        <Pressable style={styles.destinationField} onPress={() => onNavigate('Map')}>
           <View style={styles.destinationPin}><Text style={styles.destinationPinText}>⌖</Text></View>
           <Text style={styles.destinationPlaceholder}>Where are you going?</Text>
           <Text style={styles.destinationArrow}>→</Text>
         </Pressable>
         <View style={styles.quickPlaces}>
           {['Boac', 'Gasan', 'Santa Cruz', 'Mogpog'].map((place) => (
-            <Chip key={place} label={place} onPress={() => onNavigate('Plan')} />
+            <Chip key={place} label={place} onPress={() => onNavigate('Map')} />
           ))}
         </View>
       </View>
@@ -84,25 +84,24 @@ export function HomeScreen({
       <SectionHeader
         eyebrow="Explore the island"
         title="Popular routes"
-        action={<Pressable onPress={() => onNavigate('Plan')}><Text style={styles.textLink}>See all  →</Text></Pressable>}
+        action={<Pressable onPress={() => onNavigate('Map')}><Text style={styles.textLink}>See map  →</Text></Pressable>}
       />
       {demoRoutes.slice(0, 2).map((route) => (
-        <RouteCard key={route.id} route={route} onPress={() => onNavigate('Plan')} />
+        <RouteCard key={route.id} route={route} onPress={() => onNavigate('Map')} />
       ))}
 
       <SectionHeader
         eyebrow="Know before you go"
         title="Latest notice"
-        action={<Pressable onPress={() => onNavigate('Updates')}><Text style={styles.textLink}>All updates  →</Text></Pressable>}
       />
-      <Pressable onPress={() => onNavigate('Updates')} style={({ pressed }) => [styles.homeAlert, pressed && styles.pressed]}>
+      <View style={styles.homeAlert}>
         <View style={styles.alertIcon}><Text style={styles.alertIconText}>!</Text></View>
         <View style={styles.homeAlertCopy}>
           <Text style={styles.homeAlertTitle}>{latest.title}</Text>
           <Text style={styles.homeAlertDetail}>{latest.locality} · {latest.time}</Text>
         </View>
         <Text style={styles.homeAlertArrow}>›</Text>
-      </Pressable>
+      </View>
       <Text style={styles.demoNote}>Demo content only · route, fare, and vehicle details need operator confirmation.</Text>
     </ScrollView>
   );
