@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { MarinduqueMap } from '../components/MarinduqueMap';
-import { Badge, BrandMark } from '../components/ui';
 import type { AppMode } from '../lib/appMode';
 import type { AppearanceSetting } from '../lib/appearance';
 import type { Session } from '../lib/session';
@@ -58,16 +57,6 @@ export function MainShell({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.appHeader}>
-        <BrandMark />
-        <Text style={styles.brandName}>eGABAY</Text>
-        <View style={styles.headerSpacer} />
-        {mode === 'offline' && <Badge label="OFFLINE" tone="orange" />}
-        <Badge label="MARINDUQUE" />
-        <Pressable onPress={() => setShowSettings(true)} style={styles.gearButton} hitSlop={6}>
-          <Text style={styles.gearGlyph}>⚙</Text>
-        </Pressable>
-      </View>
       <View style={styles.screen}>
         {showSettings ? (
           <SettingsScreen
@@ -114,11 +103,6 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: colors.canvas },
     screen: { flex: 1 },
-    appHeader: { minHeight: 62, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, gap: 9, borderBottomWidth: 1, borderBottomColor: colors.line },
-    brandName: { color: colors.ink, fontSize: 16, fontWeight: '900', letterSpacing: 1.1 },
-    headerSpacer: { flex: 1 },
-    gearButton: { width: 34, height: 34, borderRadius: 12, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-    gearGlyph: { color: colors.ink, fontSize: 15 },
     tabBar: { minHeight: 67, paddingHorizontal: 14, paddingTop: 7, paddingBottom: 5, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.card, flexDirection: 'row', justifyContent: 'space-around' },
     tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
     tabGlyphWrap: { width: 34, height: 29, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },

@@ -1,20 +1,41 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Button, Card, ScreenHeader } from '../components/ui';
+import { Button, Card } from '../components/ui';
 import type { AppMode } from '../lib/appMode';
 import type { Session } from '../lib/session';
-import { isSupabaseConfigured } from '../lib/supabase';
 import { useThemeStyles } from '../lib/theme';
 import { radius, spacing, type ThemeColors } from '../theme';
 
-function Row({ glyph, label, value, onPress }: { glyph: string; label: string; value?: string; onPress?: () => void }) {
+function SettingsRow({
+  label,
+  value,
+  onPress,
+}: {
+  label: string;
+  value?: string;
+  onPress?: () => void;
+}) {
   const styles = useThemeStyles(createStyles);
-  return (
-    <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={styles.rowGlyphWrap}><Text style={styles.rowGlyph}>{glyph}</Text></View>
+  const rowContent = (
+    <>
       <Text style={styles.rowLabel}>{label}</Text>
-      {value && <Text style={styles.rowValue}>{value}</Text>}
-      {onPress && <Text style={styles.rowChevron}>›</Text>}
+      <View style={styles.rowTrailing}>
+        {value && <Text style={styles.rowValue}>{value}</Text>}
+        {onPress && <Text style={styles.rowChevron}>›</Text>}
+      </View>
+    </>
+  );
+
+  if (!onPress) return <View style={styles.settingsRow}>{rowContent}</View>;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.settingsRow, pressed && styles.pressed]}
+    >
+      {rowContent}
     </Pressable>
   );
 }
@@ -37,66 +58,70 @@ export function ProfileScreen({
   const styles = useThemeStyles(createStyles);
   const isAccount = session.kind === 'account';
   const initials = isAccount
-    ? session.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-    : '✦';
+    ? session.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+    : 'G';
 
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
-      <ScreenHeader eyebrow="Your eGABAY" title={isAccount ? 'Account' : 'Guest mode'} />
-      <Card style={styles.profileCard}>
-        <View style={styles.profileAvatar}><Text style={styles.profileAvatarText}>{initials}</Text></View>
-        <Text style={styles.profileTitle}>{isAccount ? session.name : 'Guest'}</Text>
-        <Text style={styles.profileBody}>{isAccount ? session.email : 'Browsing offline with saved data'}</Text>
-        <View style={styles.profileDivider} />
-        <View style={styles.profileRow}><Text style={styles.profileRowLabel}>Account</Text><Text style={styles.profileRowValue}>{isSupabaseConfigured ? 'Supabase ready' : 'Backend not connected'}</Text></View>
-        <View style={styles.profileRow}><Text style={styles.profileRowLabel}>Service area</Text><Text style={styles.profileRowValue}>Marinduque, PH</Text></View>
-        <View style={styles.profileRow}><Text style={styles.profileRowLabel}>Connection mode</Text><Text style={styles.profileRowValue}>{mode === 'online' ? 'Online' : 'Offline'}</Text></View>
-      </Card>
+      <Text accessibilityRole="header" style={styles.pageTitle}>Profile</Text>
 
-      {isAccount && (
-        <Card>
-          <Text style={styles.modeSwitchTitle}>Connection mode</Text>
-          <Text style={styles.modeSwitchBody}>Online gets live positions and fresh notices. Offline keeps saved routes, stops, and fares working with no signal.</Text>
-          <View style={styles.modeSwitchRow}>
-            {(['online', 'offline'] as AppMode[]).map((option) => {
-              const active = mode === option;
-              return (
-                <Pressable key={option} onPress={() => onChangeMode(option)} style={[styles.modeSwitchOption, active && styles.modeSwitchOptionActive]}>
-                  <Text style={[styles.modeSwitchOptionText, active && styles.modeSwitchOptionTextActive]}>{option === 'online' ? 'Online' : 'Offline'}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </Card>
-      )}
-
-      {!isAccount && (
-        <Card style={styles.guestCta}>
-          <Text style={styles.guestCtaTitle}>Unlock live updates</Text>
-          <Text style={styles.guestCtaBody}>Create an account or log in to see vehicle positions, fresh notices, and sync your trips.</Text>
-          <Button label="Create an account / Log in" onPress={onAuthRequest} />
-        </Card>
-      )}
-
-      <Card style={styles.rowsCard}>
-        <Row glyph="⚙" label="Settings" onPress={onOpenSettings} />
-        <Row glyph="⌖" label="Service area" value="Marinduque, PH" />
-        <Row glyph="▤" label="Mode" value={mode === 'online' ? 'Online' : 'Offline'} />
-      </Card>
-
-      <View style={styles.tipCard}>
-        <Text style={styles.tipGlyph}>⌁</Text>
-        <View style={styles.tipCopy}>
-          <Text style={styles.tipTitle}>Built with local knowledge</Text>
-          <Text style={styles.tipBody}>Routes and service information should be reviewed with transport groups and local communities before launch.</Text>
+      <Card style={styles.identityCard}>
+        <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
+        <View style={styles.identityCopy}>
+          <Text style={styles.name}>{isAccount ? session.name : 'Guest mode'}</Text>
+          <Text style={styles.identityDetail} numberOfLines={1}>
+            {isAccount ? session.email : 'Using saved travel information'}
+          </Text>
         </View>
+      </Card>
+
+      {isAccount ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Travel mode</Text>
+          <Text style={styles.sectionDetail}>Choose how eGABAY gets service updates.</Text>
+          <Card style={styles.modeCard}>
+            <View style={styles.modeOptions}>
+              {(['online', 'offline'] as AppMode[]).map((option) => {
+                const selected = mode === option;
+                const label = option === 'online' ? 'Online' : 'Offline';
+                return (
+                  <Pressable
+                    key={option}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${label} travel mode`}
+                    accessibilityState={{ selected }}
+                    onPress={() => onChangeMode(option)}
+                    style={[styles.modeOption, selected && styles.modeOptionSelected]}
+                  >
+                    <Text style={[styles.modeOptionText, selected && styles.modeOptionTextSelected]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={styles.modeFootnote}>
+              {mode === 'online' ? 'Live updates are available when connected.' : 'Saved routes and fares work without a signal.'}
+            </Text>
+          </Card>
+        </View>
+      ) : (
+        <Card style={styles.guestCard}>
+          <Text style={styles.guestTitle}>Get more from eGABAY</Text>
+          <Text style={styles.guestDetail}>Sign in to sync your trips and receive live service updates.</Text>
+          <Button label="Create account or sign in" onPress={onAuthRequest} />
+        </Card>
+      )}
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Card style={styles.settingsGroup}>
+          <SettingsRow label="Settings" onPress={onOpenSettings} />
+          <View style={styles.divider} />
+          <SettingsRow label="Service area" value="Marinduque, Philippines" />
+        </Card>
       </View>
-      {!isSupabaseConfigured && (
-        <View style={styles.connectCard}>
-          <Text style={styles.connectTitle}>Connect your Supabase project</Text>
-          <Text style={styles.connectBody}>Copy .env.example to .env.local and add your project URL and publishable key to enable backend features.</Text>
-        </View>
-      )}
+
+      <Text style={styles.footerNote}>Route and fare details are sample information. Confirm locally before travel.</Text>
+
       {isAccount && <Button label="Log out" variant="ghost" onPress={onLogout} />}
     </ScrollView>
   );
@@ -104,41 +129,35 @@ export function ProfileScreen({
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-    pressed: { opacity: 0.82 },
-    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 34, gap: 18 },
-    profileCard: { alignItems: 'center', padding: 20 },
-    profileAvatar: { width: 60, height: 60, borderRadius: 21, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-    profileAvatarText: { color: colors.lime, fontSize: 26, fontWeight: '900' },
-    profileTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' },
-    profileBody: { color: colors.muted, textAlign: 'center', fontSize: 11, lineHeight: 17, marginTop: 7 },
-    profileDivider: { height: 1, backgroundColor: colors.line, width: '100%', marginVertical: 16 },
-    profileRow: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginVertical: 6 },
-    profileRowLabel: { color: colors.muted, fontSize: 10 },
-    profileRowValue: { color: colors.ink, fontSize: 10, fontWeight: '700' },
-    modeSwitchTitle: { color: colors.ink, fontSize: 12, fontWeight: '800' },
-    modeSwitchBody: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 5 },
-    modeSwitchRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-    modeSwitchOption: { flex: 1, height: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-    modeSwitchOptionActive: { backgroundColor: colors.green, borderColor: colors.green },
-    modeSwitchOptionText: { color: colors.muted, fontSize: 11, fontWeight: '800' },
-    modeSwitchOptionTextActive: { color: colors.lime },
-    guestCta: { gap: 10 },
-    guestCtaTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-    guestCtaBody: { color: colors.muted, fontSize: 11, lineHeight: 16 },
-    rowsCard: { padding: 6 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 11, padding: 10, borderRadius: radius.sm },
-    rowGlyphWrap: { width: 32, height: 32, borderRadius: 11, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' },
-    rowGlyph: { color: colors.green, fontSize: 15, fontWeight: '700' },
-    rowLabel: { flex: 1, color: colors.ink, fontSize: 12, fontWeight: '700' },
-    rowValue: { color: colors.muted, fontSize: 10 },
-    rowChevron: { color: colors.muted, fontSize: 18 },
-    tipCard: { flexDirection: 'row', gap: 11, padding: 14, backgroundColor: colors.tipBg, borderRadius: radius.md },
-    tipGlyph: { color: colors.green, fontSize: 19, fontWeight: '800' },
-    tipCopy: { flex: 1 },
-    tipTitle: { color: colors.greenDark, fontSize: 11, fontWeight: '800', marginBottom: 4 },
-    tipBody: { color: colors.tipBody, fontSize: 10, lineHeight: 15 },
-    connectCard: { borderWidth: 1, borderColor: colors.connectBorder, backgroundColor: colors.connectBg, padding: 14, borderRadius: radius.md, gap: 5 },
-    connectTitle: { color: colors.connectTitle, fontSize: 11, fontWeight: '800' },
-    connectBody: { color: colors.connectBody, fontSize: 10, lineHeight: 15 },
+    pressed: { opacity: 0.7 },
+    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 32, gap: 20 },
+    pageTitle: { color: colors.ink, fontSize: 32, lineHeight: 38, letterSpacing: -0.8, fontWeight: '700' },
+    identityCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+    avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' },
+    avatarText: { color: colors.greenDark, fontSize: 18, fontWeight: '700' },
+    identityCopy: { flex: 1, gap: 4 },
+    name: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+    identityDetail: { color: colors.muted, fontSize: 13 },
+    section: { gap: 6 },
+    sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },
+    sectionDetail: { color: colors.muted, fontSize: 13, lineHeight: 18, marginBottom: 5 },
+    modeCard: { gap: 12 },
+    modeOptions: { flexDirection: 'row', backgroundColor: colors.canvas, borderRadius: radius.md, padding: 4, gap: 4 },
+    modeOption: { minHeight: 44, flex: 1, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+    modeOptionSelected: { backgroundColor: colors.green },
+    modeOptionText: { color: colors.muted, fontSize: 14, fontWeight: '600' },
+    modeOptionTextSelected: { color: '#FFFFFF' },
+    modeFootnote: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+    guestCard: { gap: 12 },
+    guestTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+    guestDetail: { color: colors.muted, fontSize: 13, lineHeight: 19 },
+    settingsGroup: { paddingVertical: 4, paddingHorizontal: 14 },
+    settingsRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    rowLabel: { flex: 1, color: colors.ink, fontSize: 15 },
+    rowTrailing: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    rowValue: { color: colors.muted, fontSize: 13, textAlign: 'right', maxWidth: '55%' },
+    rowChevron: { color: colors.muted, fontSize: 22, lineHeight: 24 },
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
+    footerNote: { color: colors.muted, fontSize: 12, lineHeight: 17, paddingHorizontal: 2 },
   });
 }
