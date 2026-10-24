@@ -2,18 +2,14 @@
 
 This file records repository changes visible in local Git history and `origin/main`. The [checklist](CHECKLIST.md) tracks implementation and the branch differences.
 
-## Unreleased (uncommitted in the local workspace)
-
-Base: `0097625` (same as `origin/main`). These changes were reapplied on top of `0097625` after the pull; no conflicts.
-
-- **Map markers and controls** — Town markers are now map pins (teardrop pin with a white centre) whose tip sits on the town's coordinate, replacing the green diamonds. Every map control — zoom, layer switcher, expand, compass, locate button, scale bar, attribution, and toast messages — now uses the same floating white card, border, and shadow as the search bar. The map's edge shading was moved inside the map so it no longer darkens the controls. The layer switcher's "Waypoints" overlay was renamed to "Towns". (`assets/marinduque-map.html`)
-- **Map tab icon** — The navbar's Map tab now shows a folded map with the same location pin used on the map page, replacing the `◈` glyph. It follows the tab's selected/unselected colors. Added `react-native-svg` (15.16.0) to draw it. (`src/components/MapTabIcon.tsx`, `src/screens/MainShell.tsx`, `package.json`, `package-lock.json`)
-- **Unused import cleanup** — Removed the `spacing` import from `MainShell.tsx`; nothing used it after the app header was removed in `0097625`. The README's `MainShell.tsx` description no longer mentions a header. (`src/screens/MainShell.tsx`, `README.md`)
-
 ## 2026-10-24
 
-The repository is public. Local `main` and public `origin/main` are both at `0097625`; every commit below is pushed.
+The repository is public. Local `main` and public `origin/main` are both at `5e10e85`; every commit below is pushed.
 
+- **Settings screen simplified** — The Settings sub-screen now has a "‹ Back" button (labelled "Back to profile" for screen readers), a plain "Settings" title, and an Appearance card with System/Light/Dark rows and radio buttons (the ◐/☀/☾ glyphs were removed). The reset option is now a "Reset app" section with a "Reset eGABAY" button; it still needs a second tap within 3 seconds to confirm. The "eGABAY · v1.0.0 · Marinduque pilot" footer was removed. (`5e10e85`, Lyka Tolosa)
+- **Map markers and controls** — Town markers are now map pins (teardrop pin with a white centre) whose tip sits on the town's coordinate, replacing the green diamonds. Every map control — zoom, layer switcher, expand, compass, locate button, scale bar, attribution, and toast messages — now uses the same floating white card, border, and shadow as the search bar. The map's edge shading was moved inside the map so it no longer darkens the controls. The layer switcher's "Waypoints" overlay was renamed to "Towns". (`497cad7`)
+- **Map tab icon** — The navbar's Map tab now shows a folded map with the same location pin used on the map page, replacing the `◈` glyph. It follows the tab's selected/unselected colors. Added `react-native-svg` (15.16.0) to draw it. (`497cad7`)
+- **Unused import cleanup** — Removed the `spacing` import from `MainShell.tsx`; nothing used it after the app header was removed in `0097625`. The README's `MainShell.tsx` description no longer mentions a header. (`497cad7`)
 - **Profile redesign + app header removed** — Removed the top app header from `MainShell` (eGABAY brand, OFFLINE/MARINDUQUE badges, and the ⚙ settings button). Settings is now opened from Profile → Preferences → Settings; online/offline status is still shown on the Home status line. The Profile screen now has a "Profile" title, an identity card (initials, name and email, or "Guest mode"), an Online/Offline travel-mode switch for signed-in accounts, a sign-in card for guests, and a Preferences group (Settings, Service area). The old "Supabase ready / Backend not connected" row was removed. (`0097625`, Lyka Tolosa)
 - **Docs update** — Updated the changelog, checklist, and README after the merges. (`392bd4b`)
 - **Mobile navigation fix** — The app container had no flex style on narrow screens, so it collapsed to its content height and pushed the bottom tab bar off-screen. It now always fills the screen; the wide-web phone frame is unchanged. (`97c44de`)
@@ -33,7 +29,7 @@ The repository is public. Local `main` and public `origin/main` are both at `009
 - A migration file and Supabase client scaffold are in the repository; a deployed Supabase backend and live app data are not evidenced by repository code.
 - Route names, fares, times, vehicle counts, and service notices are demo content until verified with local transport sources.
 - The nested `CHECKLIST.md/CHECKLIST.md` path is fixed on public `origin/main`; the checklist and changelog are at the repository root.
-- Public `origin/main` matches local `main` at `0097625`. The changes under "Unreleased" are not committed or pushed yet.
+- Public `origin/main` matches local `main` at `5e10e85`. Nothing is waiting to be pushed apart from this docs update.
 - Add a dated entry when a user-visible feature or backend milestone lands. Keep unfinished work in `CHECKLIST.md`.
 
 ## Commit log
@@ -42,6 +38,8 @@ Every commit on `main`, newest first (from `git log`). Times are +0800.
 
 | Commit | Date | Author | Message |
 | --- | --- | --- | --- |
+| `5e10e85` | 2026-10-24 15:57 | Lyka Tolosa | Simplify settings screen |
+| `497cad7` | 2026-10-24 15:56 | Raphael Dale Ogbac | change the ui in the map and map button |
 | `0097625` | 2026-10-24 15:48 | Lyka Tolosa | Refine profile and remove app header |
 | `392bd4b` | 2026-10-24 15:33 | Raphael Dale Ogbac | added changelogs and checklist |
 | `972a8e6` | 2026-10-24 15:32 | Raphael Dale Ogbac | Merge branch 'main' of https://github.com/b0urbonn/egabay |
