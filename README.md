@@ -4,8 +4,11 @@ React Native starter for an AI-assisted public transportation navigation and mon
 
 ## Current starter
 
-- Four local prototype tabs: Home, Plan, Updates, and Profile
-- Sample Boac, Gasan, and Santa Cruz route cards and service notices
+- Guided first-run flow: onboarding slides → welcome → mock login/sign-up or "Continue offline" → main app
+- Four tabs inside the app shell: Home, Plan, Updates, and Profile, plus a Settings sub-screen (appearance, two-tap reset)
+- Mock auth and guest sessions persisted locally (expo-sqlite localStorage); demo account `demo@egabay.ph`
+- Online/offline connection modes; guests run offline and can create an account later from Profile
+- Sample routes and service notices across Marinduque towns, clearly labeled as demo content
 - Route planning interactions backed by clearly marked sample data
 - Supabase client scaffold with persistent auth storage through expo-sqlite
 - Initial Postgres schema with row-level security and Realtime tables
@@ -34,9 +37,26 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
 
 ## Project map
 
-    App.tsx                          Mobile prototype and local tab navigation
-    src/data/demo.ts                 Explicitly non-live sample routes and notices
+    App.tsx                          Stage routing: onboarding → welcome → auth → app shell
+    src/screens/OnboardingScreen.tsx First-run "about the app" slides
+    src/screens/WelcomeScreen.tsx    Login / sign up / continue offline entry
+    src/screens/LoginScreen.tsx      Mock login with demo account hint
+    src/screens/SignUpScreen.tsx     Mock account creation with validation
+    src/screens/MainShell.tsx        Header, bottom tabs, Settings sub-screen
+    src/screens/HomeScreen.tsx       Greeting, status, search entry, quick actions
+    src/screens/PlanScreen.tsx       Route finder with swap and result list
+    src/screens/UpdatesScreen.tsx    Filterable service notices + offline banner
+    src/screens/ProfileScreen.tsx    Account/guest profile, mode switch, log out
+    src/screens/SettingsScreen.tsx   Appearance picker and reset
+    src/components/ui.tsx            Shared UI kit (Button, TextField, Card, Chip, Badge)
+    src/components/MapPreview.tsx    Stylized sample map
+    src/components/RouteCard.tsx     Route summary card
+    src/lib/session.ts               Mock auth, session, and onboarding persistence
+    src/lib/storage.ts               Safe localStorage wrappers
+    src/lib/appMode.ts               Online/offline mode persistence
+    src/lib/appearance.ts            Appearance setting persistence
     src/lib/supabase.ts              Supabase client and session persistence
+    src/data/demo.ts                 Explicitly non-live sample routes and notices
     src/theme.ts                     Shared visual tokens
     supabase/migrations/             Database schema, policies, and Realtime setup
     BUILD_PLAN.md                    Product and implementation milestones
