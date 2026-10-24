@@ -45,8 +45,6 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/screens/SignUpScreen.tsx     Mock account creation with validation
     src/screens/MainShell.tsx        Header, bottom tabs, Settings sub-screen
     src/screens/HomeScreen.tsx       Greeting, status, search entry, quick actions
-    src/screens/PlanScreen.tsx       Route finder with swap and result list
-    src/screens/UpdatesScreen.tsx    Filterable service notices + offline banner
     src/screens/ProfileScreen.tsx    Account/guest profile, mode switch, log out
     src/screens/SettingsScreen.tsx   Appearance picker and reset
     src/components/ui.tsx            Shared UI kit (Button, TextField, Card, Chip, Badge)
