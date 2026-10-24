@@ -2,18 +2,18 @@
 
 **Status snapshot:** 2026-10-24
 
-**Local workspace:** `main` at `5e10e85`
+**Latest app change:** `874abe8` (Home screen redesign)
 
-**Public GitHub branch:** `origin/main` at `5e10e85`
+**Public GitHub branch:** `origin/main` — includes `874abe8`, the merge with docs commit `68ca474`, and the cleanup/docs commit on top
 
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
 
-Local `main` and `origin/main` are at the same commit; all app code is pushed (map pins, floating map controls, and the Map tab icon landed in `497cad7`). Only this docs update is uncommitted. See [CHANGELOG.md](CHANGELOG.md) for per-commit details. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
+Local `main` and `origin/main` match after this push; nothing is waiting to be pushed. See the commit log in [CHANGELOG.md](CHANGELOG.md) for per-commit details. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
 
 ## Current state
 
 - [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
-- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen. (Profile redesigned and the top app header removed in `0097625`; Settings now opens from Profile → Preferences and was simplified in `5e10e85`.)
+- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen. (Profile redesigned and the top app header removed in `0097625`; Settings now opens from Profile → Preferences and was simplified in `5e10e85`; Home redesigned with a large-title header and grouped lists in `874abe8`.)
 - [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
 - [x] **Done in local workspace** — Map view using Leaflet, OpenStreetMap tiles, and Nominatim search.

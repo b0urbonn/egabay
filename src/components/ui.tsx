@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { useColors, useThemeStyles } from '../lib/theme';
-import { radius, spacing, type ThemeColors } from '../theme';
+import { radius, type ThemeColors } from '../theme';
 
 export function BrandMark({ size = 31 }: { size?: number }) {
   const styles = useThemeStyles(createStyles);
