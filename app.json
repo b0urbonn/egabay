@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "eGABAY",
+    "slug": "egabay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "egabay",
+    "web": {
+      "bundler": "metro"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ph.egabay.app"
+    },
+    "android": {
+      "package": "ph.egabay.app"
+    },
+    "plugins": ["expo-sqlite"]
+  }
+}
