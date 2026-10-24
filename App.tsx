@@ -10,13 +10,15 @@ import {
   View,
 } from 'react-native';
 
+import { MarinduqueMap } from './src/components/MarinduqueMap';
 import { demoAlerts, demoRoutes, type CommuteRoute } from './src/data/demo';
 import { isSupabaseConfigured } from './src/lib/supabase';
 import { colors, spacing } from './src/theme';
 
-type Tab = 'Home' | 'Plan' | 'Updates' | 'Profile';
+type Tab = 'Home' | 'Map' | 'Plan' | 'Updates' | 'Profile';
 const tabs: { label: Tab; glyph: string }[] = [
   { label: 'Home', glyph: '⌂' },
+  { label: 'Map', glyph: '◈' },
   { label: 'Plan', glyph: '↗' },
   { label: 'Updates', glyph: '◉' },
   { label: 'Profile', glyph: '○' },
@@ -42,22 +44,6 @@ function RouteCard({ route, onPress }: { route: CommuteRoute; onPress: () => voi
       </View>
       <Text style={styles.routeUnits}>{route.activeUnits} sample units reported nearby</Text>
     </Pressable>
-  );
-}
-
-function MapPreview() {
-  return (
-    <View style={styles.mapPreview}>
-      <View style={styles.mapIsland} />
-      <View style={styles.mapRoadOne} />
-      <View style={styles.mapRoadTwo} />
-      <View style={styles.mapRoute} />
-      <View style={[styles.mapPoint, styles.mapPointTop]} />
-      <View style={[styles.mapPoint, styles.mapPointBottom]} />
-      <View style={styles.mapLabelTop}><Text style={styles.mapLabelText}>BOAC</Text></View>
-      <View style={styles.mapLabelBottom}><Text style={styles.mapLabelText}>GASAN</Text></View>
-      <View style={styles.mapSample}><Text style={styles.mapSampleText}>SAMPLE MAP</Text></View>
-    </View>
   );
 }
 
@@ -123,6 +109,14 @@ function HomeScreen({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
   );
 }
 
+function MapScreen() {
+  return (
+    <View style={styles.mapScreen}>
+      <MarinduqueMap fullscreen />
+    </View>
+  );
+}
+
 function PlanScreen() {
   const [origin, setOrigin] = useState('Boac Town Plaza');
   const [destination, setDestination] = useState('Gasan Town Center');
@@ -161,7 +155,6 @@ function PlanScreen() {
         <View><Eyebrow>Suggested route</Eyebrow><Text style={styles.sectionTitle}>{hasSearched ? 'Best available match' : 'A popular trip'}</Text></View>
         <View style={styles.sampleBadge}><Text style={styles.sampleBadgeText}>SAMPLE</Text></View>
       </View>
-      <MapPreview />
       <RouteCard route={matchingRoute} onPress={() => setHasSearched(true)} />
       <View style={styles.tipCard}>
         <Text style={styles.tipGlyph}>✦</Text>
@@ -181,7 +174,6 @@ function UpdatesScreen() {
       <Eyebrow>Service board</Eyebrow>
       <Text style={styles.pageTitle}>Island{"\n"}updates.</Text>
       <Text style={styles.pageIntro}>Local notices can help you adjust your trip before you leave.</Text>
-      <MapPreview />
       <View style={styles.updatesSummary}>
         <View style={styles.updatesPulse} />
         <Text style={styles.updatesSummaryText}>2 sample updates for today</Text>
@@ -248,6 +240,7 @@ export default function App() {
       </View>
       <View style={styles.screen}>
         {activeTab === 'Home' && <HomeScreen onNavigate={setActiveTab} />}
+        {activeTab === 'Map' && <MapScreen />}
         {activeTab === 'Plan' && <PlanScreen />}
         {activeTab === 'Updates' && <UpdatesScreen />}
         {activeTab === 'Profile' && <ProfileScreen />}
@@ -347,19 +340,7 @@ const styles = StyleSheet.create({
   searchButtonArrow: { color: colors.lime, fontSize: 21, fontWeight: '700' },
   sampleBadge: { backgroundColor: colors.orangeLight, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5, marginBottom: 2 },
   sampleBadgeText: { color: colors.orange, fontSize: 8, fontWeight: '900', letterSpacing: 1 },
-  mapPreview: { height: 174, backgroundColor: '#DFEBE7', borderRadius: 19, overflow: 'hidden', position: 'relative' },
-  mapIsland: { position: 'absolute', width: 120, height: 230, backgroundColor: '#B8D7C1', borderRadius: 70, left: '38%', top: -23, transform: [{ rotate: '32deg' }] },
-  mapRoadOne: { position: 'absolute', height: 1, backgroundColor: 'rgba(255,255,255,0.72)', width: 250, top: 62, left: 10, transform: [{ rotate: '21deg' }] },
-  mapRoadTwo: { position: 'absolute', height: 1, backgroundColor: 'rgba(255,255,255,0.72)', width: 230, top: 120, left: 65, transform: [{ rotate: '-32deg' }] },
-  mapRoute: { position: 'absolute', height: 4, width: 132, borderRadius: 4, backgroundColor: colors.green, left: '32%', top: '50%', transform: [{ rotate: '63deg' }] },
-  mapPoint: { position: 'absolute', width: 14, height: 14, borderRadius: 8, backgroundColor: colors.lime, borderWidth: 3, borderColor: colors.green },
-  mapPointTop: { left: '46%', top: 27 },
-  mapPointBottom: { left: '62%', bottom: 26 },
-  mapLabelTop: { position: 'absolute', left: '49%', top: 20, backgroundColor: '#FFFFFF', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 7 },
-  mapLabelBottom: { position: 'absolute', left: '66%', bottom: 21, backgroundColor: '#FFFFFF', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 7 },
-  mapLabelText: { color: colors.greenDark, fontSize: 8, fontWeight: '900', letterSpacing: 0.5 },
-  mapSample: { position: 'absolute', left: 11, bottom: 10, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 8, paddingVertical: 5, paddingHorizontal: 7 },
-  mapSampleText: { color: colors.muted, fontSize: 7, fontWeight: '900', letterSpacing: 0.8 },
+  mapScreen: { flex: 1 },
   tipCard: { flexDirection: 'row', gap: 11, padding: 14, backgroundColor: '#F0F6EC', borderRadius: 16 },
   tipGlyph: { color: colors.green, fontSize: 19, fontWeight: '800' },
   tipCopy: { flex: 1 },

@@ -35,9 +35,12 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
 ## Project map
 
     App.tsx                          Mobile prototype and local tab navigation
+    src/components/MarinduqueMap.tsx Leaflet map embed (WebView native / iframe web)
     src/data/demo.ts                 Explicitly non-live sample routes and notices
     src/lib/supabase.ts              Supabase client and session persistence
     src/theme.ts                     Shared visual tokens
+    assets/marinduque-map.html       Marinduque-only Leaflet page (OSM + Nominatim)
+    metro.config.js                  Bundles .html files as app assets
     supabase/migrations/             Database schema, policies, and Realtime setup
     BUILD_PLAN.md                    Product and implementation milestones
 

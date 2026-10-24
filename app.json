@@ -16,6 +16,9 @@
     "android": {
       "package": "ph.egabay.app"
     },
-    "plugins": ["expo-sqlite"]
+    "plugins": [
+      "expo-sqlite",
+      "expo-asset"
+    ]
   }
 }
