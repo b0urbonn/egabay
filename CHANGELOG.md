@@ -6,8 +6,8 @@ This file records repository changes visible in local Git history and `origin/ma
 
 The repository is public. Every commit below is on public `origin/main`.
 
-- **Unused import cleanup** — Removed the unused `spacing` import from `src/components/ui.tsx` (left over since `45b44d4`). Pushed together with this docs update.
-- **Merge of the Home redesign** — Merged `874abe8` into local `main` alongside the docs commit `68ca474`; no conflicts.
+- **Unused import cleanup** — Removed the unused `spacing` import from `src/components/ui.tsx` (left over since `45b44d4`), and recorded the Home redesign in the docs. (`6e18cfb`)
+- **Merge of the Home redesign** — Merged `874abe8` into local `main` alongside the docs commit `68ca474`; no conflicts. (`b869e8c`)
 - **Home screen redesigned (Apple HIG layout)** — Replaced the stacked dashboard cards with a large-title header (today's date and "Good …, name"), a "Where to?" search field, quick-place pills, and inset grouped lists for **Routes** (first 3 sample routes, "See All") and **Service Updates** (first 2 sample notices). The search field, place pills, and route rows open the Map tab. When offline, a "You're offline · Showing saved routes and fares" card appears with a "Manage" link to Profile; there is no longer an "Online" status line. Added `fill` colors to the theme. Content is still sample data ("Sample data — live information coming soon."). (`874abe8`, Raphael Dale R. Ogbac)
 - **Docs fix** — Moved the map/Map-tab entries out of "Unreleased" now that they were pushed in `497cad7`. (`68ca474`)
 - **Settings screen simplified** — The Settings sub-screen now has a "‹ Back" button (labelled "Back to profile" for screen readers), a plain "Settings" title, and an Appearance card with System/Light/Dark rows and radio buttons (the ◐/☀/☾ glyphs were removed). The reset option is now a "Reset app" section with a "Reset eGABAY" button; it still needs a second tap within 3 seconds to confirm. The "eGABAY · v1.0.0 · Marinduque pilot" footer was removed. (`5e10e85`, Lyka Tolosa)
@@ -38,10 +38,12 @@ The repository is public. Every commit below is on public `origin/main`.
 
 ## Commit log
 
-Every commit on `main`, newest first (from `git log`). Times are +0800.
+Every commit on `main`, newest first (from `git log`). Times are +0800. The commit that updates this table can't list itself; it is added by the next docs update.
 
 | Commit | Date | Author | Message |
 | --- | --- | --- | --- |
+| `6e18cfb` | 2026-10-24 16:04 | Raphael Dale Ogbac | Track Home redesign in docs and drop unused import |
+| `b869e8c` | 2026-10-24 16:03 | Raphael Dale Ogbac | Merge branch 'main' of https://github.com/b0urbonn/egabay |
 | `68ca474` | 2026-10-24 16:03 | Raphael Dale Ogbac | fixed whatever the heck happened |
 | `874abe8` | 2026-10-24 16:02 | Raphael Dale R. Ogbac | Simplify home screen using Apple HIG layout |
 | `5e10e85` | 2026-10-24 15:57 | Lyka Tolosa | Simplify settings screen |

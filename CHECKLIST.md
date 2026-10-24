@@ -4,7 +4,7 @@
 
 **Latest app change:** `874abe8` (Home screen redesign)
 
-**Public GitHub branch:** `origin/main` — includes `874abe8`, the merge with docs commit `68ca474`, and the cleanup/docs commit on top
+**Public GitHub branch:** `origin/main` — includes `874abe8`, the merge `b869e8c`, the cleanup/docs commit `6e18cfb`, and the docs-only commit on top
 
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
 
