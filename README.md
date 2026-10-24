@@ -43,7 +43,7 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/screens/WelcomeScreen.tsx    Login / sign up / continue offline entry
     src/screens/LoginScreen.tsx      Mock login with demo account hint
     src/screens/SignUpScreen.tsx     Mock account creation with validation
-    src/screens/MainShell.tsx        Header, bottom tabs, Settings sub-screen
+    src/screens/MainShell.tsx        Bottom tabs (Home, Map, Profile), Settings sub-screen
     src/screens/HomeScreen.tsx       Travel dashboard with sample routes and notices
     src/screens/ProfileScreen.tsx    Account/guest profile, mode switch, log out
     src/screens/SettingsScreen.tsx   Appearance picker and reset

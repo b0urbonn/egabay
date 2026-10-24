@@ -2,10 +2,22 @@
 
 This file records repository changes visible in local Git history and `origin/main`. The [checklist](CHECKLIST.md) tracks implementation and the branch differences.
 
+## Unreleased (uncommitted in the local workspace)
+
+Base: `0097625` (same as `origin/main`). These changes were reapplied on top of `0097625` after the pull; no conflicts.
+
+- **Map markers and controls** — Town markers are now map pins (teardrop pin with a white centre) whose tip sits on the town's coordinate, replacing the green diamonds. Every map control — zoom, layer switcher, expand, compass, locate button, scale bar, attribution, and toast messages — now uses the same floating white card, border, and shadow as the search bar. The map's edge shading was moved inside the map so it no longer darkens the controls. The layer switcher's "Waypoints" overlay was renamed to "Towns". (`assets/marinduque-map.html`)
+- **Map tab icon** — The navbar's Map tab now shows a folded map with the same location pin used on the map page, replacing the `◈` glyph. It follows the tab's selected/unselected colors. Added `react-native-svg` (15.16.0) to draw it. (`src/components/MapTabIcon.tsx`, `src/screens/MainShell.tsx`, `package.json`, `package-lock.json`)
+- **Unused import cleanup** — Removed the `spacing` import from `MainShell.tsx`; nothing used it after the app header was removed in `0097625`. The README's `MainShell.tsx` description no longer mentions a header. (`src/screens/MainShell.tsx`, `README.md`)
+
 ## 2026-10-24
 
-The repository is public. Local `main` is `93a6bda`; public `origin/main` is `00a1107`. Local `main` is 2 commits ahead and has not been pushed.
+The repository is public. Local `main` and public `origin/main` are both at `0097625`; every commit below is pushed.
 
+- **Profile redesign + app header removed** — Removed the top app header from `MainShell` (eGABAY brand, OFFLINE/MARINDUQUE badges, and the ⚙ settings button). Settings is now opened from Profile → Preferences → Settings; online/offline status is still shown on the Home status line. The Profile screen now has a "Profile" title, an identity card (initials, name and email, or "Guest mode"), an Online/Offline travel-mode switch for signed-in accounts, a sign-in card for guests, and a Preferences group (Settings, Service area). The old "Supabase ready / Backend not connected" row was removed. (`0097625`, Lyka Tolosa)
+- **Docs update** — Updated the changelog, checklist, and README after the merges. (`392bd4b`)
+- **Mobile navigation fix** — The app container had no flex style on narrow screens, so it collapsed to its content height and pushed the bottom tab bar off-screen. It now always fills the screen; the wide-web phone frame is unchanged. (`97c44de`)
+- **Local merge of the mobile fix** — Pulled `97c44de` into local `main`. (`972a8e6`)
 - **Public travel dashboard + web Supabase client** — Redesigned the Home screen as a travel dashboard and added a browser-specific Supabase client using browser `localStorage`. Dashboard routes and notices still come from demo arrays. (`3121b49`)
 - **Public navigation change** — Removed the Plan and Updates tabs/screens. Public navigation now contains Home, Map, and Profile, with Settings as a sub-screen. (`b874c4e`)
 - **Public branch merge** — Merged the newer public dashboard/navigation changes to the current public `main`. (`00a1107`)
@@ -20,7 +32,28 @@ The repository is public. Local `main` is `93a6bda`; public `origin/main` is `00
 
 - A migration file and Supabase client scaffold are in the repository; a deployed Supabase backend and live app data are not evidenced by repository code.
 - Route names, fares, times, vehicle counts, and service notices are demo content until verified with local transport sources.
-- Public `origin/main` still has the checklist nested at `CHECKLIST.md/CHECKLIST.md`; this workspace has the restored root checklist.
-- Push the two local commits before assuming the public repo has the same docs and source state as this workspace.
+- The nested `CHECKLIST.md/CHECKLIST.md` path is fixed on public `origin/main`; the checklist and changelog are at the repository root.
+- Public `origin/main` matches local `main` at `0097625`. The changes under "Unreleased" are not committed or pushed yet.
 - Add a dated entry when a user-visible feature or backend milestone lands. Keep unfinished work in `CHECKLIST.md`.
+
+## Commit log
+
+Every commit on `main`, newest first (from `git log`). Times are +0800.
+
+| Commit | Date | Author | Message |
+| --- | --- | --- | --- |
+| `0097625` | 2026-10-24 15:48 | Lyka Tolosa | Refine profile and remove app header |
+| `392bd4b` | 2026-10-24 15:33 | Raphael Dale Ogbac | added changelogs and checklist |
+| `972a8e6` | 2026-10-24 15:32 | Raphael Dale Ogbac | Merge branch 'main' of https://github.com/b0urbonn/egabay |
+| `97c44de` | 2026-10-24 15:31 | Raphael Dale Ogbac | Fix bottom navigation hidden on mobile |
+| `93a6bda` | 2026-10-24 15:25 | Raphael Dale Ogbac | Merge origin/main; restore CHECKLIST.md as a root file |
+| `00a1107` | 2026-10-24 15:23 | Raphael Dale Ogbac | Merge remote-tracking branch 'origin/main' |
+| `d22d789` | 2026-10-24 15:22 | Raphael Dale Ogbac | added the checklist and changelogs |
+| `b874c4e` | 2026-10-24 15:22 | Raphael Dale Ogbac | Remove Plan and Updates tabs |
+| `47c1639` | 2026-10-24 15:21 | Raphael Dale R. Ogbac | docs: add current project checklist |
+| `3121b49` | 2026-10-24 15:00 | Lyka Tolosa | Add travel dashboard and web Supabase client |
+| `4ed2920` | 2026-10-24 14:49 | Raphael Dale Ogbac | Merge remote-tracking branch 'origin/main' |
+| `45b44d4` | 2026-10-24 14:48 | Raphael Dale Ogbac | Rebuild UI/UX with onboarding, mock auth, and offline flow |
+| `0def165` | 2026-10-24 14:44 | Raphael Dale Ogbac | Added map and functions of the map |
+| `d86ac73` | 2026-10-24 13:44 | Raphael Dale Ogbac | init the repo and created the scaffold for react native and supabase |
 

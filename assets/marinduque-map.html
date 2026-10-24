@@ -24,6 +24,7 @@
     --hud: rgba(11, 22, 17, 0.92);
     --hud-line: rgba(198, 240, 106, 0.35);
     --sea: #aad3df;
+    --float-shadow: 0 6px 20px rgba(24, 35, 30, 0.16);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -38,31 +39,32 @@
     filter: saturate(1.4) contrast(1.07) hue-rotate(-8deg) brightness(0.98);
   }
 
-  /* ---- HUD chrome over the map ---- */
+  /* ---- Vignette: lives inside the map, above tiles/markers but below
+     every UI control, so only the map itself is shaded ---- */
   .vignette {
     position: absolute;
     inset: 0;
-    z-index: 900;
+    z-index: 640;
     pointer-events: none;
     background:
       repeating-linear-gradient(0deg, rgba(255,255,255,0.014) 0 1px, transparent 1px 3px),
       radial-gradient(ellipse at center, transparent 52%, rgba(6, 16, 12, 0.45) 100%);
   }
   .compass {
-    width: 34px;
+    width: 40px;
     height: 40px;
     background: var(--card);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 50%;
     color: var(--green);
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     text-align: center;
     line-height: 1;
-    padding-top: 5px;
+    padding-top: 7px;
     pointer-events: none;
     letter-spacing: 1px;
-    box-shadow: 0 4px 12px rgba(24, 35, 30, 0.14);
+    box-shadow: var(--float-shadow);
     clear: both;
   }
   .compass .arrow { display: block; font-size: 13px; margin-bottom: 2px; }
@@ -77,7 +79,7 @@
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 16px;
-    box-shadow: 0 8px 28px rgba(24, 35, 30, 0.14);
+    box-shadow: var(--float-shadow);
     padding: 14px;
   }
   .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
@@ -131,7 +133,7 @@
     font-family: inherit;
     color: var(--ink);
     background: var(--card);
-    box-shadow: 0 6px 20px rgba(24, 35, 30, 0.14);
+    box-shadow: var(--float-shadow);
     outline: none;
   }
   #search::placeholder { color: var(--muted); }
@@ -179,7 +181,7 @@
     line-height: 38px;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(24, 35, 30, 0.18);
+    box-shadow: var(--float-shadow);
     padding: 0;
   }
   .locate-fab:hover { background: #E5F3EA; }
@@ -210,16 +212,15 @@
     body:not(.embedded) .panel-sub, body:not(.embedded) .panel-body { display: none; }
   }
 
-  /* ---- waypoint markers & labels ---- */
-  .waypoint {
-    width: 13px;
-    height: 13px;
-    transform: rotate(45deg);
-    border: 2px solid #fff;
-    background: var(--green);
-    border-radius: 3px;
-    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+  /* ---- town pins & labels ---- */
+  .pin-marker {
+    width: 30px;
+    height: 30px;
+    display: block;
+    filter: drop-shadow(0 2px 3px rgba(24, 35, 30, 0.45));
   }
+  .pin-marker path { fill: var(--green); stroke: #fff; stroke-width: 1.4; stroke-linejoin: round; }
+  .pin-marker circle { fill: #fff; }
   .poi-dot {
     width: 10px;
     height: 10px;
@@ -253,49 +254,66 @@
   }
   .island-label::before { display: none; }
 
-  /* ---- Leaflet chrome (app theme) ---- */
+  /* ---- Leaflet chrome: floating cards like the search bar ---- */
+  .leaflet-top .leaflet-control, .leaflet-bottom .leaflet-control { margin: 12px 12px 0 0; }
+  .leaflet-bottom .leaflet-control { margin: 0 12px 10px 0; }
+  .leaflet-left .leaflet-control { margin-left: 12px; }
+
   .leaflet-bar a, .expand-btn {
-    width: 30px;
-    height: 30px;
+    width: 40px !important;
+    height: 40px !important;
     border: 0;
     border-bottom: 1px solid var(--line) !important;
-    background: #fff !important;
+    background: var(--card) !important;
     color: var(--ink) !important;
-    font-size: 16px;
-    line-height: 30px;
+    font-size: 18px !important;
+    line-height: 40px !important;
     cursor: pointer;
     padding: 0;
     text-align: center;
   }
-  .leaflet-bar a:hover, .expand-btn:hover { background: #f4f4f4 !important; }
-  .leaflet-bar { border: 1px solid var(--line) !important; border-radius: 8px !important; box-shadow: 0 4px 14px rgba(24, 35, 30, 0.15) !important; }
+  .leaflet-bar a:hover, .expand-btn:hover { background: #E5F3EA !important; color: var(--green) !important; }
+  .leaflet-bar {
+    border: 1px solid var(--line) !important;
+    border-radius: 20px !important;
+    overflow: hidden;
+    box-shadow: var(--float-shadow) !important;
+  }
   .leaflet-bar a:last-child { border-bottom: 0 !important; }
+  .expand-btn { border-radius: 50% !important; border: 1px solid var(--line) !important; box-shadow: var(--float-shadow) !important; }
 
   .leaflet-control-layers {
     background: var(--card) !important;
     border: 1px solid var(--line) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 14px rgba(24, 35, 30, 0.15) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--float-shadow) !important;
     color: var(--ink);
     font-size: 11px;
   }
-  .leaflet-control-layers-expanded { padding: 8px 12px 8px 30px; }
+  .leaflet-control-layers-toggle { width: 40px !important; height: 40px !important; background-size: 20px 20px; }
+  .leaflet-control-layers-expanded { padding: 10px 14px 10px 12px; border-radius: 16px !important; }
   .leaflet-control-layers label { color: var(--ink); }
 
   .leaflet-control-attribution {
-    background: rgba(255, 255, 255, 0.82) !important;
+    background: var(--card) !important;
     color: var(--muted) !important;
     font-size: 9px !important;
-    padding: 2px 7px;
-    border-radius: 6px 0 0 0;
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--float-shadow);
   }
   .leaflet-control-attribution a { color: var(--green) !important; }
 
   .leaflet-control-scale-line {
-    background: rgba(255, 255, 255, 0.78) !important;
+    background: var(--card) !important;
     color: var(--ink) !important;
-    border-color: #9db3a7 !important;
+    border: 1px solid var(--line) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 8px 8px;
+    box-shadow: var(--float-shadow);
     font-size: 9px !important;
+    padding: 2px 6px;
   }
 
   .leaflet-popup-content-wrapper {
@@ -316,8 +334,10 @@
     left: 50%;
     transform: translateX(-50%) translateY(20px);
     z-index: 1000;
-    background: var(--ink);
-    color: #fff;
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    box-shadow: var(--float-shadow);
     font-size: 12px;
     padding: 9px 16px;
     border-radius: 20px;
@@ -326,12 +346,11 @@
     pointer-events: none;
     white-space: nowrap;
   }
-  #toast.show { opacity: 0.95; transform: translateX(-50%) translateY(0); }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="vignette"></div>
 
 <div class="panel" id="panel">
   <div class="panel-head">
@@ -381,6 +400,10 @@ const map = L.map('map', {
   maxBoundsViscosity: 1.0,
 });
 map.fitBounds(ISLAND_VIEW);
+
+// Vignette goes inside the map container (z 640): above tiles, sea and
+// markers, but below Leaflet's control layer (z 1000) and popups (z 700).
+L.DomUtil.create('div', 'vignette', map.getContainer());
 
 // Sea layer sits above tiles but below vectors/markers and shares the same
 // CSS filter as the tile pane, so masked water matches tile water exactly.
@@ -451,11 +474,24 @@ function dotIcon(cls, size) {
   });
 }
 
+// Map-pin marker ("this place is here"). The pin's tip sits exactly on the
+// town coordinate; popups and labels open above the pin head.
+const PIN_ICON = L.divIcon({
+  className: '',
+  html: '<svg class="pin-marker" viewBox="0 0 24 24" aria-hidden="true">'
+    + '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>'
+    + '<circle cx="12" cy="9" r="2.6"/></svg>',
+  iconSize: [30, 30],
+  iconAnchor: [15, 28],
+  popupAnchor: [0, -26],
+  tooltipAnchor: [0, -26],
+});
+
 for (const t of TOWNS) {
-  L.marker([t.lat, t.lng], { icon: dotIcon('waypoint', 13) })
+  L.marker([t.lat, t.lng], { icon: PIN_ICON })
     .bindPopup('<p class="popup-title">' + t.name + '</p><p class="popup-sub">' + t.note + ' · Marinduque</p>')
     .bindTooltip(t.name.toUpperCase(), {
-      permanent: true, direction: 'top', offset: [0, -10], className: 'town-label',
+      permanent: true, direction: 'top', offset: [0, -2], className: 'town-label',
     })
     .addTo(townsLayer);
 }
@@ -471,7 +507,7 @@ const overlayLayers = {};
 for (const name of Object.keys(baseLayers)) overlayLayers[name] = baseLayers[name].layer;
 L.control.layers(
   overlayLayers,
-  { 'Waypoints': townsLayer, 'Ports & POIs': poisLayer },
+  { 'Towns': townsLayer, 'Ports & POIs': poisLayer },
   { position: 'topright' }
 ).addTo(map);
 

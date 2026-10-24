@@ -2,18 +2,18 @@
 
 **Status snapshot:** 2026-10-24
 
-**Local workspace:** `main` at `93a6bda`
+**Local workspace:** `main` at `0097625` (plus uncommitted changes — see below)
 
-**Public GitHub branch:** `origin/main` at `00a1107`
+**Public GitHub branch:** `origin/main` at `0097625`
 
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
 
-The local branch includes the latest public app changes and is 2 commits ahead of `origin/main`; those two commits have not been pushed. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
+Local `main` and `origin/main` are at the same commit; all commits are pushed. Uncommitted: map pins and floating controls (`assets/marinduque-map.html`), the navbar Map tab icon (`src/components/MapTabIcon.tsx`, `src/screens/MainShell.tsx`, `react-native-svg` in `package.json`/`package-lock.json`), and these docs. See the "Unreleased" section of [CHANGELOG.md](CHANGELOG.md). “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
 
 ## Current state
 
 - [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
-- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen.
+- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen. (Profile redesigned and the top app header removed in `0097625`; Settings now opens from Profile → Preferences.)
 - [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
 - [x] **Done in local workspace** — Map view using Leaflet, OpenStreetMap tiles, and Nominatim search.
@@ -26,7 +26,7 @@ The local branch includes the latest public app changes and is 2 commits ahead o
 - [ ] **Not started** — Live vehicle sharing and operator notice publishing.
 - [ ] **Not started** — Field pilot, measures, and AI route ranking.
 
-### Latest public app changes (now merged into the local checkout)
+### Latest public app changes (merged and pushed)
 
 - [x] **Done** — Home travel dashboard and browser-specific Supabase client (`src/lib/supabase.web.ts`) were added in `3121b49`.
 - [x] **Done** — Plan and Updates tabs/screens were removed in `b874c4e`; current navigation is Home, Map, and Profile, with Settings as a sub-screen.
@@ -37,8 +37,8 @@ The local branch includes the latest public app changes and is 2 commits ahead o
 ### Public documentation path status
 
 - [x] **Local workspace** — `CHECKLIST.md`, `CHANGELOG.md`, and README links are at the repository root.
-- [ ] **Public `origin/main`** — The checklist currently exists at `CHECKLIST.md/CHECKLIST.md` (nested); there is no root `CHECKLIST.md` or `CHANGELOG.md`, and the public README does not link these docs.
-- [ ] Push the local merge and root documentation commits so the public repo matches this workspace.
+- [x] **Public `origin/main`** — `CHECKLIST.md` and `CHANGELOG.md` are at the repository root (the nested `CHECKLIST.md/CHECKLIST.md` is gone), and the public README links both.
+- [x] Push the local merge and root documentation commits so the public repo matches this workspace. (Pushed in `392bd4b`; `origin/main` is now at `0097625`.)
 
 ## Build plan progress
 
@@ -94,6 +94,6 @@ The local branch includes the latest public app changes and is 2 commits ahead o
 2. Confirm pilot route data and its trusted owners (Milestone 0).
 3. Configure Supabase, apply/review the migration, and add verified seed records (Milestone 1).
 4. Replace demo content with typed Supabase reads and add useful cached reads (Milestone 2).
-5. Push the local merge and root docs so public `main` matches the workspace.
+5. ~~Push the local merge and root docs so public `main` matches the workspace.~~ Done in `392bd4b`.
 6. Add real sign-in and staff workflows, then consider driver tracking and a field pilot.
 

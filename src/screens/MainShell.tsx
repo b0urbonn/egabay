@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
+import { MapTabIcon } from '../components/MapTabIcon';
 import { MarinduqueMap } from '../components/MarinduqueMap';
 import type { AppMode } from '../lib/appMode';
 import type { AppearanceSetting } from '../lib/appearance';
 import type { Session } from '../lib/session';
-import { useThemeStyles } from '../lib/theme';
-import { spacing, type ThemeColors } from '../theme';
+import { useColors, useThemeStyles } from '../lib/theme';
+import type { ThemeColors } from '../theme';
 import { HomeScreen } from './HomeScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SettingsScreen } from './SettingsScreen';
 
 export type Tab = 'Home' | 'Map' | 'Profile';
 
-const tabs: { label: Tab; glyph: string }[] = [
+const tabs: { label: Tab; glyph?: string }[] = [
   { label: 'Home', glyph: '⌂' },
-  { label: 'Map', glyph: '◈' },
+  { label: 'Map' },
   { label: 'Profile', glyph: '○' },
 ];
 
@@ -43,6 +44,7 @@ export function MainShell({
   onAuthRequest: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const colors = useColors();
   const [activeTab, setActiveTab] = useState<Tab>('Home');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -88,7 +90,14 @@ export function MainShell({
           return (
             <Pressable style={styles.tabItem} key={tab.label} onPress={() => { setShowSettings(false); setActiveTab(tab.label); }}>
               <View style={[styles.tabGlyphWrap, selected && styles.tabGlyphWrapSelected]}>
-                <Text style={[styles.tabGlyph, selected && styles.tabGlyphSelected]}>{tab.glyph}</Text>
+                {tab.label === 'Map' ? (
+                  <MapTabIcon
+                    color={selected ? colors.green : colors.muted}
+                    background={selected ? colors.greenLight : colors.card}
+                  />
+                ) : (
+                  <Text style={[styles.tabGlyph, selected && styles.tabGlyphSelected]}>{tab.glyph}</Text>
+                )}
               </View>
               <Text style={[styles.tabLabel, selected && styles.tabLabelSelected]}>{tab.label}</Text>
             </Pressable>
