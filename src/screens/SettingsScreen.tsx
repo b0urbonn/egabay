@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ScreenHeader } from '../components/ui';
+import { Card } from '../components/ui';
 import type { AppearanceSetting } from '../lib/appearance';
 import { useThemeStyles } from '../lib/theme';
 import { radius, spacing, type ThemeColors } from '../theme';
 
 type AppearanceOption = {
   value: AppearanceSetting;
-  glyph: string;
   title: string;
   detail: string;
 };
 
 const appearanceOptions: AppearanceOption[] = [
-  { value: 'system', glyph: '◐', title: 'System', detail: 'Match your device setting' },
-  { value: 'light', glyph: '☀', title: 'Light', detail: 'Always use light colors' },
-  { value: 'dark', glyph: '☾', title: 'Dark', detail: 'Easier on the eyes at night' },
+  { value: 'system', title: 'System', detail: 'Follow your device setting' },
+  { value: 'light', title: 'Light', detail: 'Use light appearance' },
+  { value: 'dark', title: 'Dark', detail: 'Use dark appearance' },
 ];
 
 export function SettingsScreen({
@@ -41,91 +40,100 @@ export function SettingsScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
-      <Pressable onPress={onBack} style={styles.backButton} hitSlop={8}>
-        <Text style={styles.backGlyph}>←</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back to profile"
+        onPress={onBack}
+        style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.backGlyph}>‹</Text>
         <Text style={styles.backText}>Back</Text>
       </Pressable>
-      <ScreenHeader eyebrow="Settings" title={'Make it\nyours.'} />
+
+      <Text accessibilityRole="header" style={styles.pageTitle}>Settings</Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Appearance</Text>
-        <Text style={styles.sectionBody}>Choose a look, or follow your device.</Text>
-        <View style={styles.optionList}>
-          {appearanceOptions.map((option) => {
+        <View style={styles.sectionHeading}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <Text style={styles.sectionDetail}>Choose how eGABAY looks.</Text>
+        </View>
+        <Card style={styles.optionCard}>
+          {appearanceOptions.map((option, index) => {
             const selected = appearance === option.value;
             return (
-              <Pressable
-                key={option.value}
-                onPress={() => onChangeAppearance(option.value)}
-                style={({ pressed }) => [styles.optionRow, selected && styles.optionRowSelected, pressed && styles.pressed]}
-              >
-                <View style={[styles.optionGlyphWrap, selected && styles.optionGlyphWrapSelected]}>
-                  <Text style={[styles.optionGlyph, selected && styles.optionGlyphSelected]}>{option.glyph}</Text>
-                </View>
-                <View style={styles.optionCopy}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionDetail}>{option.detail}</Text>
-                </View>
-                <View style={[styles.optionRadio, selected && styles.optionRadioSelected]}>
-                  {selected && <View style={styles.optionRadioDot} />}
-                </View>
-              </Pressable>
+              <View key={option.value}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${option.title}, ${option.detail}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => onChangeAppearance(option.value)}
+                  style={({ pressed }) => [styles.optionRow, selected && styles.optionRowSelected, pressed && styles.pressed]}
+                >
+                  <View style={styles.optionCopy}>
+                    <Text style={styles.optionTitle}>{option.title}</Text>
+                    <Text style={styles.optionDetail}>{option.detail}</Text>
+                  </View>
+                  <View style={[styles.radio, selected && styles.radioSelected]}>
+                    {selected && <View style={styles.radioDot} />}
+                  </View>
+                </Pressable>
+                {index < appearanceOptions.length - 1 && <View style={styles.optionDivider} />}
+              </View>
             );
           })}
-        </View>
+        </Card>
       </View>
 
-      <View style={styles.dangerCard}>
-        <Text style={styles.dangerTitle}>Reset eGABAY</Text>
-        <Text style={styles.dangerBody}>
-          Clears your session, mode, appearance, and onboarding on this device, then shows first-time
-          setup again. Created mock accounts are kept.
-        </Text>
-        <Pressable
-          onPress={() => (resetArmed ? onReset() : setResetArmed(true))}
-          style={({ pressed }) => [styles.resetButton, resetArmed && styles.resetButtonArmed, pressed && styles.pressed]}
-        >
-          <Text style={[styles.resetButtonText, resetArmed && styles.resetButtonTextArmed]}>
-            {resetArmed ? 'Tap again to confirm' : 'Reset app'}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Reset app</Text>
+        <Card style={styles.resetCard}>
+          <Text style={styles.resetDetail}>
+            Clears your session and settings on this device, then returns to setup. Mock accounts stay saved.
           </Text>
-        </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={resetArmed ? 'Tap again to confirm app reset' : 'Reset app'}
+            accessibilityHint="Clears this device's session and preferences"
+            onPress={() => (resetArmed ? onReset() : setResetArmed(true))}
+            style={({ pressed }) => [styles.resetButton, resetArmed && styles.resetButtonArmed, pressed && styles.pressed]}
+          >
+            <Text style={[styles.resetButtonText, resetArmed && styles.resetButtonTextArmed]}>
+              {resetArmed ? 'Tap again to confirm' : 'Reset eGABAY'}
+            </Text>
+          </Pressable>
+        </Card>
       </View>
-
-      <Text style={styles.versionNote}>eGABAY · v1.0.0 · Marinduque pilot</Text>
     </ScrollView>
   );
 }
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-    pressed: { opacity: 0.85 },
-    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 34, gap: 18 },
-    backButton: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
-    backGlyph: { color: colors.green, fontSize: 18, fontWeight: '700' },
-    backText: { color: colors.green, fontSize: 12, fontWeight: '800' },
-    section: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 15 },
-    sectionTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
-    sectionBody: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 4 },
-    optionList: { marginTop: 12, gap: 8 },
-    optionRow: { flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderColor: colors.line, borderRadius: 14, padding: 11 },
-    optionRowSelected: { borderColor: colors.green, backgroundColor: colors.selectedCardBg },
-    optionGlyphWrap: { width: 34, height: 34, borderRadius: 12, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' },
-    optionGlyphWrapSelected: { backgroundColor: colors.green },
-    optionGlyph: { color: colors.green, fontSize: 17, fontWeight: '700' },
-    optionGlyphSelected: { color: colors.lime },
-    optionCopy: { flex: 1 },
-    optionTitle: { color: colors.ink, fontSize: 12, fontWeight: '800' },
-    optionDetail: { color: colors.muted, fontSize: 9, marginTop: 2 },
-    optionRadio: { width: 19, height: 19, borderRadius: 10, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-    optionRadioSelected: { borderColor: colors.green },
-    optionRadioDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.green },
-    dangerCard: { borderWidth: 1, borderColor: colors.connectBorder, backgroundColor: colors.connectBg, padding: 15, borderRadius: radius.md },
-    dangerTitle: { color: colors.connectTitle, fontSize: 12, fontWeight: '800' },
-    dangerBody: { color: colors.connectBody, fontSize: 10, lineHeight: 15, marginTop: 6 },
-    resetButton: { marginTop: 12, height: 42, borderRadius: 13, borderWidth: 1.5, borderColor: colors.red, alignItems: 'center', justifyContent: 'center' },
+    pressed: { opacity: 0.72 },
+    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: 32, gap: 22 },
+    backButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingRight: 12 },
+    backGlyph: { color: colors.green, fontSize: 24, lineHeight: 28 },
+    backText: { color: colors.green, fontSize: 15, fontWeight: '600' },
+    pageTitle: { color: colors.ink, fontSize: 32, lineHeight: 38, letterSpacing: -0.8, fontWeight: '700' },
+    section: { gap: 9 },
+    sectionHeading: { gap: 3 },
+    sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },
+    sectionDetail: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+    optionCard: { padding: 0, overflow: 'hidden' },
+    optionRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14, paddingHorizontal: 16, paddingVertical: 10 },
+    optionRowSelected: { backgroundColor: colors.selectedCardBg },
+    optionCopy: { flex: 1, gap: 3 },
+    optionTitle: { color: colors.ink, fontSize: 15, fontWeight: '600' },
+    optionDetail: { color: colors.muted, fontSize: 13, lineHeight: 17 },
+    radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.muted, alignItems: 'center', justifyContent: 'center' },
+    radioSelected: { borderColor: colors.green },
+    radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.green },
+    optionDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 16 },
+    resetCard: { gap: 14, backgroundColor: colors.connectBg, borderColor: colors.connectBorder },
+    resetDetail: { color: colors.connectBody, fontSize: 13, lineHeight: 19 },
+    resetButton: { minHeight: 44, borderRadius: radius.md, borderWidth: 1, borderColor: colors.red, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
     resetButtonArmed: { backgroundColor: colors.red },
-    resetButtonText: { color: colors.red, fontSize: 12, fontWeight: '800' },
+    resetButtonText: { color: colors.red, fontSize: 15, fontWeight: '600' },
     resetButtonTextArmed: { color: '#FFFFFF' },
-    versionNote: { color: colors.muted, fontSize: 9, textAlign: 'center' },
   });
 }
