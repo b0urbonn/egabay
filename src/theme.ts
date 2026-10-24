@@ -28,6 +28,7 @@ export type ThemeColors = {
   connectBg: string;
   connectTitle: string;
   connectBody: string;
+  fill: string;
 };
 
 export const lightColors: ThemeColors = {
@@ -60,6 +61,7 @@ export const lightColors: ThemeColors = {
   connectBg: '#FFF8F1',
   connectTitle: '#8C4B22',
   connectBody: '#916A50',
+  fill: 'rgba(118,118,128,0.12)',
 };
 
 export const darkColors: ThemeColors = {
@@ -92,6 +94,7 @@ export const darkColors: ThemeColors = {
   connectBg: '#2A2118',
   connectTitle: '#F0A868',
   connectBody: '#C79A7C',
+  fill: 'rgba(118,118,128,0.24)',
 };
 
 export const spacing = { xs: 6, sm: 10, md: 16, lg: 22, xl: 30 } as const;

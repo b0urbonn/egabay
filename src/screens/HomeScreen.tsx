@@ -1,21 +1,12 @@
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { RouteCard } from '../components/RouteCard';
-import { Chip } from '../components/ui';
 import { demoAlerts, demoRoutes } from '../data/demo';
 import type { AppMode } from '../lib/appMode';
 import type { Session } from '../lib/session';
 import { useThemeStyles } from '../lib/theme';
-import { radius, spacing, type ThemeColors } from '../theme';
+import type { ThemeColors } from '../theme';
 
-const rideModeOptions = ['Any ride', 'Jeepney', 'Tricycle'] as const;
-
-const quickActions: { glyph: string; label: string; tab: 'Map' | 'Profile' }[] = [
-  { glyph: '◈', label: 'Island map', tab: 'Map' },
-  { glyph: '▤', label: 'Saved routes', tab: 'Map' },
-  { glyph: '○', label: 'My profile', tab: 'Profile' },
-];
+const quickPlaces = ['Boac', 'Gasan', 'Santa Cruz', 'Mogpog'];
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -34,273 +25,357 @@ export function HomeScreen({
   onNavigate: (tab: 'Map' | 'Profile') => void;
 }) {
   const styles = useThemeStyles(createStyles);
-  const [settingsVisible, setSettingsVisible] = useState(false);
-  const [preferredMode, setPreferredMode] = useState<(typeof rideModeOptions)[number]>('Any ride');
   const name = session.kind === 'account' ? session.name.split(' ')[0] : 'commuter';
   const today = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
-  const reportedUnits = demoRoutes.reduce((total, route) => total + route.activeUnits, 0);
 
   return (
-    <>
-      <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.welcomeRow}>
-          <View style={styles.greetingCopy}>
-            <Text style={styles.dashboardDate}>{today.toUpperCase()}  |  MARINDUQUE</Text>
-            <Text style={styles.pageTitle}>{greeting()}, {name}.</Text>
-            <Text style={styles.pageIntro}>Your island travel at a glance.</Text>
+    <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
+      <View>
+        <Text style={styles.dateText}>{today}</Text>
+        <Text style={styles.largeTitle}>
+          {greeting()}, {name}
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <Pressable
+          accessibilityRole="search"
+          accessibilityLabel="Search destinations"
+          onPress={() => onNavigate('Map')}
+          style={({ pressed }) => [styles.searchField, pressed && styles.searchFieldPressed]}
+        >
+          <Text style={styles.searchGlyph}>⌕</Text>
+          <Text style={styles.searchPlaceholder}>Where to?</Text>
+        </Pressable>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.placesRow}
+          style={styles.placesScroll}
+        >
+          {quickPlaces.map((place) => (
+            <Pressable
+              key={place}
+              accessibilityRole="button"
+              accessibilityLabel={place}
+              onPress={() => onNavigate('Map')}
+              style={({ pressed }) => [styles.placePill, pressed && styles.pressed]}
+            >
+              <Text style={styles.placePillText}>{place}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      {mode === 'offline' && (
+        <View style={[styles.offlineCard, styles.section]}>
+          <View style={styles.offlineDot} />
+          <View style={styles.offlineCopy}>
+            <Text style={styles.offlineTitle}>You&apos;re offline</Text>
+            <Text style={styles.offlineDetail}>Showing saved routes and fares.</Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Open travel settings"
-            onPress={() => setSettingsVisible(true)}
-            style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
+            accessibilityLabel="Manage offline data"
+            onPress={() => onNavigate('Profile')}
           >
-            <Text style={styles.settingsButtonText}>Settings</Text>
+            <Text style={styles.offlineAction}>Manage</Text>
           </Pressable>
         </View>
+      )}
 
-        <View style={styles.statusCard}>
-          <View style={[styles.statusDot, mode === 'offline' && styles.statusDotOff]} />
-          <View style={styles.statusCopy}>
-            <Text style={styles.statusTitle}>{mode === 'online' ? 'Online · live updates on' : 'Offline · showing saved data'}</Text>
-            <Text style={styles.statusBody}>
-              {mode === 'online' ? 'Fresh notices and unit positions when available.' : 'Routes, stops, and fares from your last sync.'}
-            </Text>
-          </View>
-          {mode === 'offline' && (
-            <Pressable onPress={() => onNavigate('Profile')} hitSlop={6}>
-              <Text style={styles.statusLink}>Manage</Text>
-            </Pressable>
-          )}
-        </View>
-
-        <View style={styles.searchBlock}>
-          <Pressable style={styles.destinationField} onPress={() => onNavigate('Map')}>
-            <View style={styles.destinationPin}><Text style={styles.destinationPinText}>⌖</Text></View>
-            <Text style={styles.destinationPlaceholder}>Where are you going?</Text>
-            <Text style={styles.destinationArrow}>→</Text>
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Routes</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="See all routes"
+            onPress={() => onNavigate('Map')}
+          >
+            <Text style={styles.sectionAction}>See All</Text>
           </Pressable>
-          <View style={styles.quickPlaces}>
-            {['Boac', 'Gasan', 'Santa Cruz', 'Mogpog'].map((place) => (
-              <Chip key={place} label={place} onPress={() => onNavigate('Map')} />
-            ))}
-          </View>
         </View>
-
-        <View style={styles.actionGrid}>
-          {quickActions.map((action) => (
-            <Pressable key={action.label} onPress={() => onNavigate(action.tab)} style={({ pressed }) => [styles.actionTile, pressed && styles.pressed]}>
-              <Text style={styles.actionGlyph}>{action.glyph}</Text>
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.heroCard}>
-          <View style={styles.heroPill}><View style={styles.heroPillDot} /><Text style={styles.heroPillText}>LOCAL TRAVEL, MADE CLEAR</Text></View>
-          <Text style={styles.heroTitle}>Where will the island take you?</Text>
-          <Text style={styles.heroBody}>Find a jeepney or tricycle route, check service information, and plan your next ride.</Text>
-          <Pressable style={styles.heroButton} onPress={() => onNavigate('Map')}>
-            <Text style={styles.heroButtonText}>Open the map</Text>
-            <Text style={styles.heroButtonArrow}>→</Text>
-          </Pressable>
-          <View style={styles.heroDecorCircle} />
-          <View style={styles.heroDecorLine} />
-        </View>
-
-        <View style={styles.summaryCard}>
-          <View style={styles.sectionHeading}>
-            <View>
-              <Text style={styles.sectionEyebrow}>TRAVEL SNAPSHOT</Text>
-              <Text style={styles.sectionTitle}>Trips and routes</Text>
-            </View>
-            <View style={styles.sampleBadge}><Text style={styles.sampleBadgeText}>SAMPLE</Text></View>
-          </View>
-          <View style={styles.metricsRow}>
-            <View style={styles.metric}>
-              <Text style={styles.metricValue}>{demoRoutes.length}</Text>
-              <Text style={styles.metricLabel}>routes listed</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metric}>
-              <Text style={styles.metricValue}>{reportedUnits}</Text>
-              <Text style={styles.metricLabel}>units reported</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metric}>
-              <Text style={styles.metricValue}>{demoAlerts.length}</Text>
-              <Text style={styles.metricLabel}>recent updates</Text>
-            </View>
-          </View>
-          <Text style={styles.summaryNote}>Sample information only. Personal trip history is not connected yet.</Text>
-        </View>
-
-        <View style={styles.sectionHeading}>
-          <View>
-            <Text style={styles.sectionEyebrow}>A ROUTE TO GET YOU STARTED</Text>
-            <Text style={styles.sectionTitle}>Recent trip preview</Text>
-          </View>
-          <View style={styles.sampleBadge}><Text style={styles.sampleBadgeText}>DEMO</Text></View>
-        </View>
-        <RouteCard route={demoRoutes[0]} onPress={() => onNavigate('Map')} />
-
-        <View style={styles.sectionHeading}>
-          <View>
-            <Text style={styles.sectionEyebrow}>FROM THE SERVICE BOARD</Text>
-            <Text style={styles.sectionTitle}>Recent information</Text>
-          </View>
-        </View>
-        {demoAlerts.map((alert) => (
-          <View key={alert.id} style={styles.infoCard}>
-            <View style={[styles.infoIcon, alert.severity === 'notice' && styles.infoIconNotice]}>
-              <Text style={[styles.infoIconText, alert.severity === 'notice' && styles.infoIconTextNotice]}>{alert.severity === 'notice' ? '!' : 'i'}</Text>
-            </View>
-            <View style={styles.infoCopy}>
-              <Text style={styles.infoMeta}>{alert.locality}  |  {alert.time}</Text>
-              <Text style={styles.infoTitle}>{alert.title}</Text>
-              <Text style={styles.infoDetail}>{alert.detail}</Text>
-            </View>
-          </View>
-        ))}
-
-        <View style={styles.offlineCard}>
-          <View style={styles.offlineMark}><Text style={styles.offlineMarkText}>OFF</Text></View>
-          <View style={styles.offlineCopy}>
-            <Text style={styles.offlineTitle}>Offline travel guide</Text>
-            <Text style={styles.offlineBody}>Saved routes, terminal details, and offline guidance are planned for the app.</Text>
-          </View>
-        </View>
-        <Text style={styles.demoNote}>Routes, vehicle counts, fares, and service notices shown here are sample data.</Text>
-      </ScrollView>
-
-      <Modal transparent animationType="fade" visible={settingsVisible} onRequestClose={() => setSettingsVisible(false)}>
-        <View style={styles.settingsOverlay}>
-          <View style={styles.settingsSheet}>
-            <View style={styles.settingsHeader}>
-              <View>
-                <Text style={styles.sectionEyebrow}>YOUR TRAVEL PREFERENCES</Text>
-                <Text style={styles.settingsTitle}>Settings</Text>
-              </View>
-              <Pressable accessibilityRole="button" accessibilityLabel="Close settings" onPress={() => setSettingsVisible(false)} style={styles.settingsCloseButton}>
-                <Text style={styles.settingsCloseText}>x</Text>
+        <View style={styles.group}>
+          {demoRoutes.slice(0, 3).map((route, index) => (
+            <View key={route.id}>
+              {index > 0 && <View style={styles.separator} />}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={route.name}
+                onPress={() => onNavigate('Map')}
+                style={({ pressed }) => [styles.routeRow, pressed && styles.rowPressed]}
+              >
+                <View style={styles.routeCopy}>
+                  <Text style={styles.routeName}>{route.name}</Text>
+                  <Text style={styles.routeMeta}>
+                    {route.duration} · {route.fare}
+                  </Text>
+                </View>
+                {route.status === 'Limited units' && (
+                  <Text style={styles.routeStatus}>Limited units</Text>
+                )}
+                <Text style={styles.chevron}>›</Text>
               </Pressable>
             </View>
-            <View style={styles.settingsSection}>
-              <Text style={styles.settingsLabel}>Preferred ride</Text>
-              <View style={styles.settingsModeOptions}>
-                {rideModeOptions.map((rideMode) => {
-                  const selected = preferredMode === rideMode;
-                  return (
-                    <Pressable key={rideMode} onPress={() => setPreferredMode(rideMode)} style={[styles.settingsModeOption, selected && styles.settingsModeOptionSelected]}>
-                      <Text style={[styles.settingsModeText, selected && styles.settingsModeTextSelected]}>{rideMode}</Text>
-                    </Pressable>
-                  );
-                })}
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Service Updates</Text>
+        </View>
+        <View style={styles.group}>
+          {demoAlerts.slice(0, 2).map((alert, index) => (
+            <View key={alert.id}>
+              {index > 0 && <View style={styles.alertSeparator} />}
+              <View style={styles.alertRow}>
+                <View
+                  style={[
+                    styles.alertDot,
+                    alert.severity === 'notice' ? styles.alertDotNotice : styles.alertDotInfo,
+                  ]}
+                />
+                <View style={styles.alertCopy}>
+                  <Text style={styles.alertTitle}>{alert.title}</Text>
+                  <Text style={styles.alertDetail}>{alert.detail}</Text>
+                  <Text style={styles.alertMeta}>
+                    {alert.locality} · {alert.time}
+                  </Text>
+                </View>
               </View>
             </View>
-            <View style={styles.settingsDetailsCard}>
-              <Text style={styles.settingsLabel}>Service area</Text>
-              <Text style={styles.settingsValue}>Marinduque, Philippines</Text>
-              <View style={styles.settingsDivider} />
-              <Text style={styles.settingsLabel}>Offline information</Text>
-              <Text style={styles.settingsDescription}>Offline routes and terminal details are planned; live service updates need an internet connection.</Text>
-            </View>
-            <Pressable style={styles.settingsDoneButton} onPress={() => setSettingsVisible(false)}>
-              <Text style={styles.settingsDoneText}>Done</Text>
-            </Pressable>
-          </View>
+          ))}
         </View>
-      </Modal>
-    </>
+      </View>
+
+      <Text style={styles.footer}>Sample data — live information coming soon.</Text>
+    </ScrollView>
   );
 }
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-    pressed: { opacity: 0.82 },
-    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 34, gap: 16 },
-    welcomeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-    greetingCopy: { flex: 1 },
-    dashboardDate: { color: colors.green, fontSize: 8, fontWeight: '800', letterSpacing: 1, marginBottom: 8 },
-    pageTitle: { color: colors.ink, fontSize: 24, lineHeight: 29, letterSpacing: -0.8, fontWeight: '800' },
-    pageIntro: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 5 },
-    settingsButton: { minWidth: 62, height: 42, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 9 },
-    settingsButtonText: { color: colors.greenDark, fontSize: 10, fontWeight: '800' },
-    statusCard: { backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
-    statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.onTime },
-    statusDotOff: { backgroundColor: colors.orange },
-    statusCopy: { flex: 1 },
-    statusTitle: { color: colors.ink, fontSize: 10, fontWeight: '800' },
-    statusBody: { color: colors.muted, fontSize: 8, lineHeight: 12, marginTop: 3 },
-    statusLink: { color: colors.green, fontSize: 10, fontWeight: '800' },
-    searchBlock: { gap: 11 },
-    destinationField: { minHeight: 55, backgroundColor: colors.card, borderRadius: radius.md, borderColor: colors.line, borderWidth: 1, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 10 },
-    destinationPin: { width: 29, height: 29, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight },
-    destinationPinText: { color: colors.green, fontSize: 17, fontWeight: '700' },
-    destinationPlaceholder: { flex: 1, color: colors.muted, fontSize: 13 },
-    destinationArrow: { color: colors.green, fontSize: 19, fontWeight: '700' },
-    quickPlaces: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    actionTile: { flexBasis: '30%', flexGrow: 1, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 8 },
-    actionGlyph: { color: colors.green, fontSize: 20, fontWeight: '800' },
-    actionLabel: { color: colors.ink, fontSize: 12, fontWeight: '800' },
-    heroCard: { backgroundColor: colors.green, borderRadius: 22, paddingHorizontal: 19, paddingTop: 18, paddingBottom: 18, overflow: 'hidden', minHeight: 178 },
-    heroPill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 9, paddingVertical: 6, borderRadius: 16, gap: 7 },
-    heroPillDot: { width: 6, height: 6, backgroundColor: colors.lime, borderRadius: 3 },
-    heroPillText: { color: '#F4FAF2', fontSize: 8, fontWeight: '800', letterSpacing: 1 },
-    heroTitle: { color: '#FFFFFF', fontSize: 22, lineHeight: 26, letterSpacing: -0.7, fontWeight: '800', marginTop: 13, maxWidth: 290 },
-    heroBody: { color: '#DDECE3', fontSize: 10, lineHeight: 15, marginTop: 6, maxWidth: 290 },
-    heroButton: { marginTop: 13, height: 36, backgroundColor: colors.lime, paddingHorizontal: 12, borderRadius: 12, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 13 },
-    heroButtonText: { color: colors.greenDark, fontSize: 10, fontWeight: '800' },
-    heroButtonArrow: { color: colors.greenDark, fontSize: 14, fontWeight: '700' },
-    heroDecorCircle: { position: 'absolute', width: 150, height: 150, borderRadius: 75, borderWidth: 1, borderColor: 'rgba(255,255,255,0.13)', right: -61, top: 55 },
-    heroDecorLine: { position: 'absolute', width: 145, height: 1, backgroundColor: 'rgba(255,255,255,0.18)', right: -31, top: 116, transform: [{ rotate: '-38deg' }] },
-    summaryCard: { backgroundColor: colors.card, borderRadius: 19, borderWidth: 1, borderColor: colors.line, padding: 15, gap: 14 },
-    sectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 },
-    sectionEyebrow: { color: colors.green, fontSize: 8, fontWeight: '800', letterSpacing: 1.05, marginBottom: 5 },
-    sectionTitle: { color: colors.ink, fontSize: 16, fontWeight: '800', letterSpacing: -0.3 },
-    sampleBadge: { backgroundColor: colors.orangeLight, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5, marginBottom: 2 },
-    sampleBadgeText: { color: colors.orange, fontSize: 8, fontWeight: '900', letterSpacing: 1 },
-    metricsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-    metric: { flex: 1, alignItems: 'flex-start' },
-    metricValue: { color: colors.greenDark, fontSize: 22, lineHeight: 26, fontWeight: '800' },
-    metricLabel: { color: colors.muted, fontSize: 8, lineHeight: 12, marginTop: 3 },
-    metricDivider: { width: 1, height: 30, backgroundColor: colors.line },
-    summaryNote: { color: colors.muted, fontSize: 8, lineHeight: 12, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 9 },
-    infoCard: { backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-    infoIcon: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' },
-    infoIconNotice: { backgroundColor: colors.orangeLight },
-    infoIconText: { color: colors.green, fontSize: 12, fontWeight: '900' },
-    infoIconTextNotice: { color: colors.orange },
-    infoCopy: { flex: 1 },
-    infoMeta: { color: colors.green, fontSize: 8, lineHeight: 12, fontWeight: '800', letterSpacing: 0.3 },
-    infoTitle: { color: colors.ink, fontSize: 10, lineHeight: 15, fontWeight: '800', marginTop: 3 },
-    infoDetail: { color: colors.muted, fontSize: 9, lineHeight: 13, marginTop: 3 },
-    offlineCard: { backgroundColor: colors.greenLight, borderRadius: 16, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 10 },
-    offlineMark: { width: 34, height: 34, borderRadius: 12, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
-    offlineMarkText: { color: colors.greenDark, fontSize: 8, fontWeight: '900', letterSpacing: 0.4 },
-    offlineCopy: { flex: 1 },
-    offlineTitle: { color: colors.greenDark, fontSize: 10, fontWeight: '800' },
-    offlineBody: { color: colors.muted, fontSize: 8, lineHeight: 12, marginTop: 3 },
-    demoNote: { color: colors.muted, fontSize: 8, lineHeight: 13, textAlign: 'center', paddingHorizontal: 8 },
-    settingsOverlay: { flex: 1, backgroundColor: 'rgba(16,35,25,0.42)', alignItems: 'center', justifyContent: 'center', padding: 18 },
-    settingsSheet: { width: '100%', maxWidth: 380, backgroundColor: colors.card, borderRadius: 23, padding: 20, gap: 17 },
-    settingsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    settingsTitle: { color: colors.ink, fontSize: 24, fontWeight: '800', letterSpacing: -0.6 },
-    settingsCloseButton: { width: 34, height: 34, borderRadius: 12, backgroundColor: colors.canvas, alignItems: 'center', justifyContent: 'center' },
-    settingsCloseText: { color: colors.muted, fontSize: 22, lineHeight: 25 },
-    settingsSection: { gap: 9 },
-    settingsLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
-    settingsModeOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    settingsModeOption: { borderRadius: 15, borderWidth: 1, borderColor: colors.line, paddingVertical: 9, paddingHorizontal: 12, backgroundColor: colors.canvas },
-    settingsModeOptionSelected: { borderColor: colors.green, backgroundColor: colors.greenLight },
-    settingsModeText: { color: colors.muted, fontSize: 10, fontWeight: '700' },
-    settingsModeTextSelected: { color: colors.greenDark },
-    settingsDetailsCard: { backgroundColor: colors.canvas, borderRadius: 15, padding: 13, gap: 5 },
-    settingsValue: { color: colors.ink, fontSize: 12, fontWeight: '700' },
-    settingsDivider: { height: 1, backgroundColor: colors.line, marginVertical: 7 },
-    settingsDescription: { color: colors.muted, fontSize: 10, lineHeight: 15 },
-    settingsDoneButton: { height: 44, backgroundColor: colors.green, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-    settingsDoneText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+    pageContent: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 40,
+    },
+    dateText: {
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors.muted,
+    },
+    largeTitle: {
+      fontSize: 34,
+      lineHeight: 41,
+      fontWeight: '700',
+      letterSpacing: 0.37,
+      color: colors.ink,
+    },
+    section: {
+      marginTop: 28,
+    },
+    searchField: {
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: colors.fill,
+      paddingHorizontal: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    searchFieldPressed: {
+      backgroundColor: colors.line,
+    },
+    searchGlyph: {
+      fontSize: 17,
+      color: colors.muted,
+      marginRight: 6,
+    },
+    searchPlaceholder: {
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '400',
+      color: colors.muted,
+    },
+    placesScroll: {
+      marginTop: 12,
+    },
+    placesRow: {
+      gap: 8,
+    },
+    placePill: {
+      height: 32,
+      paddingHorizontal: 14,
+      borderRadius: 16,
+      backgroundColor: colors.fill,
+      justifyContent: 'center',
+    },
+    placePillText: {
+      fontSize: 15,
+      lineHeight: 20,
+      fontWeight: '500',
+      color: colors.ink,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+    offlineCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    offlineDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.orange,
+      marginRight: 10,
+    },
+    offlineCopy: {
+      flex: 1,
+    },
+    offlineTitle: {
+      fontSize: 15,
+      lineHeight: 20,
+      fontWeight: '400',
+      color: colors.ink,
+    },
+    offlineDetail: {
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors.muted,
+    },
+    offlineAction: {
+      fontSize: 15,
+      lineHeight: 20,
+      fontWeight: '400',
+      color: colors.green,
+      marginLeft: 12,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      lineHeight: 25,
+      fontWeight: '600',
+      color: colors.ink,
+    },
+    sectionAction: {
+      fontSize: 15,
+      lineHeight: 20,
+      fontWeight: '400',
+      color: colors.green,
+    },
+    group: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    separator: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.line,
+      marginLeft: 16,
+    },
+    routeRow: {
+      minHeight: 60,
+      paddingVertical: 11,
+      paddingHorizontal: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    rowPressed: {
+      backgroundColor: colors.line,
+    },
+    routeCopy: {
+      flex: 1,
+    },
+    routeName: {
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '600',
+      color: colors.ink,
+    },
+    routeMeta: {
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors.muted,
+    },
+    routeStatus: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '400',
+      color: colors.orange,
+      marginRight: 4,
+    },
+    chevron: {
+      fontSize: 20,
+      color: colors.muted,
+      marginLeft: 4,
+    },
+    alertSeparator: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.line,
+      marginLeft: 36,
+    },
+    alertRow: {
+      flexDirection: 'row',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    alertDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginTop: 7,
+      marginRight: 10,
+    },
+    alertDotNotice: {
+      backgroundColor: colors.orange,
+    },
+    alertDotInfo: {
+      backgroundColor: colors.green,
+    },
+    alertCopy: {
+      flex: 1,
+    },
+    alertTitle: {
+      fontSize: 15,
+      lineHeight: 20,
+      fontWeight: '600',
+      color: colors.ink,
+    },
+    alertDetail: {
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors.muted,
+    },
+    alertMeta: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '400',
+      color: colors.muted,
+      marginTop: 4,
+    },
+    footer: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '400',
+      color: colors.muted,
+      textAlign: 'center',
+      marginTop: 24,
+    },
   });
 }
