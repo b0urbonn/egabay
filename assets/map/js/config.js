@@ -8,9 +8,17 @@ if (EMBEDDED) document.body.classList.add('embedded');
 
 // ---------- Coverage area (Marinduque island province, PH) ----------
 // MapLibre uses [lng, lat] ordering everywhere.
-const ISLAND_VIEW = [[121.74, 13.15], [122.22, 13.63]]; // initial frame
-const HARD_BOUNDS = [[121.62, 13.05], [122.32, 13.72]];   // panning limit
+const ISLAND_BOUNDS = [[121.74, 13.15], [122.22, 13.63]]; // whole island frame
+const HOME_PAD = 0.15;                                   // margin around the island (fraction of the smaller screen side)
+const HARD_BOUNDS = [[121.62, 13.05], [122.32, 13.72]];  // panning limit
 let provinceBounds = HARD_BOUNDS;
+
+// Pixel margin around the island, scaled to the smaller screen side so the
+// whole island shows at a decent size without filling the frame edge to edge.
+function homePadding() {
+  const el = document.getElementById('map');
+  return Math.round(Math.min(el.clientWidth, el.clientHeight) * HOME_PAD);
+}
 
 // Sea cover: world polygon; island ring is punched in once the boundary loads.
 const WORLD_RING = [[-180, -89], [180, -89], [180, 89], [-180, 89], [-180, -89]];
@@ -35,38 +43,11 @@ const baseStyles = {
     sea: '#bfd9f2',
     styleUrl: 'https://tiles.versatiles.org/assets/styles/colorful/style.json',
   },
-  'Transport': {
-    sea: '#a4c9d8',
-    tiles: [
-      'https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-      'https://b.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-      'https://c.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-    ],
-    maxZoom: 18,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Style: <a href="https://www.cyclosm.org">CyclOSM</a>',
-  },
   'Standard': {
     sea: '#aad3df',
     tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  },
-  'Dark': {
-    sea: '#101216',
-    tiles: [
-      'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-      'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-      'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-      'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    ],
-    maxZoom: 20,
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-  },
-  'Satellite': {
-    sea: '#123b52',
-    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-    maxZoom: 19,
-    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
   },
 };
 let activeBase = 'General';

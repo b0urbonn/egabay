@@ -11,11 +11,30 @@ if (map) {
     const marker = new maplibregl.Marker({ element: el })
       .setLngLat([p.lng, p.lat])
       .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(
-        '<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>'))
+        '<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>'
+        + '<div class="popup-actions">'
+        + '<button class="popup-btn" data-route-to="' + p.name + '">Directions</button>'
+        + '<button class="popup-btn popup-btn-quiet" data-route-from="' + p.name + '">Set as start</button>'
+        + '</div>'))
       .addTo(map);
     (p.category === 'terminal' ? terminalMarkers : otherMarkers).push(marker);
   }
 }
+
+// Popup actions: "Directions" routes from the current origin to the tapped
+// place; "Set as start" makes the tapped place the new routing origin.
+document.addEventListener('click', (e) => {
+  const toBtn = e.target.closest('[data-route-to]');
+  const fromBtn = e.target.closest('[data-route-from]');
+  if (!toBtn && !fromBtn) return;
+  const poi = POIS.find((p) => p.name === (toBtn || fromBtn).dataset[toBtn ? 'routeTo' : 'routeFrom']);
+  if (!poi) return;
+  if (toBtn) showRoadRoute(selectedOrigin, poi);
+  else {
+    selectedOrigin = poi;
+    showToast('Routes will now start from ' + poi.name + '.');
+  }
+});
 
 let activeTransportFilter = null;
 document.querySelectorAll('.filter-chip').forEach((button) => {

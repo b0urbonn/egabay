@@ -7,7 +7,6 @@
     --green: #176B4B;
     --green-dark: #10543A;
     --lime: #C6F06A;
-    --orange: #E9813F;
     --hud: rgba(11, 22, 17, 0.92);
     --hud-line: rgba(198, 240, 106, 0.35);
     --sea: #aad3df;
@@ -181,7 +180,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--orange);
+    background: var(--green);
     border: 2px solid #fff;
     box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
     cursor: pointer;
@@ -204,18 +203,36 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 3px solid var(--orange);
-    background: rgba(233, 129, 63, 0.25);
+    border: 3px solid var(--green);
+    background: rgba(23, 107, 75, 0.25);
     pointer-events: none;
   }
   .locate-dot {
     width: 17px;
     height: 17px;
     border-radius: 50%;
-    border: 3px solid #fff;
-    background: var(--green);
+    border: 3px solid var(--green-dark);
+    background: var(--lime);
     box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
     pointer-events: none;
+    position: relative;
+  }
+  .locate-dot::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+    border: 2px solid var(--lime);
+    opacity: 0;
+    animation: locate-pulse 2.4s ease-out infinite;
+  }
+  @keyframes locate-pulse {
+    0% { transform: scale(0.6); opacity: 0.55; }
+    70% { transform: scale(1.5); opacity: 0; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .locate-dot::after { animation: none; }
   }
 
   /* ---- MapLibre chrome: floating cards like the search bar ---- */
@@ -283,6 +300,21 @@
   .maplibregl-popup-close-button { color: var(--muted); }
   .popup-title { font-size: 13px; font-weight: 800; color: var(--ink); margin: 0 0 2px; }
   .popup-sub { font-size: 11px; color: var(--muted); margin: 0; }
+  .popup-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .popup-btn {
+    border: 0;
+    border-radius: 10px;
+    background: var(--green);
+    color: #fff;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .popup-btn:hover { background: var(--green-dark); }
+  .popup-btn-quiet { background: var(--line); color: var(--ink); }
+  .popup-btn-quiet:hover { background: #d8ded6; }
   #toast {
     position: absolute;
     bottom: 30px;

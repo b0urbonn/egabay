@@ -1,13 +1,12 @@
-// Selected road route and the route-details panel.
-// Geometry and turn-by-turn come from OSRM (OpenStreetMap road data);
-// triggered when a search result is picked (see search.js).
+// Selected road route and the compact route-details card.
+// Geometry, distance, and duration come from OSRM (OpenStreetMap road data);
+// triggered when a search result or a marker's Directions action is picked.
 
 // ---------- Selected road route (route-details panel) ----------
 const routeDetails = document.getElementById('route-details');
 const routeTitle = document.getElementById('route-title');
 const routeMetrics = document.getElementById('route-metrics');
 const routeState = document.getElementById('route-state');
-const routeInstructions = document.getElementById('route-instructions');
 let routeRequestId = 0;
 let selectedRouteFC = null;
 let routeEndMarkers = [];
@@ -30,7 +29,7 @@ function drawSelectedRoute() {
     type: 'line',
     source: 'selected-route',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#E9813F', 'line-width': 5, 'line-opacity': 1 },
+    paint: { 'line-color': '#176B4B', 'line-width': 5, 'line-opacity': 1 },
   });
 }
 
@@ -38,13 +37,12 @@ function showRoadRoute(origin, destination) {
   const requestId = ++routeRequestId;
   routeTitle.textContent = origin.name + ' to ' + destination.name;
   routeMetrics.hidden = true;
-  routeInstructions.hidden = true;
   routeState.textContent = 'Finding the fastest mapped road route…';
   routeDetails.classList.add('open');
 
   const coordinates = origin.lng + ',' + origin.lat + ';' + destination.lng + ',' + destination.lat;
   const url = 'https://router.project-osrm.org/route/v1/driving/' + coordinates
-    + '?overview=full&geometries=geojson&steps=true&alternatives=false';
+    + '?overview=full&geometries=geojson&alternatives=false';
   fetch(url, { signal: AbortSignal.timeout(12000) })
     .then((response) => response.json())
     .then((data) => {
@@ -67,7 +65,7 @@ function showRoadRoute(origin, destination) {
         for (const [i, wp] of ends.entries()) {
           const el = document.createElement('div');
           el.className = 'route-end-dot';
-          el.style.background = i === 0 ? '#176B4B' : '#E9813F';
+          el.style.background = i === 0 ? '#C6F06A' : '#176B4B';
           routeEndMarkers.push(
             new maplibregl.Marker({ element: el, interactive: false })
               .setLngLat(wp.location)
@@ -83,12 +81,11 @@ function showRoadRoute(origin, destination) {
         padding: { top: 190, bottom: 72, left: 18, right: 18 },
       });
 
-      routeMetrics.innerHTML = '<div>' + formatRouteDistance(route.distance) + ' <span>road distance</span></div>'
-        + '<div>' + formatRouteDuration(route.duration) + ' <span>driving estimate</span></div>';
+      routeMetrics.innerHTML = '<div>' + formatRouteDistance(route.distance) + ' <span>road</span></div>'
+        + '<div>' + formatRouteDuration(route.duration) + ' <span>drive</span></div>'
+        + '<div>' + formatRouteEta(route.duration) + ' <span>ETA</span></div>';
       routeMetrics.hidden = false;
-      updateRouteInstructions(route.legs && route.legs[0] ? route.legs[0].steps || [] : [], destination.name);
-      routeInstructions.hidden = false;
-      routeState.textContent = 'Route line follows mapped roads between the selected points.';
+      routeState.textContent = 'Route follows mapped roads; transport service is not verified.';
     })
     .catch(() => {
       if (requestId !== routeRequestId) return;
@@ -105,42 +102,9 @@ function clearSelectedRoute() {
   routeEndMarkers = [];
   routeDetails.classList.remove('open');
   routeMetrics.hidden = true;
-  routeInstructions.hidden = true;
 }
 
 document.getElementById('clear-route').addEventListener('click', clearSelectedRoute);
-
-function updateRouteInstructions(steps, destinationName) {
-  routeInstructions.replaceChildren();
-  steps.forEach((step, index) => {
-    const maneuver = step.maneuver || {};
-    const roadName = step.name || step.ref || '';
-    let instruction;
-    if (maneuver.type === 'depart') instruction = 'Start' + (roadName ? ' on ' + roadName : ' on the nearest road');
-    else if (maneuver.type === 'arrive') instruction = 'Arrive at ' + destinationName;
-    else if (maneuver.type === 'turn') instruction = 'Turn ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
-    else if (maneuver.type === 'fork') instruction = 'Keep ' + (maneuver.modifier || 'straight') + (roadName ? ' onto ' + roadName : ' at the fork');
-    else if (maneuver.type === 'merge') instruction = 'Merge ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
-    else if (maneuver.type === 'roundabout' || maneuver.type === 'rotary') instruction = 'Enter the roundabout' + (roadName ? ' toward ' + roadName : '');
-    else if (maneuver.type === 'exit roundabout' || maneuver.type === 'exit rotary') instruction = 'Take the roundabout exit' + (roadName ? ' onto ' + roadName : '');
-    else if (maneuver.type === 'new name') instruction = 'Continue' + (roadName ? ' onto ' + roadName : ' on the road');
-    else instruction = 'Continue' + (roadName ? ' on ' + roadName : ' on the road');
-
-    const row = document.createElement('div');
-    row.className = 'route-step';
-    const number = document.createElement('span');
-    number.className = 'route-step-index';
-    number.textContent = String(index + 1);
-    const detail = document.createElement('span');
-    detail.className = 'route-step-detail';
-    detail.textContent = instruction.trim();
-    const distance = document.createElement('span');
-    distance.className = 'route-step-distance';
-    distance.textContent = step.distance > 0 ? formatRouteDistance(step.distance) : '';
-    row.append(number, detail, distance);
-    routeInstructions.appendChild(row);
-  });
-}
 
 function formatRouteDistance(meters) {
   return meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km';
@@ -149,4 +113,9 @@ function formatRouteDistance(meters) {
 function formatRouteDuration(seconds) {
   const minutes = Math.max(1, Math.round(seconds / 60));
   return minutes >= 60 ? Math.floor(minutes / 60) + ' hr ' + (minutes % 60) + ' min' : minutes + ' min';
+}
+
+function formatRouteEta(seconds) {
+  return new Date(Date.now() + seconds * 1000)
+    .toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
 }

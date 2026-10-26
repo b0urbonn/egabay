@@ -11,8 +11,9 @@ const TOWNS = [
   { name: 'Santa Cruz', lat: 13.4756, lng: 122.0525, note: 'Northeast' },
 ];
 
-// Route-details panel always measures from the provincial capital for now.
-const selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
+// Routing origin defaults to the provincial capital. Locate-me and the
+// "Set as start" popup action replace it with the chosen point.
+let selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
 
 // ---------- Points of interest ----------
 const POIS = [
