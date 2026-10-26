@@ -2,7 +2,7 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest committed app state:** merge `643b638` — Supabase auth and role workspaces (`bbc391b`) combined with the interactive map routing, ETA card, palette, and ACO prototype updates (`1781ac9`–`9d8e9c9`, map-zoom fix `5cb71e9`).
+**Latest committed app state:** merge `f756072` — `origin/main` (`643b638`: Supabase auth + role workspaces + map routing/palette) integrated; doc conflicts resolved. Plus uncommitted working-tree edits: responsive wide-web app layout with hidable navigation rail.
 
 **Current local phase:** browser Supabase authentication and group-scoped access foundation. Code and migrations are committed on `origin/main`; live database setup, owner promotion, and real sign-in verification are pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
@@ -13,6 +13,7 @@
 - [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
 - [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, Map, Trips, Profile tabs plus Settings (from Profile) and Terminals (from Home) sub-screens. (Profile redesigned and the top app header removed in `0097625`; Settings simplified in `5e10e85`; Home redesigned in `874abe8`; Terminals directory added in `b0fa8af`.)
 - [x] **Local source complete** — Supabase Google/email browser sign-in, session restoration, recovery, protected profile reads, guest preferences, and initial role workspaces. Live project verification is pending.
+- [x] **Done in local workspace** — Responsive web app layout (uncommitted): on ≥1024 px web the signed-in app renders full-width with an animated hidable left navigation rail (logo mark toggles it), list screens in a centered 1240 px column with multi-column wide layouts (Home hero + two-column body, 2-col Trips/Terminals grids, two-column Profile/Settings, map-left Terminal details), and the Map tab full-bleed; the intro/phone-frame chrome only shows on pre-sign-in screens. Mobile and narrow web keep the bottom tab bar.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
 - [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as the default "General" render with an OSM Standard raster fallback, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (`js/` + `css/`, ≤500 lines/file); `npm run build:map` emits the single-file bundle `assets/generated/marinduque-map.html` the app embeds (generated output, gitignored — auto-rebuilt on start).
 - [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road routing with a compact details card (distance, drive time, ETA), and a preview AI-assistant chat (canned replies, no backend). The routing origin is no longer fixed to Boac: it follows locate-me GPS or a "Set as start" marker action, and every POI popup has a "Directions" action. POI markers are per-town land-transport service areas (approximate, unverified).
