@@ -140,6 +140,7 @@ if (typeof maplibregl === 'undefined') {
     if (sea) {
       sea.setData(seaData);
       map.setPaintProperty('sea', 'fill-color', baseStyles[activeBase].sea);
+      map.setPaintProperty('coastline', 'line-color', baseStyles[activeBase].sea);
     } else {
       map.addSource('sea', { type: 'geojson', data: seaData });
       map.addLayer({
@@ -149,11 +150,17 @@ if (typeof maplibregl === 'undefined') {
         paint: { 'fill-color': baseStyles[activeBase].sea, 'fill-opacity': 1 },
       });
       map.addLayer({
-        // Hairline highlight hides sub-pixel seams between mask and tiles.
+        // Feathered band in the same sea colour blends the mask edge into
+        // the rendered sea — the island stays the only land on screen.
         id: 'coastline',
         type: 'line',
         source: 'sea',
-        paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 1 },
+        paint: {
+          'line-color': baseStyles[activeBase].sea,
+          'line-width': 10,
+          'line-blur': 8,
+          'line-opacity': 0.6,
+        },
       });
     }
     drawRoutes();

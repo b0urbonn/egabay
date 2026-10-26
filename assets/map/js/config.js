@@ -28,7 +28,9 @@ let seaData = {
 // Do NOT add tile.memomaps.de: no CORS header, silently renders nothing.
 const baseStyles = {
   'OpenMapTiles': {
-    sea: '#aad3df',
+    // Matches the water-ocean fill (rgb 191 217 242) of the VersaTiles
+    // colorful style so the sea mask blends seamlessly at the coastline.
+    sea: '#bfd9f2',
     styleUrl: 'https://tiles.versatiles.org/assets/styles/colorful/style.json',
   },
   'Transport': {
