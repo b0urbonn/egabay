@@ -8,6 +8,11 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:map": "node scripts/build-map.mjs",
+    "prestart": "node scripts/build-map.mjs",
+    "preandroid": "node scripts/build-map.mjs",
+    "preios": "node scripts/build-map.mjs",
+    "preweb": "node scripts/build-map.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

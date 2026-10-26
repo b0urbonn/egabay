@@ -16,7 +16,7 @@ Local `main` and `origin/main` match after this push; nothing is waiting to be p
 - [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen. (Profile redesigned and the top app header removed in `0097625`; Settings now opens from Profile → Preferences and was simplified in `5e10e85`; Home redesigned with a large-title header and grouped lists in `874abe8`.)
 - [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
-- [x] **Done in local workspace** — Map view using Leaflet, OpenStreetMap tiles, and Nominatim search.
+- [x] **Done in local workspace** — Map view using MapLibre GL (vendored), OpenStreetMap tiles, and Nominatim search.
 - [x] **Done in current local workspace** — Native and browser Supabase client scaffolds plus initial migration defining tables, row-level security, and Realtime publication entries.
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
 - [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
