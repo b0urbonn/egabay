@@ -89,16 +89,16 @@ export function ProfileScreen({
       <Card style={styles.identityCard}>
         <View style={styles.avatarFrame}>
           <Image
-            source={require('../../assets/profile-avatar.png')}
+            source={session.kind === 'account' && session.photoUrl ? { uri: session.photoUrl } : require('../../assets/profile-avatar.png')}
             style={styles.avatar}
             resizeMode="cover"
-            accessibilityLabel="Default commuter profile photo"
+            accessibilityLabel={`${name} profile photo`}
           />
         </View>
         <View style={styles.identityCopy}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
           <Text style={styles.identityDetail} numberOfLines={1}>{email}</Text>
-          {isAccount && <Text style={styles.accountLabel}>eGABAY commuter</Text>}
+          {isAccount && <Text style={styles.accountLabel}>{session.role.replace('_', ' ')}</Text>}
         </View>
       </Card>
 

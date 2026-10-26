@@ -132,6 +132,8 @@ export function Button({
   const inactive = disabled || loading;
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       disabled={inactive}
       style={({ pressed }) => [
@@ -195,6 +197,7 @@ export function TextField({
       <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
       <View style={[styles.field, error && styles.fieldError]}>
         <TextInput
+        accessibilityLabel={label}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -246,7 +249,7 @@ function createStyles(colors: ThemeColors) {
     pressed: { opacity: 0.82 },
     brandMark: { backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
     brandMarkText: { color: colors.lime, fontWeight: '900' },
-    eyebrow: { color: colors.green, fontSize: 10, fontWeight: '800', letterSpacing: 1.35, marginBottom: 7 },
+    eyebrow: { color: colors.greenDark, fontSize: 10, fontWeight: '800', letterSpacing: 1.35, marginBottom: 7 },
     card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 15 },
     badge: { backgroundColor: colors.greenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6 },
     badgeOrange: { backgroundColor: colors.orangeLight },
@@ -279,7 +282,7 @@ function createStyles(colors: ThemeColors) {
     field: { flexDirection: 'row', alignItems: 'center', minHeight: 50, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.card, paddingHorizontal: 14 },
     fieldError: { borderColor: colors.red },
     fieldInput: { flex: 1, color: colors.ink, fontSize: 14, fontWeight: '600', padding: 0 },
-    fieldToggle: { color: colors.green, fontSize: 11, fontWeight: '800', marginLeft: 10 },
+    fieldToggle: { color: colors.greenDark, fontSize: 11, fontWeight: '800', marginLeft: 10 },
     fieldErrorText: { color: colors.red, fontSize: 10, fontWeight: '700' },
     fieldHint: { color: colors.muted, fontSize: 10 },
     errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.orangeLight, borderRadius: radius.md, padding: 12 },

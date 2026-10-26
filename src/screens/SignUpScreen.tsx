@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { Button, ErrorBanner, ScreenHeader, TextField } from '../components/ui';
-import { mockSignUp, type Session } from '../lib/session';
+import { signInWithGoogle, signUpWithEmail } from '../lib/auth';
 import { useThemeStyles } from '../lib/theme';
 import { spacing, type ThemeColors } from '../theme';
 
@@ -21,11 +21,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function SignUpScreen({
   onBack,
   onLogin,
-  onSuccess,
 }: {
   onBack: () => void;
   onLogin: () => void;
-  onSuccess: (session: Session) => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const [name, setName] = useState('');
@@ -35,6 +33,8 @@ export function SignUpScreen({
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -55,7 +55,7 @@ export function SignUpScreen({
     if (Object.keys(next).length > 0) return;
     setLoading(true);
     try {
-      onSuccess(await mockSignUp(name, email, password));
+      setConfirmationSent(await signUpWithEmail(name, email, password));
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Sign up failed. Try again.');
     } finally {
@@ -63,28 +63,39 @@ export function SignUpScreen({
     }
   };
 
+  const googleSignIn = async () => {
+    setFormError(null);
+    setGoogleLoading(true);
+    try { await signInWithGoogle(); }
+    catch (error) { setFormError(error instanceof Error ? error.message : 'Google sign-in failed.'); }
+    finally { setGoogleLoading(false); }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Pressable onPress={onBack} style={styles.backButton} hitSlop={8}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={styles.backButton} hitSlop={8}>
             <Text style={styles.backGlyph}>←</Text>
             <Text style={styles.backText}>Back</Text>
           </Pressable>
           <ScreenHeader
             eyebrow="Join eGABAY"
             title="Create your account"
-            intro="Save favorite places and get live updates across Marinduque."
+            intro="Create your commuter account. Group and staff access are assigned separately."
           />
+          <Button label="Continue with Google" variant="secondary" onPress={googleSignIn} loading={googleLoading} disabled={loading} />
+          <Text style={styles.separator}>or create an account with email</Text>
           {formError && <ErrorBanner message={formError} />}
+          {confirmationSent && <Text accessibilityRole="alert" style={styles.confirmation}>Check your email to confirm your account, then return to sign in. Open the link in this browser.</Text>}
           <TextField label="Full name" value={name} onChangeText={setName} placeholder="Juan Dela Cruz" error={errors.name} autoCapitalize="words" />
           <TextField label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" error={errors.email} autoCapitalize="none" keyboardType="email-address" />
           <TextField label="Password" value={password} onChangeText={setPassword} placeholder="6+ characters" error={errors.password} secure autoCapitalize="none" />
           <TextField label="Confirm password" value={confirm} onChangeText={setConfirm} placeholder="Repeat your password" error={errors.confirm} secure autoCapitalize="none" />
-          <Button label={loading ? 'Creating account…' : 'Create an account'} loading={loading} onPress={submit} />
+          <Button label={loading ? 'Creating account…' : 'Create an account'} loading={loading} disabled={googleLoading || confirmationSent} onPress={submit} />
           <View style={styles.switchRow}>
             <Text style={styles.switchText}>Already have an account?</Text>
-            <Pressable onPress={onLogin} hitSlop={6}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Log in" onPress={onLogin} hitSlop={6}>
               <Text style={styles.switchLink}>Log in</Text>
             </Pressable>
           </View>
@@ -100,10 +111,12 @@ function createStyles(colors: ThemeColors) {
     flex: { flex: 1 },
     content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 40, gap: 16 },
     backButton: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
-    backGlyph: { color: colors.green, fontSize: 18, fontWeight: '700' },
-    backText: { color: colors.green, fontSize: 12, fontWeight: '800' },
+    backGlyph: { color: colors.greenDark, fontSize: 18, fontWeight: '700' },
+    backText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
+    separator: { color: colors.muted, fontSize: 12, textAlign: 'center' },
+    confirmation: { color: colors.greenDark, backgroundColor: colors.greenLight, padding: 14, borderRadius: 12, fontSize: 13, lineHeight: 19 },
     switchRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
     switchText: { color: colors.muted, fontSize: 12 },
-    switchLink: { color: colors.green, fontSize: 12, fontWeight: '800' },
+    switchLink: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
   });
 }

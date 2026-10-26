@@ -4,14 +4,14 @@ React Native starter for an AI-assisted public transportation navigation and mon
 
 ## Current starter
 
-- Guided first-run flow: onboarding slides → welcome → mock login/sign-up or "Continue offline" → main app
+- Guided first-run flow: onboarding slides → welcome → Supabase Google/email sign-in or "Continue offline" → role-aware app
 - Four tabs inside the app shell: Home, Trips, Map, and Profile, plus Settings and Terminals sub-screens
-- Mock auth and guest sessions persisted locally (expo-sqlite localStorage); demo account `demo@egabay.ph`
+- Real Supabase browser authentication with PKCE, session restoration, email confirmation/recovery, and guest browsing; old mock accounts are ignored
 - Online/offline connection modes; guests run offline and can create an account later from Profile
 - Sample routes and service notices across Marinduque towns, clearly labeled as demo content
 - Home dashboard route and service notice previews backed by clearly marked sample data
-- Supabase client scaffold with persistent auth storage through expo-sqlite
-- Initial Postgres schema with row-level security and Realtime tables
+- Supabase clients with browser session storage and a separate native SQLite adapter
+- Initial catalog plus a group-scoped role migration, protected role RPCs, public-safe vehicle view, and isolated database integration checks
 - Staged implementation milestones in BUILD_PLAN.md
 - Current fact-based progress checklist in CHECKLIST.md and repository history in CHANGELOG.md
 
@@ -28,13 +28,17 @@ This opens the web version in your browser. Use npm run start to choose a platfo
 
 ## Connect Supabase
 
-1. Create a Supabase project.
-2. Copy .env.example to .env.local.
-3. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY from the project API settings.
-4. Apply supabase/migrations/20261024000000_initial_schema.sql in the Supabase SQL Editor, or install the Supabase CLI, authenticate, link this folder to your project, and run npx supabase db push.
-5. Restart Expo after changing environment variables.
+Follow [the project-specific Supabase setup guide](docs/SUPABASE_AUTH_SETUP.md).
 
-Only the Supabase publishable key belongs in the mobile app. Never put a service-role key in an EXPO_PUBLIC_ variable or ship it in the app.
+1. Configure `.env.local` using `.env.example`, including the local-only first-owner email.
+2. Enable Google and configure the website callback URLs in Google Cloud and Supabase.
+3. For an **empty** project, run `npm run build:database` and apply the complete generated `supabase/generated/setup.sql` in the SQL Editor once.
+4. Sign in as the verified first owner, then apply `supabase/generated/bootstrap_super_admin.sql` in the SQL Editor and reload the app.
+5. Run `npm run web -- --port 8081` for desktop and responsive browser development.
+
+The source migrations and bootstrap template are committed; generated SQL and `.env.local` are ignored. The publishable key belongs in the browser app; secret/service-role keys stay off the frontend. The role workspaces are the first authentication slice; operational group/terminal/vehicle consoles and verified catalog reads are still being built.
+
+Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. The database checks use an isolated in-memory PostgreSQL engine and never modify your live Supabase project.
 
 ## Project map
 
@@ -50,8 +54,10 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     │   ├── screens/
     │   │   ├── OnboardingScreen.tsx         First-run "about the app" slides
     │   │   ├── WelcomeScreen.tsx            Login / sign up / continue offline entry
-    │   │   ├── LoginScreen.tsx              Mock login with demo account hint
-    │   │   ├── SignUpScreen.tsx             Mock account creation with validation
+    │   │   ├── LoginScreen.tsx              Supabase Google/email sign-in and password-reset request
+    │   │   ├── SignUpScreen.tsx             Supabase signup with email-confirmation handling
+    │   │   ├── PasswordRecoveryScreen.tsx  Verified recovery session password form
+    │   │   ├── RoleWorkspaceScreen.tsx     Desktop admin / responsive staff entry
     │   │   ├── MainShell.tsx                Bottom tabs (Home, Trips, Map, Profile) + Settings/Terminals sub-screens
     │   │   ├── HomeScreen.tsx               Travel dashboard with sample routes and notices
     │   │   ├── TripsScreen.tsx              Trips tab with compact trip cards
@@ -66,7 +72,10 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     │   │   ├── MapTabIcon.tsx               Folded-map-with-pin tab icon
     │   │   └── RouteCard.tsx                Route summary card
     │   ├── lib/
-    │   │   ├── session.ts                   Mock auth, session, and onboarding persistence
+    │   │   ├── session.ts                   Account role types, guest preference, and onboarding state
+    │   │   ├── auth.ts                      Supabase auth operations and protected profile reads
+    │   │   ├── useAuthSession.ts            Session subscription, restoration, and profile loading
+    │   │   ├── storage.web.ts               Browser-only preference storage
     │   │   ├── storage.ts                   Safe localStorage wrappers
     │   │   ├── appMode.ts                   Online/offline mode persistence
     │   │   ├── appearance.ts                Appearance setting persistence
@@ -90,7 +99,9 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     ├── scripts/
     │   └── build-map.mjs                    Inlines assets/map/* into the bundled map page
     ├── supabase/
-    │   └── migrations/                      Database schema, policies, and Realtime setup
+    │   ├── migrations/                      Catalog and group-scoped authentication policies
+    │   ├── admin/                           First-owner bootstrap SQL template
+    │   └── generated/                       Ignored SQL Editor setup and local bootstrap output
     │
     ├── BUILD_PLAN.md                        Product and implementation milestones (incl. RBAC roles)
     ├── CHECKLIST.md                         Current status against the build plan

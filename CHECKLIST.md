@@ -2,29 +2,27 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest app change:** `f3abd0d` (merge: MapLibre map + Terminals screen + land-transport hubs); plus uncommitted working-tree edits — RBAC build plan, README tree map, web SVG icon fix, interactive map routing + palette updates, ACO route-ordering prototype script
+**Latest committed app state:** merge `643b638` — Supabase auth and role workspaces (`bbc391b`) combined with the interactive map routing, ETA card, palette, and ACO prototype updates (`1781ac9`–`9d8e9c9`, map-zoom fix `5cb71e9`).
 
-**Public GitHub branch:** `origin/main` — merged locally through `ffcc59e`; local `main` additionally has the MapLibre map rebuild and both merges
+**Current local phase:** browser Supabase authentication and group-scoped access foundation. Code and migrations are committed on `origin/main`; live database setup, owner promotion, and real sign-in verification are pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
-**Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
-
-Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when ready. See the commit log in [CHANGELOG.md](CHANGELOG.md) for per-commit details. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
+**Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public). “Done” means code exists; it does not imply a deployed or field-tested service.
 
 ## Current state
 
 - [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
 - [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, Map, Trips, Profile tabs plus Settings (from Profile) and Terminals (from Home) sub-screens. (Profile redesigned and the top app header removed in `0097625`; Settings simplified in `5e10e85`; Home redesigned in `874abe8`; Terminals directory added in `b0fa8af`.)
-- [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
+- [x] **Local source complete** — Supabase Google/email browser sign-in, session restoration, recovery, protected profile reads, guest preferences, and initial role workspaces. Live project verification is pending.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
 - [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as the default "General" render with an OSM Standard raster fallback, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (`js/` + `css/`, ≤500 lines/file); `npm run build:map` emits the single-file bundle `assets/generated/marinduque-map.html` the app embeds (generated output, gitignored — auto-rebuilt on start).
 - [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road routing with a compact details card (distance, drive time, ETA), and a preview AI-assistant chat (canned replies, no backend). The routing origin is no longer fixed to Boac: it follows locate-me GPS or a "Set as start" marker action, and every POI popup has a "Directions" action. POI markers are per-town land-transport service areas (approximate, unverified).
 - [x] **Done in local workspace** — Terminals directory screen (from Home explore banner): per-municipality land-transport terminals with locality filter and search, backed by sample/approximate data — not verified terminal records.
-- [x] **Done in current local workspace** — Native and browser Supabase client scaffolds plus initial migration defining tables, row-level security, and Realtime publication entries.
+- [x] **Done in current local workspace** — Native and browser Supabase clients plus catalog and group-access migrations defining tables, row-level security, role RPCs, and audit records; 13 isolated database integration checks pass.
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
 - [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
 - [~] **Partial** — Map provider is implemented, but local coverage, offline support, licensing, and cost are not documented as evaluated.
-- [x] **Done in local workspace** — Build plan updated (uncommitted) with the four-role access model: Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, plus commuters as public users. Includes the permissions matrix, group-scoped Supabase tables/relations, per-role screens, and the backend/app changes needed before implementing.
-- [ ] **Not started** — Supabase-backed authentication and the four real role workflows (super admin, chairperson, driver, commuter).
+- [x] **Done in local workspace** — Build plan defines the four-role access model: Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, plus commuters as public users. Includes the permissions matrix, group-scoped Supabase tables/relations, per-role screens, and the backend/app changes needed before implementing.
+- [~] **Partial** — Supabase auth source and initial role workspaces are implemented. Live migration/bootstrap and full driver/chairperson/super-admin operational workflows remain pending.
 - [ ] **Not started** — Verified pilot route, group, and terminal data and named data/update owners.
 - [ ] **Not started** — Live vehicle sharing and group announcement publishing.
 - [ ] **Not started** — Field pilot, measures, and AI route ranking.
@@ -61,7 +59,7 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 - [x] Initial Supabase schema and row-level security policy definitions are in `supabase/migrations/`.
 - [x] Supabase client initialization is scaffolded in `src/lib/supabase.ts`.
 - [x] RBAC data model is specified in `BUILD_PLAN.md` (groups, terminals, drivers, feedback, audit_log; role helpers; public-safe vehicle view).
-- [ ] Apply the RBAC changes to a migration: `profiles.role` → `commuter`/`driver`/`chairperson`/`super_admin`, new `groups`/`terminals`/`drivers`/`feedback`/`audit_log` tables, `vehicles.terminal_id`, `service_alerts.group_id`, group-scoped RLS policies, audit triggers.
+- [x] Prepare and locally test the RBAC changes in `20261026000000_auth_and_group_access.sql`: `profiles.role` → `commuter`/`driver`/`chairperson`/`super_admin`, new `groups`/`terminals`/`drivers`/`feedback`/`audit_log` tables, `vehicles.terminal_id`, `service_alerts.group_id`, group-scoped RLS policies, audit triggers.
 - [ ] Create/configure a Supabase project and apply the migrations there.
 - [ ] Add only verified groups, terminals, routes, and stops; demo arrays are not verified seed data.
 - [ ] Provision super admin and chairperson accounts through a controlled workflow.
@@ -84,8 +82,8 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 
 ### 3. Deliver the role consoles, service updates, and live operations — Not started
 
-- [ ] Replace mock auth with Supabase Auth; resolve profile and role at sign-in.
-- [ ] Add role-gated navigation (driver, chairperson, super admin sections appear by role).
+- [x] Replace mock auth with Supabase Auth in local source; resolve profile and role at sign-in (live login still pending).
+- [x] Add initial role-gated browser workspaces (operational management screens remain below).
 - [ ] Build the driver flow: group application, profile editor, availability, read-only announcements, trip start/stop consent.
 - [ ] Build the chairperson console: group dashboard, terminals manager, vehicle roster, driver approvals, assignments, announcement composer.
 - [ ] Build the super admin console: groups manager, chairperson assignment, user management, reports, override edits, audit log viewer.

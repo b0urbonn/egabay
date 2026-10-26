@@ -11,8 +11,8 @@ import {
   View,
 } from 'react-native';
 
-import { Button, Card, ErrorBanner, ScreenHeader, TextField } from '../components/ui';
-import { mockSignIn } from '../lib/session';
+import { Button, ErrorBanner, ScreenHeader, TextField } from '../components/ui';
+import { sendPasswordReset, signInWithEmail, signInWithGoogle } from '../lib/auth';
 import { useThemeStyles } from '../lib/theme';
 import { spacing, type ThemeColors } from '../theme';
 
@@ -21,11 +21,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function LoginScreen({
   onBack,
   onSignUp,
-  onSuccess,
 }: {
   onBack: () => void;
   onSignUp: () => void;
-  onSuccess: (session: import('../lib/session').Session) => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const [email, setEmail] = useState('');
@@ -34,6 +32,7 @@ export function LoginScreen({
   const [formError, setFormError] = useState<string | null>(null);
   const [forgotNote, setForgotNote] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -52,7 +51,7 @@ export function LoginScreen({
     if (Object.keys(next).length > 0) return;
     setLoading(true);
     try {
-      onSuccess(await mockSignIn(email, password));
+      await signInWithEmail(email, password);
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Sign in failed. Try again.');
     } finally {
@@ -60,23 +59,38 @@ export function LoginScreen({
     }
   };
 
+  const googleSignIn = async () => {
+    setFormError(null);
+    setGoogleLoading(true);
+    try { await signInWithGoogle(); }
+    catch (error) { setFormError(error instanceof Error ? error.message : 'Google sign-in failed.'); }
+    finally { setGoogleLoading(false); }
+  };
+
+  const resetPassword = async () => {
+    if (!EMAIL_RE.test(email.trim())) { setErrors({ email: 'Enter your email address above first.' }); return; }
+    setFormError(null);
+    setLoading(true);
+    try { await sendPasswordReset(email); setForgotNote(true); }
+    catch (error) { setFormError(error instanceof Error ? error.message : 'Unable to send the reset email.'); }
+    finally { setLoading(false); }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Pressable onPress={onBack} style={styles.backButton} hitSlop={8}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={styles.backButton} hitSlop={8}>
             <Text style={styles.backGlyph}>←</Text>
             <Text style={styles.backText}>Back</Text>
           </Pressable>
           <ScreenHeader
             eyebrow="Welcome back"
             title="Log in to eGABAY"
-            intro="Use your account to unlock live updates and sync your trips."
+            intro="Sign in to access your profile and transport services."
           />
-          <Card style={styles.hintCard}>
-            <Text style={styles.hintTitle}>Demo account</Text>
-            <Text style={styles.hintBody}>demo@egabay.ph · any password (6+ chars)</Text>
-          </Card>
+          <Button label="Continue with Google" variant="secondary" onPress={googleSignIn} loading={googleLoading} disabled={loading} />
+          <Text style={styles.separator}>or sign in with email</Text>
           {formError && <ErrorBanner message={formError} />}
           <TextField
             label="Email"
@@ -97,17 +111,17 @@ export function LoginScreen({
               secure
               autoCapitalize="none"
             />
-            <Pressable onPress={() => setForgotNote(true)} style={styles.forgotLink} hitSlop={6}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Forgot password" onPress={resetPassword} disabled={loading || googleLoading} style={styles.forgotLink} hitSlop={6}>
               <Text style={styles.forgotText}>Forgot password?</Text>
             </Pressable>
             {forgotNote && (
-              <Text style={styles.forgotNote}>Password reset is not available in this demo build.</Text>
+              <Text style={styles.forgotNote}>If an account exists for this email, a password-reset link has been sent. Open it in this browser.</Text>
             )}
           </View>
-          <Button label={loading ? 'Signing in…' : 'Log in'} loading={loading} onPress={submit} />
+          <Button label={loading ? 'Signing in…' : 'Log in'} loading={loading} disabled={googleLoading} onPress={submit} />
           <View style={styles.switchRow}>
             <Text style={styles.switchText}>New to eGABAY?</Text>
-            <Pressable onPress={onSignUp} hitSlop={6}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Create an account" onPress={onSignUp} hitSlop={6}>
               <Text style={styles.switchLink}>Create an account</Text>
             </Pressable>
           </View>
@@ -123,17 +137,15 @@ function createStyles(colors: ThemeColors) {
     flex: { flex: 1 },
     content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 40, gap: 16 },
     backButton: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
-    backGlyph: { color: colors.green, fontSize: 18, fontWeight: '700' },
-    backText: { color: colors.green, fontSize: 12, fontWeight: '800' },
-    hintCard: { gap: 4 },
-    hintTitle: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
-    hintBody: { color: colors.muted, fontSize: 11 },
+    backGlyph: { color: colors.greenDark, fontSize: 18, fontWeight: '700' },
+    backText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
+    separator: { color: colors.muted, fontSize: 12, textAlign: 'center' },
     passwordBlock: { gap: 6 },
     forgotLink: { alignSelf: 'flex-end' },
-    forgotText: { color: colors.green, fontSize: 11, fontWeight: '800' },
+    forgotText: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
     forgotNote: { color: colors.muted, fontSize: 10, textAlign: 'right' },
     switchRow: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
     switchText: { color: colors.muted, fontSize: 12 },
-    switchLink: { color: colors.green, fontSize: 12, fontWeight: '800' },
+    switchLink: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
   });
 }
