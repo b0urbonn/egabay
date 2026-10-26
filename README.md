@@ -12,6 +12,10 @@ React Native starter for an AI-assisted public transportation navigation and mon
 - Home dashboard route and service notice previews backed by clearly marked sample data
 - Supabase clients with browser session storage and a separate native SQLite adapter
 - Initial catalog plus a group-scoped role migration, protected role RPCs, public-safe vehicle view, and isolated database integration checks
+- Chairperson console preview opened from the Log in screen, with engineered mobile layouts, five bottom tabs, terminal and vehicle forms, driver approvals, assignments, and announcements; sample data and local preview actions
+- Driver workspace preview opened from the Log in screen (Apple HIG layout): grouped lists, segmented availability control, trip start/stop consent sheet, read-only group announcements, profile editor, and group application flow; sample data only, no GPS or backend
+- [Driver mobile wireframes and interaction specification](docs/design/DRIVER_MOBILE_UI.md)
+- [Chairperson mobile wireframes and interaction specification](docs/design/CHAIRPERSON_MOBILE_UI.md)
 - Staged implementation milestones in BUILD_PLAN.md
 - Current fact-based progress checklist in CHECKLIST.md and repository history in CHANGELOG.md
 
@@ -62,6 +66,8 @@ Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. T
     │   │   ├── HomeScreen.tsx               Travel dashboard with sample routes and notices
     │   │   ├── TripsScreen.tsx              Trips tab with compact trip cards
     │   │   ├── TerminalsScreen.tsx          Per-municipality land-transport terminals directory
+    │   │   ├── ChairpersonConsoleScreen.tsx  Preview of the planned group-scoped chairperson console
+    │   │   ├── DriverWorkspaceScreen.tsx     Preview of the planned driver workspace
     │   │   ├── ProfileScreen.tsx            Account/guest profile, mode switch, log out
     │   │   └── SettingsScreen.tsx           Appearance picker and reset
     │   ├── components/

@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1850" viewBox="0 0 1298 1850" role="img" aria-labelledby="title desc">
+  <title id="title">eGABAY driver mobile UI wireframes</title>
+  <desc id="desc">Six editable 390 by 844 mobile screen layouts for Home, trip consent, group updates, profile, profile editing, and driver group application.</desc>
+  <rect width="1298" height="1850" fill="#eef1ed"/>
+  <text x="24" y="43" font-family="system-ui,-apple-system,sans-serif" font-size="25" font-weight="700" fill="#18231e">eGABAY · Driver preview</text>
+  <text x="24" y="69" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#66746b">Mobile wireframes · 390 × 844 pt · sample flows only</text>
+
+  <!-- Home -->
+  <g transform="translate(24 108)" font-family="system-ui,-apple-system,sans-serif">
+    <text x="0" y="-12" font-size="15" font-weight="700" fill="#176b4b">01 · Home and availability</text>
+    <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/>
+    <path d="M1 60h388" stroke="#e0e6e0"/>
+    <text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="164" y="37" font-size="15" font-weight="600" fill="#18231e">Driver</text><text x="337" y="37" font-size="12" fill="#66746b">Preview</text>
+    <text x="22" y="100" font-size="12" font-weight="600" fill="#66746b">BOAC CENTRAL TODA</text>
+    <text x="22" y="143" font-size="33" font-weight="700" fill="#18231e">Hello, Alex</text>
+    <text x="22" y="187" font-size="14" fill="#18231e">Status</text>
+    <rect x="20" y="202" width="350" height="50" rx="12" fill="#e7ebe7"/>
+    <rect x="23" y="205" width="115" height="44" rx="10" fill="#ffffff" stroke="#dce4dc"/>
+    <circle cx="42" cy="227" r="4" fill="#50a669"/><text x="52" y="231" font-size="12" font-weight="600" fill="#18231e">Available</text>
+    <circle cx="171" cy="227" r="4" fill="#e9813f"/><text x="181" y="231" font-size="12" fill="#66746b">On trip</text>
+    <circle cx="279" cy="227" r="4" fill="#aab5ad"/><text x="289" y="231" font-size="12" fill="#66746b">Offline</text>
+    <rect x="20" y="267" width="350" height="50" rx="13" fill="#176b4b"/><text x="195" y="298" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Start trip</text>
+    <text x="22" y="359" font-size="14" font-weight="600" fill="#66746b">Assignment</text>
+    <rect x="20" y="373" width="350" height="160" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="35" y="405" font-size="14" fill="#18231e">Group</text><text x="355" y="405" text-anchor="end" font-size="14" fill="#66746b">Boac Central TODA</text><path d="M32 420h326" stroke="#e5eae4"/>
+    <text x="35" y="454" font-size="14" fill="#18231e">Vehicle</text><text x="355" y="454" text-anchor="end" font-size="14" fill="#66746b">BC-014 · Tricycle</text><path d="M32 469h326" stroke="#e5eae4"/>
+    <text x="35" y="503" font-size="14" fill="#18231e">Terminal</text><text x="355" y="503" text-anchor="end" font-size="14" fill="#66746b">Boac Town Center</text>
+    <text x="22" y="578" font-size="14" font-weight="600" fill="#66746b">Latest update</text>
+    <rect x="20" y="591" width="350" height="76" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="35" y="620" font-size="14" font-weight="600" fill="#18231e">Roster check this week</text><text x="35" y="644" font-size="12" fill="#66746b">Oct 24 · from your chairperson</text><text x="350" y="635" font-size="20" fill="#66746b">›</text>
+    <path d="M1 770h388" stroke="#e0e6e0"/><text x="65" y="802" text-anchor="middle" font-size="11" font-weight="600" fill="#176b4b">⌂  Home</text><text x="195" y="802" text-anchor="middle" font-size="11" fill="#66746b">◉  Updates</text><text x="325" y="802" text-anchor="middle" font-size="11" fill="#66746b">○  Profile</text>
+  </g>
+
+  <!-- Consent sheet -->
+  <g transform="translate(454 108)" font-family="system-ui,-apple-system,sans-serif">
+    <text x="0" y="-12" font-size="15" font-weight="700" fill="#176b4b">02 · Trip consent</text>
+    <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/>
+    <path d="M1 60h388" stroke="#e0e6e0"/><text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="164" y="37" font-size="15" font-weight="600" fill="#18231e">Driver</text>
+    <text x="22" y="105" font-size="12" font-weight="600" fill="#66746b">BOAC CENTRAL TODA</text><text x="22" y="148" font-size="32" font-weight="700" fill="#18231e">Hello, Alex</text>
+    <text x="22" y="197" font-size="14" fill="#18231e">Status</text><rect x="20" y="210" width="350" height="48" rx="12" fill="#e7ebe7"/><rect x="23" y="212" width="112" height="44" rx="10" fill="#ffffff"/><text x="193" y="241" text-anchor="middle" font-size="13" fill="#66746b">Available · On trip · Offline</text>
+    <rect width="390" height="844" rx="26" fill="#111815" opacity=".46"/>
+    <path d="M0 505 Q0 482 23 482 H367 Q390 482 390 505 V844 H0Z" fill="#ffffff"/>
+    <text x="24" y="533" font-size="22" font-weight="700" fill="#18231e">Share location for this trip?</text>
+    <text x="24" y="565" font-size="14" fill="#536158">Your group can see your vehicle's location</text><text x="24" y="585" font-size="14" fill="#536158">while the trip is active. Stop at any time.</text>
+    <rect x="24" y="607" width="342" height="42" rx="10" fill="#edf5ed"/><text x="37" y="633" font-size="12" font-weight="600" fill="#536158">Preview · GPS is not accessed</text>
+    <rect x="25" y="670" width="21" height="21" rx="5" fill="#ffffff" stroke="#7d8981"/><text x="57" y="680" font-size="13" fill="#18231e">I consent to location sharing for this trip</text>
+    <rect x="24" y="708" width="342" height="49" rx="13" fill="#176b4b"/><text x="195" y="738" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Start trip</text>
+    <text x="195" y="789" text-anchor="middle" font-size="14" font-weight="600" fill="#176b4b">Cancel</text>
+  </g>
+
+  <!-- Updates -->
+  <g transform="translate(884 108)" font-family="system-ui,-apple-system,sans-serif">
+    <text x="0" y="-12" font-size="15" font-weight="700" fill="#176b4b">03 · Group updates</text>
+    <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/><path d="M1 60h388" stroke="#e0e6e0"/>
+    <text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="164" y="37" font-size="15" font-weight="600" fill="#18231e">Driver</text><text x="337" y="37" font-size="12" fill="#66746b">Preview</text>
+    <text x="22" y="104" font-size="12" font-weight="600" fill="#66746b">BOAC CENTRAL TODA</text><text x="22" y="147" font-size="32" font-weight="700" fill="#18231e">Announcements</text><text x="22" y="176" font-size="14" fill="#66746b">Read-only updates from your chairperson.</text>
+    <rect x="20" y="204" width="350" height="164" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="236" font-size="16" font-weight="700" fill="#18231e">Roster check this week</text><text x="36" y="268" font-size="14" fill="#536158">Please confirm your assigned vehicle details</text><text x="36" y="289" font-size="14" fill="#536158">with your terminal lead before Friday.</text><text x="36" y="338" font-size="12" fill="#66746b">Oct 24 · Boac Central TODA</text>
+    <rect x="20" y="384" width="350" height="164" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="416" font-size="16" font-weight="700" fill="#18231e">Terminal meeting reminder</text><text x="36" y="448" font-size="14" fill="#536158">A group meeting reminder for drivers</text><text x="36" y="469" font-size="14" fill="#536158">assigned to Boac Town Center.</text><text x="36" y="518" font-size="12" fill="#66746b">Oct 22 · Boac Central TODA</text>
+    <path d="M1 770h388" stroke="#e0e6e0"/><text x="65" y="802" text-anchor="middle" font-size="11" fill="#66746b">⌂  Home</text><text x="195" y="802" text-anchor="middle" font-size="11" font-weight="600" fill="#176b4b">◉  Updates</text><text x="325" y="802" text-anchor="middle" font-size="11" fill="#66746b">○  Profile</text>
+  </g>
+
+  <!-- Profile -->
+  <g transform="translate(24 1000)" font-family="system-ui,-apple-system,sans-serif">
+    <text x="0" y="-12" font-size="15" font-weight="700" fill="#176b4b">04 · Driver profile</text>
+    <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/><path d="M1 60h388" stroke="#e0e6e0"/>
+    <text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="164" y="37" font-size="15" font-weight="600" fill="#18231e">Driver</text><text x="337" y="37" font-size="12" fill="#66746b">Preview</text>
+    <text x="22" y="120" font-size="32" font-weight="700" fill="#18231e">Profile</text>
+    <circle cx="195" cy="211" r="38" fill="#e5f3ea"/><text x="195" y="219" text-anchor="middle" font-size="23" font-weight="700" fill="#10543a">AR</text>
+    <text x="195" y="275" text-anchor="middle" font-size="19" font-weight="700" fill="#18231e">Alex Reyes</text><text x="195" y="298" text-anchor="middle" font-size="14" fill="#66746b">Driver · Boac Central TODA</text>
+    <text x="24" y="354" font-size="13" font-weight="600" fill="#66746b">Details</text>
+    <rect x="20" y="368" width="350" height="157" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="404" font-size="14" fill="#18231e">Contact</text><text x="352" y="404" text-anchor="end" font-size="14" fill="#66746b">09XX-XXX-1427</text><path d="M32 420h326" stroke="#e5eae4"/>
+    <text x="36" y="456" font-size="14" fill="#18231e">License</text><text x="352" y="456" text-anchor="end" font-size="14" fill="#66746b">••••81</text><path d="M32 472h326" stroke="#e5eae4"/>
+    <text x="36" y="507" font-size="14" fill="#18231e">Membership</text><text x="352" y="507" text-anchor="end" font-size="14" fill="#66746b">Approved</text>
+    <text x="24" y="566" font-size="13" font-weight="600" fill="#66746b">Actions</text>
+    <rect x="20" y="580" width="350" height="112" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="616" font-size="14" fill="#176b4b">Edit profile</text><text x="352" y="616" text-anchor="end" font-size="21" fill="#66746b">›</text><path d="M32 632h326" stroke="#e5eae4"/>
+    <text x="36" y="668" font-size="14" fill="#176b4b">Preview application</text><text x="352" y="668" text-anchor="end" font-size="21" fill="#66746b">›</text>
+    <path d="M1 770h388" stroke="#e0e6e0"/><text x="65" y="802" text-anchor="middle" font-size="11" fill="#66746b">⌂  Home</text><text x="195" y="802" text-anchor="middle" font-size="11" fill="#66746b">◉  Updates</text><text x="325" y="802" text-anchor="middle" font-size="11" font-weight="600" fill="#176b4b">○  Profile</text>
+  </g>
+
+  <!-- Edit profile -->
+  <g transform="translate(454 1000)" font-family="system-ui,-apple-system,sans-serif">
+    <text x="0" y="-12" font-size="15" font-weight="700" fill="#176b4b">05 · Edit profile</text>
+    <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/><path d="M1 60h388" stroke="#e0e6e0"/>
+    <text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="148" y="37" font-size="15" font-weight="600" fill="#18231e">Edit profile</text>
+    <text x="22" y="120" font-size="32" font-weight="700" fill="#18231e">Your details</text><text x="22" y="149" font-size="14" fill="#66746b">Visible to your group chairperson.</text>
+    <rect x="20" y="180" width="350" height="270" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="212" font-size="12" font-weight="600" fill="#66746b">FULL NAME</text><rect x="35" y="224" width="320" height="46" rx="9" fill="#f5f7f4"/><text x="48" y="253" font-size="15" fill="#18231e">Alex Reyes</text>
+    <text x="36" y="300" font-size="12" font-weight="600" fill="#66746b">CONTACT NUMBER</text><rect x="35" y="312" width="320" height="46" rx="9" fill="#f5f7f4"/><text x="48" y="341" font-size="15" fill="#18231e">09XX-XXX-1427</text>
+    <text x="36" y="388" font-size="12" font-weight="600" fill="#66746b">DRIVER'S LICENSE</text><rect x="35" y="400" width="320" height="46" rx="9" fill="#f5f7f4"/><text x="48" y="429" font-size="15" fill="#18231e">DEMO-LICENSE-81</text>
+    <text x="23" y="492" font-size="14" font-weight="600" fill="#176b4b">Change profile photo</text><text x="23" y="516" font-size="12" fill="#66746b">Photo storage connects with the backend.</text>
+    <rect x="20" y="552" width="350" height="51" rx="13" fill="#176b4b"/><text x="195" y="583" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Save</text><text x="195" y="645" text-anchor="middle" font-size="14" font-weight="600" fill="#176b4b">Cancel</text>
+  </g>
+
+  <!-- Application -->
+  <g transform="translate(884 1000)" font-family="system-ui,-apple-system,sans-serif">
+    <text x="0" y="-12" font-size="15" font-weight="700" fill="#176b4b">06 · Group application</text>
+    <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/><path d="M1 60h388" stroke="#e0e6e0"/>
+    <text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="148" y="37" font-size="15" font-weight="600" fill="#18231e">Join a group</text>
+    <text x="22" y="120" font-size="32" font-weight="700" fill="#18231e">Choose a group</text><text x="22" y="149" font-size="14" fill="#66746b">A chairperson reviews new applications.</text>
+    <rect x="20" y="174" width="350" height="165" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <circle cx="42" cy="205" r="9" fill="#ffffff" stroke="#176b4b" stroke-width="2"/><circle cx="42" cy="205" r="4" fill="#176b4b"/><text x="62" y="210" font-size="14" font-weight="600" fill="#18231e">Boac Central TODA</text><path d="M32 228h326" stroke="#e5eae4"/>
+    <circle cx="42" cy="261" r="9" fill="#ffffff" stroke="#8a968e"/><text x="62" y="266" font-size="14" fill="#18231e">Mogpog TODA</text><path d="M32 284h326" stroke="#e5eae4"/>
+    <circle cx="42" cy="316" r="9" fill="#ffffff" stroke="#8a968e"/><text x="62" y="321" font-size="14" fill="#18231e">Gasan Jeepney Group</text>
+    <text x="22" y="377" font-size="13" font-weight="600" fill="#66746b">Your details</text>
+    <rect x="20" y="391" width="350" height="236" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="424" font-size="12" font-weight="600" fill="#66746b">FULL NAME</text><text x="36" y="449" font-size="15" fill="#18231e">Alex Reyes</text><path d="M32 464h326" stroke="#e5eae4"/>
+    <text x="36" y="497" font-size="12" font-weight="600" fill="#66746b">CONTACT NUMBER</text><text x="36" y="522" font-size="15" fill="#18231e">09XX-XXX-1427</text><path d="M32 537h326" stroke="#e5eae4"/>
+    <text x="36" y="570" font-size="12" font-weight="600" fill="#66746b">DRIVER'S LICENSE</text><text x="36" y="595" font-size="15" fill="#18231e">DEMO-LICENSE-81</text><path d="M32 610h326" stroke="#e5eae4"/>
+    <text x="22" y="655" font-size="12" fill="#66746b">Application preview · nothing will be sent.</text>
+    <rect x="20" y="678" width="350" height="51" rx="13" fill="#176b4b"/><text x="195" y="709" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Submit application</text><text x="195" y="764" text-anchor="middle" font-size="14" font-weight="600" fill="#176b4b">Cancel</text>
+  </g>
+</svg>

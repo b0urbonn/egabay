@@ -136,6 +136,7 @@ export function Button({
       accessibilityLabel={label}
       onPress={onPress}
       disabled={inactive}
+      accessibilityState={{ disabled: inactive }}
       style={({ pressed }) => [
         styles.button,
         variant === 'secondary' && styles.buttonSecondary,
@@ -186,7 +187,7 @@ export function TextField({
   error?: string | null;
   secure?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  keyboardType?: 'default' | 'email-address';
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
   hint?: string;
 }) {
   const styles = useThemeStyles(createStyles);
@@ -197,7 +198,7 @@ export function TextField({
       <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
       <View style={[styles.field, error && styles.fieldError]}>
         <TextInput
-        accessibilityLabel={label}
+          accessibilityLabel={label}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
