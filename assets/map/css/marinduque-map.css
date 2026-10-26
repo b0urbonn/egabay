@@ -7,7 +7,6 @@
     --green: #176B4B;
     --green-dark: #10543A;
     --lime: #C6F06A;
-    --orange: #E9813F;
     --hud: rgba(11, 22, 17, 0.92);
     --hud-line: rgba(198, 240, 106, 0.35);
     --sea: #aad3df;
@@ -181,7 +180,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--orange);
+    background: var(--green);
     border: 2px solid #fff;
     box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
     cursor: pointer;
@@ -212,10 +211,28 @@
     width: 17px;
     height: 17px;
     border-radius: 50%;
-    border: 3px solid #fff;
-    background: var(--green);
+    border: 3px solid var(--green-dark);
+    background: var(--lime);
     box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
     pointer-events: none;
+    position: relative;
+  }
+  .locate-dot::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+    border: 2px solid var(--lime);
+    opacity: 0;
+    animation: locate-pulse 2.4s ease-out infinite;
+  }
+  @keyframes locate-pulse {
+    0% { transform: scale(0.6); opacity: 0.55; }
+    70% { transform: scale(1.5); opacity: 0; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .locate-dot::after { animation: none; }
   }
 
   /* ---- MapLibre chrome: floating cards like the search bar ---- */

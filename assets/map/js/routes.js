@@ -65,7 +65,7 @@ function showRoadRoute(origin, destination) {
         for (const [i, wp] of ends.entries()) {
           const el = document.createElement('div');
           el.className = 'route-end-dot';
-          el.style.background = i === 0 ? '#176B4B' : '#10543A';
+          el.style.background = i === 0 ? '#C6F06A' : '#176B4B';
           routeEndMarkers.push(
             new maplibregl.Marker({ element: el, interactive: false })
               .setLngLat(wp.location)
