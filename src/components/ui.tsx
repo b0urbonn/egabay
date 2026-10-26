@@ -54,18 +54,22 @@ export function Chip({
   label,
   selected = false,
   onPress,
+  comfortable = false,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
+  comfortable?: boolean;
 }) {
   const styles = useThemeStyles(createStyles);
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.chip, comfortable && { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14 }, selected && styles.chipSelected, pressed && styles.pressed]}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <Text style={[styles.chipText, comfortable && { fontSize: 14 }, selected && styles.chipTextSelected]}>{label}</Text>
     </Pressable>
   );
 }
@@ -179,6 +183,7 @@ export function TextField({
   autoCapitalize = 'sentences',
   keyboardType,
   hint,
+  comfortable = false,
 }: {
   label: string;
   value: string;
@@ -189,13 +194,14 @@ export function TextField({
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   hint?: string;
+  comfortable?: boolean;
 }) {
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
   const [hidden, setHidden] = useState(secure);
   return (
     <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
+      <Text style={[styles.fieldLabel, comfortable && { fontSize: 13, letterSpacing: 0 }]}>{comfortable ? label : label.toUpperCase()}</Text>
       <View style={[styles.field, error && styles.fieldError]}>
         <TextInput
           accessibilityLabel={label}
@@ -207,7 +213,7 @@ export function TextField({
           autoCapitalize={autoCapitalize}
           autoCorrect={false}
           keyboardType={keyboardType}
-          style={styles.fieldInput}
+          style={[styles.fieldInput, comfortable && { fontSize: 15 }]}
         />
         {secure && (
           <Pressable onPress={() => setHidden((v) => !v)} hitSlop={8}>
@@ -216,7 +222,7 @@ export function TextField({
         )}
       </View>
       {error ? (
-        <Text style={styles.fieldErrorText}>{error}</Text>
+        <Text style={[styles.fieldErrorText, comfortable && { fontSize: 13 }]}>{error}</Text>
       ) : hint ? (
         <Text style={styles.fieldHint}>{hint}</Text>
       ) : null}

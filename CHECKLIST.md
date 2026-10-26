@@ -86,6 +86,7 @@
 - [x] Replace mock auth with Supabase Auth; resolve profile and role at sign-in (live project setup remains pending).
 - [x] Add role-gated browser workspaces for the four roles.
 - [x] Add the Super Admin standby console: overview, group/terminal/vehicle directories, user roles, reports, audit log, search, filters, and responsive navigation.
+- [x] Engineer Super Admin desktop/compact layouts, eleven editable wireframes, accessible record panels, role-change confirmation, and a separate sample-data preview with group creation/editing and chairperson selection.
 - [x] Load Super Admin counts and records from Supabase; role changes use the checked RPC.
 - [~] **UI preview implemented** — Driver flow: group application with pending state, profile editor, segmented availability control on Home, read-only announcements, and trip start/stop consent sheet. Six Apple-HIG mobile wireframes cover the primary screens. Sample data only; no GPS, role gating, or Supabase writes.
 - [~] **UI preview implemented** — Chairperson group dashboard, searchable terminal/vehicle lists, validated coordinate and roster forms, assignments, driver approval/rejection with confirmation/history, and announcement composer. Mobile bottom navigation, keyboard handling, desktop adaptation, and eight wireframes are implemented. All records/actions are sample/local state.

@@ -4,6 +4,7 @@ import { ActivityIndicator, Platform, Text, useColorScheme, useWindowDimensions,
 import { Button, ErrorBanner } from './src/components/ui';
 import { signOut } from './src/lib/auth';
 import { useAuthSession } from './src/lib/useAuthSession';
+import { adminPreviewAccount } from './src/data/adminPreview';
 
 import {
   clearStoredAppearance,
@@ -34,9 +35,10 @@ import { SignUpScreen } from './src/screens/SignUpScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { darkColors, lightColors } from './src/theme';
 
-type Stage = 'onboarding' | 'welcome' | 'login' | 'signup' | 'chairperson' | 'driver' | 'app';
+type Stage = 'onboarding' | 'welcome' | 'login' | 'signup' | 'chairperson' | 'driver' | 'admin-preview' | 'app';
 
 function initialStage(): Stage {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'super-admin') return 'admin-preview';
   if (!isOnboardingDone()) return 'onboarding';
   return getStoredSession() ? 'app' : 'welcome';
 }
@@ -54,20 +56,20 @@ export default function App() {
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
-    if (!auth.account) return;
+    if (!auth.account || stage === 'admin-preview') return;
     setStoredSession(auth.account);
     setOnboardingDone();
     setSession(auth.account);
     setStage('app');
-  }, [auth.account]);
+  }, [auth.account, stage]);
 
   useEffect(() => {
-    if (!auth.loading && !auth.userId && session?.kind === 'account') {
+    if (stage !== 'admin-preview' && !auth.loading && !auth.userId && session?.kind === 'account') {
       clearStoredSession();
       setSession(null);
       setStage('welcome');
     }
-  }, [auth.loading, auth.userId, session]);
+  }, [auth.loading, auth.userId, session, stage]);
 
   const accountId = session?.kind === 'account' ? session.id : null;
   const accountRole = session?.kind === 'account' ? session.role : null;
@@ -77,7 +79,7 @@ export default function App() {
   const themeColors = isDark ? darkColors : lightColors;
   const isWideWeb = Platform.OS === 'web' && width >= 1024 && stage !== 'chairperson' && stage !== 'driver';
   const staffAccount = session?.kind === 'account' && session.role !== 'commuter' ? session : null;
-  const isAdminWorkspace = stage === 'app' && staffAccount?.role === 'super_admin' && !showCommuterView;
+  const isAdminWorkspace = stage === 'admin-preview' || (stage === 'app' && staffAccount?.role === 'super_admin' && !showCommuterView);
   const styles = createAppStyles(themeColors);
 
   const chooseMode = (next: AppMode) => { setStoredMode(next); setMode(next); };
@@ -128,7 +130,9 @@ export default function App() {
         <View style={isWideWeb && !isAdminWorkspace ? styles.appFrame : styles.appFrameFill}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           {actionError && <ErrorBanner message={actionError} />}
-          {auth.loading ? (
+          {stage === 'admin-preview' ? (
+            <SuperAdminWorkspaceScreen preview account={adminPreviewAccount} onLogout={() => setStage('login')} onOpenCommuter={() => setStage('login')} onRefreshSession={() => {}} />
+          ) : auth.loading ? (
             <View style={styles.authStatus}><ActivityIndicator color={themeColors.greenDark} /><Text style={styles.authStatusCopy}>Connecting your account…</Text></View>
           ) : auth.error ? (
             <View style={styles.authStatus}>
@@ -148,6 +152,7 @@ export default function App() {
                 onSignUp={() => setStage('signup')}
                 onChairpersonPreview={() => setStage('chairperson')}
                 onDriverPreview={() => setStage('driver')}
+                onAdminPreview={() => setStage('admin-preview')}
               />}
               {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
               {stage === 'driver' && <DriverWorkspaceScreen onBack={() => setStage('login')} />}

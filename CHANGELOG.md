@@ -4,6 +4,8 @@ This file records repository changes visible in local Git history and `origin/ma
 
 ## 2026-10-26
 
+- **Super Admin wireframes and web layouts** — Added eleven editable vector layouts and a layout/interaction specification. Refined text sizes, 44px controls, registry columns, compact cards, loading/error states, record inspectors, and role-change review. Added an isolated sample-data preview from Login and `?preview=super-admin`, with local group forms, chairperson selection, status changes, and audit examples. Live group/terminal/vehicle mutation flows remain pending.
+
 - **Supabase browser auth and group-access foundation (committed in `bbc391b`; live setup pending)** — Replaced mock accounts with Google/email authentication, PKCE callbacks, session/profile restoration, password recovery, role-specific initial workspaces, and Google profile photos. Added a group-scoped RBAC migration, protected role-management RPCs, public-safe vehicle projection, first-owner bootstrap template, setup guide, and 13 isolated PostgreSQL policy checks. Applying the schema and completing live Google sign-in remain pending.
 
 - **Super Admin standby console** — Added responsive navigation for overview, groups, terminals, vehicles, users and roles, reports, and audit history. Counts and directories read Supabase records; role updates use the checked admin RPC. Group, terminal, and vehicle mutation workflows remain staged for the next build-plan step. The owner bootstrap now returns the assigned role and clearly rejects the unfilled source template.

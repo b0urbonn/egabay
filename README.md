@@ -16,10 +16,11 @@ React Native starter for an AI-assisted public transportation navigation and mon
 - Driver workspace preview opened from the Log in screen (Apple HIG layout): grouped lists, segmented availability control, trip start/stop consent sheet, read-only group announcements, profile editor, and group application flow; sample data only, no GPS or backend
 - [Driver mobile wireframes and interaction specification](docs/design/DRIVER_MOBILE_UI.md)
 - [Chairperson mobile wireframes and interaction specification](docs/design/CHAIRPERSON_MOBILE_UI.md)
+- [Super Admin web wireframes and layout specification](docs/design/SUPER_ADMIN_WEB_UI.md) — eleven editable layouts and a working sample-data preview at `http://localhost:8081/?preview=super-admin`
 - Staged implementation milestones in BUILD_PLAN.md
 - Current fact-based progress checklist in CHECKLIST.md and repository history in CHANGELOG.md
 
-All route names, fares, travel times, vehicle counts, and notices in the UI are mock content. Confirm these with transport operators and local authorities before presenting them as live information.
+Commuter screens and workspace previews use sample transport records. The authenticated Super Admin panel reads the configured registry. Confirm registry records with transport operators and local authorities before presenting them as verified transport information.
 
 ## Run the app
 
@@ -62,6 +63,7 @@ Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. T
     │   │   ├── SignUpScreen.tsx             Supabase signup with email-confirmation handling
     │   │   ├── PasswordRecoveryScreen.tsx  Verified recovery session password form
     │   │   ├── RoleWorkspaceScreen.tsx     Desktop admin / responsive staff entry
+    │   │   ├── SuperAdminWorkspaceScreen.tsx Registry dashboard and isolated design preview
     │   │   ├── MainShell.tsx                Bottom tabs (Home, Trips, Map, Profile) + Settings/Terminals sub-screens
     │   │   ├── HomeScreen.tsx               Travel dashboard with sample routes and notices
     │   │   ├── TripsScreen.tsx              Trips tab with compact trip cards
