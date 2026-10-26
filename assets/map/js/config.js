@@ -8,9 +8,17 @@ if (EMBEDDED) document.body.classList.add('embedded');
 
 // ---------- Coverage area (Marinduque island province, PH) ----------
 // MapLibre uses [lng, lat] ordering everywhere.
-const ISLAND_VIEW = [[121.74, 13.15], [122.22, 13.63]]; // initial frame
-const HARD_BOUNDS = [[121.62, 13.05], [122.32, 13.72]];   // panning limit
+const ISLAND_BOUNDS = [[121.74, 13.15], [122.22, 13.63]]; // whole island frame
+const HOME_PAD = 0.15;                                   // margin around the island (fraction of the smaller screen side)
+const HARD_BOUNDS = [[121.62, 13.05], [122.32, 13.72]];  // panning limit
 let provinceBounds = HARD_BOUNDS;
+
+// Pixel margin around the island, scaled to the smaller screen side so the
+// whole island shows at a decent size without filling the frame edge to edge.
+function homePadding() {
+  const el = document.getElementById('map');
+  return Math.round(Math.min(el.clientWidth, el.clientHeight) * HOME_PAD);
+}
 
 // Sea cover: world polygon; island ring is punched in once the boundary loads.
 const WORLD_RING = [[-180, -89], [180, -89], [180, 89], [-180, 89], [-180, -89]];

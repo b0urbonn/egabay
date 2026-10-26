@@ -18,10 +18,13 @@ if (typeof maplibregl === 'undefined') {
   map = new maplibregl.Map({
     container: 'map',
     style: makeStyle(baseStyles[activeBase]),
-    bounds: ISLAND_VIEW,
+    bounds: ISLAND_BOUNDS,
+    fitBoundsOptions: { padding: homePadding() },
     doubleClickZoom: false, // double-click/tap resets the view instead
     pitchWithRotate: false,
-    minZoom: 10,
+    // The padded island fit can dip below z10 on small screens — keep the
+    // floor under it so the whole island always fits the frame.
+    minZoom: 8,
     maxZoom: 18,
     maxBounds: HARD_BOUNDS,
     attributionControl: { compact: true },
@@ -170,7 +173,10 @@ if (typeof maplibregl === 'undefined') {
 
   // ---------- Double-click / double-tap resets the view ----------
   map.on('dblclick', () => {
-    map.fitBounds(provinceBounds === HARD_BOUNDS ? ISLAND_VIEW : provinceBounds, { duration: 800 });
+    map.fitBounds(provinceBounds === HARD_BOUNDS ? ISLAND_BOUNDS : provinceBounds, {
+      padding: homePadding(),
+      duration: 800,
+    });
   });
 
 }

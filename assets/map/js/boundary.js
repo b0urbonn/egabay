@@ -42,8 +42,10 @@ async function loadBoundary() {
       .setLngLat(provinceBounds.getCenter())
       .addTo(map);
 
+    // Tighten the panning limit and re-frame to the real coastline with the
+    // same margin, so the island sits inside the frame at a decent size.
     map.setMaxBounds(padBounds(provinceBounds, 0.12));
-    map.fitBounds(provinceBounds);
+    map.fitBounds(provinceBounds, { padding: homePadding() });
   } catch (err) {
     console.warn('Province boundary could not be loaded; using preset bounds.', err);
     revealBasemap();
