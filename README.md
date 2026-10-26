@@ -60,7 +60,8 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
     src/theme.ts                     Shared visual tokens
     assets/map/                      Map sources: index.html + js/ (9 feature modules)
                                      + css/ (3 stylesheets) + vendor/ (MapLibre)
-    assets/marinduque-map.html       GENERATED single-file map bundle — build with `npm run build:map`
+    assets/generated/marinduque-map.html  GENERATED map bundle — build output, NOT committed;
+                                          `npm run build:map` regenerates it (auto on start)
     scripts/build-map.mjs            Inlines assets/map/* into the bundled map page
     metro.config.js                  Bundles .html files as app assets
     supabase/migrations/             Database schema, policies, and Realtime setup

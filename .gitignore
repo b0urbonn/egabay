@@ -9,3 +9,7 @@ web-build/
 .DS_Store
 
 .agent
+
+# Build output of `npm run build:map` — regenerated automatically on start.
+# Run `npm run build:map` before `npx expo export`/EAS builds.
+assets/generated/

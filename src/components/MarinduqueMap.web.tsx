@@ -6,7 +6,7 @@ import { useThemeStyles } from '../lib/theme';
 import { radius, type ThemeColors } from '../theme';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const mapAsset = Asset.fromModule(require('../../assets/marinduque-map.html'));
+const mapAsset = Asset.fromModule(require('../../assets/generated/marinduque-map.html'));
 
 type MarinduqueMapProps = {
   height?: number;
