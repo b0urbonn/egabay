@@ -207,8 +207,7 @@
     height: 7px;
     flex-shrink: 0;
   }
-  .basemap-menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 4px; }
-  .basemap-menu .toggle-row { font-size: 12px; font-weight: 700; }
+  .basemap-menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 4px; display: none; }
 
   .panel-foot { margin-top: 8px; font-size: 9.5px; color: var(--muted); line-height: 14px; }
 

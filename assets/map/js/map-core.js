@@ -57,18 +57,6 @@ if (typeof maplibregl === 'undefined') {
         });
         menu.appendChild(opt);
       }
-      const hr = document.createElement('hr');
-      menu.appendChild(hr);
-      const routeRow = document.createElement('button');
-      routeRow.className = 'toggle-row';
-      routeRow.textContent = 'Commute routes';
-      routeRow.addEventListener('click', () => {
-        showRoutes = !showRoutes;
-        applyRouteVisibility();
-        routeRow.classList.toggle('active', showRoutes);
-      });
-      routeRow.classList.toggle('active', showRoutes);
-      menu.appendChild(routeRow);
       btn.addEventListener('click', () => menu.classList.toggle('open'));
       box.appendChild(btn);
       box.appendChild(menu);
@@ -163,7 +151,6 @@ if (typeof maplibregl === 'undefined') {
         },
       });
     }
-    drawRoutes();
     drawSelectedRoute();
   }
   map.on('style.load', () => {

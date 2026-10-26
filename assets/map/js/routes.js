@@ -1,62 +1,6 @@
-// Commute routes and the selected road route.
-// Geometry comes from OSRM (OpenStreetMap road data) with a straight-line
-// fallback for the commute routes; the selected route uses OSRM steps for
-// turn-by-turn in the route-details panel.
-
-// ---------- Commute routes ----------
-let routesFC = null;
-
-function applyRouteVisibility() {
-  const v = showRoutes ? 'visible' : 'none';
-  for (const id of ['routes-casing', 'routes-core']) {
-    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
-  }
-}
-
-function drawRoutes() {
-  if (!routesFC || map.getSource('routes')) return;
-  map.addSource('routes', { type: 'geojson', data: routesFC });
-  map.addLayer({
-    id: 'routes-casing',
-    type: 'line',
-    source: 'routes',
-    layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#10543A', 'line-width': 6.5, 'line-opacity': 0.85 },
-  });
-  map.addLayer({
-    id: 'routes-core',
-    type: 'line',
-    source: 'routes',
-    layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#C6F06A', 'line-width': 3.5, 'line-opacity': 0.95 },
-  });
-  applyRouteVisibility();
-}
-
-async function fetchRouteCoords(r) {
-  try {
-    const res = await fetch(
-      'https://router.project-osrm.org/route/v1/driving/'
-      + r.from.join(',') + ';' + r.to.join(',')
-      + '?overview=full&geometries=geojson',
-      { signal: AbortSignal.timeout(8000) });
-    const d = await res.json();
-    if (d.routes && d.routes[0] && d.routes[0].geometry) {
-      return d.routes[0].geometry.coordinates;
-    }
-  } catch { /* fall back to the straight line */ }
-  return [r.from, r.to];
-}
-
-async function loadRoutes() {
-  const feats = await Promise.all(ROUTES.map(async (r) => ({
-    type: 'Feature',
-    properties: { name: r.name, meta: r.meta },
-    geometry: { type: 'LineString', coordinates: await fetchRouteCoords(r) },
-  })));
-  routesFC = { type: 'FeatureCollection', features: feats };
-  drawRoutes();
-}
+// Selected road route and the route-details panel.
+// Geometry and turn-by-turn come from OSRM (OpenStreetMap road data);
+// triggered when a search result is picked (see search.js).
 
 // ---------- Selected road route (route-details panel) ----------
 const routeDetails = document.getElementById('route-details');
@@ -205,20 +149,4 @@ function formatRouteDistance(meters) {
 function formatRouteDuration(seconds) {
   const minutes = Math.max(1, Math.round(seconds / 60));
   return minutes >= 60 ? Math.floor(minutes / 60) + ' hr ' + (minutes % 60) + ' min' : minutes + ' min';
-}
-
-// ---------- Wiring (needs the map) ----------
-if (map) {
-  loadRoutes();
-
-  map.on('click', 'routes-core', (e) => {
-    const f = e.features && e.features[0];
-    if (!f) return;
-    new maplibregl.Popup()
-      .setLngLat(e.lngLat)
-      .setHTML('<p class="popup-title">' + f.properties.name + '</p><p class="popup-sub">' + f.properties.meta + '</p>')
-      .addTo(map);
-  });
-  map.on('mouseenter', 'routes-core', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'routes-core', () => { map.getCanvas().style.cursor = ''; });
 }

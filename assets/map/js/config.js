@@ -27,9 +27,11 @@ let seaData = {
 // Access-Control-Allow-Origin — verified for all entries below.
 // Do NOT add tile.memomaps.de: no CORS header, silently renders nothing.
 const baseStyles = {
-  'OpenMapTiles': {
-    // Matches the water-ocean fill (rgb 191 217 242) of the VersaTiles
-    // colorful style so the sea mask blends seamlessly at the coastline.
+  'General': {
+    // OpenMapTiles vector render (VersaTiles "colorful" style) — the bright,
+    // labelled general/location look, similar to a standard web map.
+    // `sea` matches that style's water-ocean fill (rgb 191 217 242) so the
+    // sea mask blends seamlessly at the coastline.
     sea: '#bfd9f2',
     styleUrl: 'https://tiles.versatiles.org/assets/styles/colorful/style.json',
   },
@@ -67,8 +69,7 @@ const baseStyles = {
     attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
   },
 };
-let activeBase = 'OpenMapTiles';
-let showRoutes = true;
+let activeBase = 'General';
 
 // Raster paint values approximate the old tile filter
 // (saturate 1.4, contrast 1.07, hue -8deg, brightness 0.98).
