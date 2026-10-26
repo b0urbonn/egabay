@@ -11,12 +11,14 @@ import type { ThemeColors } from '../theme';
 import { HomeScreen } from './HomeScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { TripsScreen } from './TripsScreen';
 
-export type Tab = 'Home' | 'Map' | 'Profile';
+export type Tab = 'Home' | 'Map' | 'Trips' | 'Profile';
 
 const tabs: { label: Tab; icon: MaterialIconName }[] = [
   { label: 'Home', icon: 'home' },
   { label: 'Map', icon: 'map' },
+  { label: 'Trips', icon: 'liveTrips' },
   { label: 'Profile', icon: 'person' },
 ];
 
@@ -78,6 +80,7 @@ export function MainShell({
               />
             )}
             {activeTab === 'Map' && <MapScreen />}
+            {activeTab === 'Trips' && <TripsScreen />}
             {activeTab === 'Profile' && (
               <ProfileScreen
                 session={session}
@@ -123,7 +126,7 @@ function createStyles(colors: ThemeColors) {
     tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
     tabGlyphWrap: { width: 38, height: 30, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     tabGlyphWrapSelected: { backgroundColor: colors.greenLight },
-    tabLabel: { color: colors.muted, fontSize: 10, fontWeight: '700' },
+    tabLabel: { color: colors.muted, fontSize: 10, lineHeight: 12, fontWeight: '700' },
     tabLabelSelected: { color: colors.greenDark },
   });
 }
