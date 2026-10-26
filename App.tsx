@@ -150,7 +150,7 @@ export default function App() {
                 onDriverPreview={() => setStage('driver')}
               />}
               {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
-              {stage === 'driver' && <DriverWorkspaceScreen onBack={() => setStage('login')} />}
+              {stage === 'driver' && <DriverWorkspaceScreen appearance={appearance} onChangeAppearance={chooseAppearance} onBack={() => setStage('login')} />}
               {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
               {stage === 'app' && session && (staffAccount && !showCommuterView ? (
                 staffAccount.role === 'super_admin' ? (

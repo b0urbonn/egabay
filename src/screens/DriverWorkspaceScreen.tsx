@@ -15,6 +15,7 @@ import {
 
 import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
 import { Button, Card, TextField } from '../components/ui';
+import type { AppearanceSetting } from '../lib/appearance';
 import { useColors, useThemeStyles } from '../lib/theme';
 import { spacing, type ThemeColors } from '../theme';
 
@@ -30,6 +31,11 @@ const tabs: { label: DriverTab; icon: MaterialIconName }[] = [
 ];
 
 const availabilityOptions: Availability[] = ['Available', 'On trip', 'Offline'];
+const appearanceOptions: { value: AppearanceSetting; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
 
 const groupOptions = ['Boac Central TODA', 'Mogpog TODA', 'Gasan Jeepney Group'];
 
@@ -48,7 +54,15 @@ const sampleAnnouncements = [
   },
 ];
 
-export function DriverWorkspaceScreen({ onBack }: { onBack: () => void }) {
+export function DriverWorkspaceScreen({
+  appearance,
+  onChangeAppearance,
+  onBack,
+}: {
+  appearance: AppearanceSetting;
+  onChangeAppearance: (setting: AppearanceSetting) => void;
+  onBack: () => void;
+}) {
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
   const [layoutWidth, setLayoutWidth] = useState(0);
@@ -274,6 +288,8 @@ export function DriverWorkspaceScreen({ onBack }: { onBack: () => void }) {
             {!page && tab === 'Profile' && (
               <DriverProfileScreen
                 profile={profile}
+                appearance={appearance}
+                onChangeAppearance={onChangeAppearance}
                 onEdit={openProfileEditor}
                 onApply={openApplication}
               />
@@ -301,7 +317,7 @@ export function DriverWorkspaceScreen({ onBack }: { onBack: () => void }) {
               />
             )}
 
-            <Text style={styles.footer}>Sample data — preview only, nothing is sent or stored.</Text>
+            <Text style={styles.footer}>Sample data and preview actions only. Appearance preference is saved on this device.</Text>
           </ScrollView>
         </View>
 
@@ -504,10 +520,14 @@ function AnnouncementsScreen() {
 
 function DriverProfileScreen({
   profile,
+  appearance,
+  onChangeAppearance,
   onEdit,
   onApply,
 }: {
   profile: DriverProfile;
+  appearance: AppearanceSetting;
+  onChangeAppearance: (setting: AppearanceSetting) => void;
   onEdit: () => void;
   onApply: () => void;
 }) {
@@ -524,6 +544,10 @@ function DriverProfileScreen({
         <Text style={styles.identitySub}>Driver · Boac Central TODA</Text>
       </View>
 
+      <Text style={styles.sectionLabel}>Appearance</Text>
+      <AppearanceSelector value={appearance} onChange={onChangeAppearance} />
+      <Text style={styles.sectionHint}>System follows your device. Light and Dark apply across eGABAY.</Text>
+
       <Text style={styles.sectionLabel}>Details</Text>
       <View style={styles.group}>
         <InfoRow icon="phone" label="Contact" value={profile.contact} first />
@@ -539,6 +563,42 @@ function DriverProfileScreen({
 
       <Text style={styles.sectionHint}>License and contact details are private to you, your chairperson, and the super admin.</Text>
     </>
+  );
+}
+
+function AppearanceSelector({
+  value,
+  onChange,
+}: {
+  value: AppearanceSetting;
+  onChange: (setting: AppearanceSetting) => void;
+}) {
+  const styles = useThemeStyles(createStyles);
+  return (
+    <View style={styles.appearanceControl}>
+      {appearanceOptions.map((option) => {
+        const selected = value === option.value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="radio"
+            accessibilityLabel={`${option.label} appearance`}
+            accessibilityState={{ checked: selected }}
+            onPress={() => onChange(option.value)}
+            style={({ pressed }) => [
+              styles.appearanceOption,
+              selected && styles.appearanceOptionSelected,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={[styles.appearanceOptionLabel, selected && styles.appearanceOptionLabelSelected]}>
+              {option.label}
+            </Text>
+            {selected && <Text style={styles.appearanceCheck}>✓</Text>}
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -738,6 +798,13 @@ function createStyles(colors: ThemeColors) {
     rowPressed: { backgroundColor: colors.selectedCardBg },
     actionLabel: { flex: 1, color: colors.greenDark, fontSize: 14, fontWeight: '600' },
     checkmark: { flex: 1, textAlign: 'right', color: colors.greenDark, fontSize: 16, fontWeight: '800' },
+
+    appearanceControl: { minHeight: 50, flexDirection: 'row', backgroundColor: colors.fill, borderRadius: 13, padding: 3, gap: 2 },
+    appearanceOption: { flex: 1, minHeight: 44, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 4 },
+    appearanceOptionSelected: { backgroundColor: colors.card, shadowColor: '#000000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2 },
+    appearanceOptionLabel: { color: colors.muted, fontSize: 13, fontWeight: '500' },
+    appearanceOptionLabelSelected: { color: colors.ink, fontWeight: '700' },
+    appearanceCheck: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
 
     linkRow: { minHeight: 56, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
     linkRowCopy: { flex: 1 },
