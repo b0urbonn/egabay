@@ -2,12 +2,13 @@
 /* ---- Transport filter chips ---- */
   .transport-filters {
     position: absolute;
-    top: 98px;
-    left: 260px;
+    top: 62px;
+    left: 14px;
     right: 14px;
     z-index: 1000;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
     pointer-events: none;
   }
@@ -89,13 +90,13 @@
   }
 
   /* Compact mode when embedded in the app */
-  body.embedded .transport-filters { top: 96px; left: 8px; right: 8px; gap: 5px; }
+  body.embedded .transport-filters { top: 8px; left: 8px; right: 8px; gap: 5px; }
   body.embedded .filter-chip { min-height: 28px; padding: 0 10px; font-size: 9px; }
   body.embedded .route-details { left: 8px; bottom: 72px; width: min(330px, calc(100vw - 70px)); max-height: 34vh; }
 
   /* Narrow screens (phones) */
   @media (max-width: 860px) {
-    body:not(.embedded) .transport-filters { top: 107px; left: 12px; right: 12px; gap: 6px; }
+    body:not(.embedded) .transport-filters { top: 60px; left: 12px; right: 12px; gap: 6px; }
     body:not(.embedded) .filter-chip { min-height: 30px; padding: 0 10px; font-size: 10px; }
     body:not(.embedded) .route-details { left: 12px; bottom: 72px; width: min(360px, calc(100vw - 78px)); max-height: min(300px, 38vh); }
     body:not(.embedded) .route-instructions { max-height: 84px; }

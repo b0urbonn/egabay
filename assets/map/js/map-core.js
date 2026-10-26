@@ -173,12 +173,4 @@ if (typeof maplibregl === 'undefined') {
     map.fitBounds(provinceBounds === HARD_BOUNDS ? ISLAND_VIEW : provinceBounds, { duration: 800 });
   });
 
-  // ---------- Panel collapse (embedded mode) ----------
-  const panel = document.getElementById('panel');
-  const collapseBtn = document.getElementById('collapse-btn');
-  if (EMBEDDED) panel.classList.add('collapsed');
-  collapseBtn.addEventListener('click', () => {
-    panel.classList.toggle('collapsed');
-    collapseBtn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
-  });
 }
