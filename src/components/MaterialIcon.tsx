@@ -51,7 +51,7 @@ export function MaterialIcon({
   color?: string;
 }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden>
+    <Svg width={size} height={size} viewBox="0 0 24 24" aria-hidden={true}>
       <Path d={paths[name]} fill={color} />
     </Svg>
   );

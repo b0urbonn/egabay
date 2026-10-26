@@ -2,7 +2,7 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest app change:** `f3abd0d` (merge: MapLibre map + Terminals screen + land-transport hubs)
+**Latest app change:** `f3abd0d` (merge: MapLibre map + Terminals screen + land-transport hubs); plus uncommitted working-tree edits — RBAC build plan, README tree map, web SVG icon fix
 
 **Public GitHub branch:** `origin/main` — merged locally through `ffcc59e`; local `main` additionally has the MapLibre map rebuild and both merges
 
@@ -23,9 +23,10 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
 - [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
 - [~] **Partial** — Map provider is implemented, but local coverage, offline support, licensing, and cost are not documented as evaluated.
-- [ ] **Not started** — Supabase-backed authentication and real operator/admin role workflows.
-- [ ] **Not started** — Verified pilot route data and named data/update owners.
-- [ ] **Not started** — Live vehicle sharing and operator notice publishing.
+- [x] **Done in local workspace** — Build plan updated (uncommitted) with the four-role access model: Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, plus commuters as public users. Includes the permissions matrix, group-scoped Supabase tables/relations, per-role screens, and the backend/app changes needed before implementing.
+- [ ] **Not started** — Supabase-backed authentication and the four real role workflows (super admin, chairperson, driver, commuter).
+- [ ] **Not started** — Verified pilot route, group, and terminal data and named data/update owners.
+- [ ] **Not started** — Live vehicle sharing and group announcement publishing.
 - [ ] **Not started** — Field pilot, measures, and AI route ranking.
 
 ### Latest public app changes (merged and pushed)
@@ -47,44 +48,53 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 
 ## Build plan progress
 
-### 0. Validate the transport network — Not started
+### 0. Validate the transport network and the operator registry — Not started
 
 - [ ] Choose pilot localities, transport modes, and routes.
+- [ ] Identify the pilot TODA and jeepney groups, their chairpersons, and their terminals.
 - [ ] Confirm stops, route variants, schedules, fares, transfers, and common disruptions with local sources.
-- [ ] Name the people responsible for verifying route data and publishing corrections/notices.
+- [ ] Name the people responsible for verifying route data, publishing corrections/notices, and holding the super admin account.
 - [ ] Agree on driver location consent, access, and retention before adding tracking.
 
-### 1. Build the data foundation — Partial
+### 1. Build the data foundation and access model — Partial
 
 - [x] Initial Supabase schema and row-level security policy definitions are in `supabase/migrations/`.
 - [x] Supabase client initialization is scaffolded in `src/lib/supabase.ts`.
-- [ ] Create/configure a Supabase project and apply the migration there.
-- [ ] Add only verified route and stop records; demo arrays are not verified seed data.
+- [x] RBAC data model is specified in `BUILD_PLAN.md` (groups, terminals, drivers, feedback, audit_log; role helpers; public-safe vehicle view).
+- [ ] Apply the RBAC changes to a migration: `profiles.role` → `commuter`/`driver`/`chairperson`/`super_admin`, new `groups`/`terminals`/`drivers`/`feedback`/`audit_log` tables, `vehicles.terminal_id`, `service_alerts.group_id`, group-scoped RLS policies, audit triggers.
+- [ ] Create/configure a Supabase project and apply the migrations there.
+- [ ] Add only verified groups, terminals, routes, and stops; demo arrays are not verified seed data.
+- [ ] Provision super admin and chairperson accounts through a controlled workflow.
 - [ ] Generate database types and add typed data-access functions.
-- [ ] Verify policies for public riders, commuters, drivers, operators, and admins.
+- [ ] Verify policies with anon, commuter, driver, chairperson, and super admin accounts.
 
 ### 2. Deliver the commuter MVP — Partial
 
 - [x] Home dashboard presents sample route and service notice previews.
-- [ ] No separate Plan or Updates screen exists in current code; add/restore them if needed for the MVP.
+- [x] Terminals directory screen exists, backed by sample data.
+- [ ] Wire the Terminals directory and terminal detail to the `terminals` table, with a public-safe vehicle board.
 - [ ] Replace sample routes and notices with Supabase reads.
 - [ ] Add destination search and locality/mode filtering backed by verified route records.
 - [ ] Add confirmed fare ranges, transfers, and source/freshness details.
+- [ ] Add the commuter feedback form (rating/complaint about a driver or vehicle).
 - [ ] Add useful cached reads and clear loading, empty, and stale-data states.
 - [ ] Keep suggested routes explainable and available without an AI service.
 
-### 3. Add service updates and live operations — Not started
+### 3. Deliver the role consoles, service updates, and live operations — Not started
 
-- [ ] Build an auditable operator workflow for publishing time-bounded notices.
-- [ ] Add driver trip start/stop controls and explicit location-sharing consent.
+- [ ] Replace mock auth with Supabase Auth; resolve profile and role at sign-in.
+- [ ] Add role-gated navigation (driver, chairperson, super admin sections appear by role).
+- [ ] Build the driver flow: group application, profile editor, availability, read-only announcements, trip start/stop consent.
+- [ ] Build the chairperson console: group dashboard, terminals manager, vehicle roster, driver approvals, assignments, announcement composer.
+- [ ] Build the super admin console: groups manager, chairperson assignment, user management, reports, override edits, audit log viewer.
 - [ ] Send location only during an active trip and show its last-updated time.
 - [ ] Subscribe to Supabase Realtime for authorized live positions and current alerts.
 - [ ] Set and document location access, retention, battery, and connectivity behavior.
 
 ### 4. Pilot and improve — Not started
 
-- [ ] Run a pilot on confirmed routes with commuters and operators.
-- [ ] Track successful trip searches, correction turnaround, notice freshness, driver opt-in, battery impact, and rider comprehension.
+- [ ] Run a pilot on confirmed routes with at least one TODA and one jeepney group; onboard chairpersons and drivers.
+- [ ] Track successful trip searches, correction turnaround, notice freshness, driver opt-in, approval turnaround, battery impact, and rider comprehension.
 - [ ] Review feedback and decide whether/how to expand coverage.
 
 ### 5. Add AI assistance after baseline quality — Not started
@@ -95,10 +105,10 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 
 ## Next work in dependency order
 
-1. Decide whether to keep the current Home/Map/Profile navigation or restore separate planning and updates screens.
-2. Confirm pilot route data and its trusted owners (Milestone 0).
-3. Configure Supabase, apply/review the migration, and add verified seed records (Milestone 1).
-4. Replace demo content with typed Supabase reads and add useful cached reads (Milestone 2).
-5. ~~Push the local merge and root docs so public `main` matches the workspace.~~ Done in `392bd4b`.
-6. Add real sign-in and staff workflows, then consider driver tracking and a field pilot.
+1. Confirm pilot route data, pilot TODA/jeepney groups and their chairpersons, and trusted data owners (Milestone 0).
+2. Write and review the RBAC migration per `BUILD_PLAN.md` → "Changes needed before implementing RBAC" (Milestone 1).
+3. Configure Supabase, apply the migrations, provision super admin/chairperson accounts, and add verified seed records (Milestone 1).
+4. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
+5. Add real sign-in and role-gated navigation, then build the driver, chairperson, and super admin surfaces (Milestone 3).
+6. ~~Push the local merge and root docs so public `main` matches the workspace.~~ Done in `392bd4b`; repeat for the current uncommitted docs/RBAC edits when ready.
 

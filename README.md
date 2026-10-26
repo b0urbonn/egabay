@@ -5,7 +5,7 @@ React Native starter for an AI-assisted public transportation navigation and mon
 ## Current starter
 
 - Guided first-run flow: onboarding slides → welcome → mock login/sign-up or "Continue offline" → main app
-- Three tabs inside the app shell: Home, Map, and Profile, plus a Settings sub-screen (appearance, two-tap reset)
+- Four tabs inside the app shell: Home, Trips, Map, and Profile, plus Settings and Terminals sub-screens
 - Mock auth and guest sessions persisted locally (expo-sqlite localStorage); demo account `demo@egabay.ph`
 - Online/offline connection modes; guests run offline and can create an account later from Profile
 - Sample routes and service notices across Marinduque towns, clearly labeled as demo content
@@ -38,36 +38,63 @@ Only the Supabase publishable key belongs in the mobile app. Never put a service
 
 ## Project map
 
-    App.tsx                          Stage routing: onboarding → welcome → auth → app shell
-    src/screens/OnboardingScreen.tsx First-run "about the app" slides
-    src/screens/WelcomeScreen.tsx    Login / sign up / continue offline entry
-    src/screens/LoginScreen.tsx      Mock login with demo account hint
-    src/screens/SignUpScreen.tsx     Mock account creation with validation
-    src/screens/MainShell.tsx        Bottom tabs (Home, Map, Profile), Settings sub-screen
-    src/screens/HomeScreen.tsx       Travel dashboard with sample routes and notices
-    src/screens/ProfileScreen.tsx    Account/guest profile, mode switch, log out
-    src/screens/SettingsScreen.tsx   Appearance picker and reset
-    src/components/ui.tsx            Shared UI kit (Button, TextField, Card, Chip, Badge)
-    src/components/MarinduqueMap.tsx MapLibre map embed (WebView native / iframe web)
-    src/components/RouteCard.tsx     Route summary card
-    src/lib/session.ts               Mock auth, session, and onboarding persistence
-    src/lib/storage.ts               Safe localStorage wrappers
-    src/lib/appMode.ts               Online/offline mode persistence
-    src/lib/appearance.ts            Appearance setting persistence
-    src/lib/supabase.ts              Supabase client and session persistence
-    src/lib/supabase.web.ts          Browser Supabase client using localStorage
-    src/data/demo.ts                 Explicitly non-live sample routes and notices
-    src/theme.ts                     Shared visual tokens
-    assets/map/                      Map sources: index.html + js/ (9 feature modules)
-                                     + css/ (3 stylesheets) + vendor/ (MapLibre)
-    assets/generated/marinduque-map.html  GENERATED map bundle — build output, NOT committed;
-                                          `npm run build:map` regenerates it (auto on start)
-    scripts/build-map.mjs            Inlines assets/map/* into the bundled map page
-    metro.config.js                  Bundles .html files as app assets
-    supabase/migrations/             Database schema, policies, and Realtime setup
-    BUILD_PLAN.md                    Product and implementation milestones
-    CHECKLIST.md                     Current status against the build plan
-    CHANGELOG.md                     Dated record of repository changes
+    .
+    ├── App.tsx                              Stage routing: onboarding → welcome → auth → app shell
+    ├── index.ts                             Expo entry point
+    ├── app.json                             Expo app config
+    ├── metro.config.js                      Bundles .html and .wasm files as app assets
+    ├── package.json                         Scripts (start/web/build:map/typecheck) and dependencies
+    │
+    ├── src/
+    │   ├── theme.ts                         Shared visual tokens
+    │   ├── screens/
+    │   │   ├── OnboardingScreen.tsx         First-run "about the app" slides
+    │   │   ├── WelcomeScreen.tsx            Login / sign up / continue offline entry
+    │   │   ├── LoginScreen.tsx              Mock login with demo account hint
+    │   │   ├── SignUpScreen.tsx             Mock account creation with validation
+    │   │   ├── MainShell.tsx                Bottom tabs (Home, Trips, Map, Profile) + Settings/Terminals sub-screens
+    │   │   ├── HomeScreen.tsx               Travel dashboard with sample routes and notices
+    │   │   ├── TripsScreen.tsx              Trips tab with compact trip cards
+    │   │   ├── TerminalsScreen.tsx          Per-municipality land-transport terminals directory
+    │   │   ├── ProfileScreen.tsx            Account/guest profile, mode switch, log out
+    │   │   └── SettingsScreen.tsx           Appearance picker and reset
+    │   ├── components/
+    │   │   ├── ui.tsx                       Shared UI kit (Button, TextField, Card, Chip, Badge)
+    │   │   ├── MarinduqueMap.tsx            MapLibre map embed (WebView on native)
+    │   │   ├── MarinduqueMap.web.tsx        MapLibre map embed (iframe on web)
+    │   │   ├── MaterialIcon.tsx             Material-style icons drawn with react-native-svg
+    │   │   ├── MapTabIcon.tsx               Folded-map-with-pin tab icon
+    │   │   └── RouteCard.tsx                Route summary card
+    │   ├── lib/
+    │   │   ├── session.ts                   Mock auth, session, and onboarding persistence
+    │   │   ├── storage.ts                   Safe localStorage wrappers
+    │   │   ├── appMode.ts                   Online/offline mode persistence
+    │   │   ├── appearance.ts                Appearance setting persistence
+    │   │   ├── theme.ts                     Theme context and hooks (useColors, useThemeStyles)
+    │   │   ├── supabase.ts                  Supabase client and session persistence
+    │   │   └── supabase.web.ts              Browser Supabase client using localStorage
+    │   └── data/
+    │       └── demo.ts                      Explicitly non-live sample routes and notices
+    │
+    ├── assets/
+    │   ├── map/
+    │   │   ├── index.html                   Map page shell (scripts load in dependency order)
+    │   │   ├── js/                          9 feature modules: config, data, helpers, map-core,
+    │   │   │                                markers, routes, boundary, search, assistant
+    │   │   ├── css/                         3 stylesheets: marinduque-map, features, assistant
+    │   │   └── vendor/                      Vendored MapLibre GL (js + css, no CDN dependency)
+    │   └── generated/
+    │       └── marinduque-map.html          GENERATED map bundle — build output, NOT committed;
+    │                                        `npm run build:map` regenerates it (auto on start)
+    │
+    ├── scripts/
+    │   └── build-map.mjs                    Inlines assets/map/* into the bundled map page
+    ├── supabase/
+    │   └── migrations/                      Database schema, policies, and Realtime setup
+    │
+    ├── BUILD_PLAN.md                        Product and implementation milestones (incl. RBAC roles)
+    ├── CHECKLIST.md                         Current status against the build plan
+    └── CHANGELOG.md                         Dated record of repository changes
 
 ## Next implementation step
 
