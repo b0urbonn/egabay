@@ -2,9 +2,9 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest app change:** `f1dabcb` (merge: MapLibre map + Trips tab + profile updates)
+**Latest app change:** `f3abd0d` (merge: MapLibre map + Terminals screen + land-transport hubs)
 
-**Public GitHub branch:** `origin/main` — merged locally through `00193e7`; local `main` additionally has the MapLibre map rebuild and the `f1dabcb` merge
+**Public GitHub branch:** `origin/main` — merged locally through `ffcc59e`; local `main` additionally has the MapLibre map rebuild and both merges
 
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
 
@@ -13,11 +13,12 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 ## Current state
 
 - [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
-- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen. (Profile redesigned and the top app header removed in `0097625`; Settings now opens from Profile → Preferences and was simplified in `5e10e85`; Home redesigned with a large-title header and grouped lists in `874abe8`.)
+- [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, Map, Trips, Profile tabs plus Settings (from Profile) and Terminals (from Home) sub-screens. (Profile redesigned and the top app header removed in `0097625`; Settings simplified in `5e10e85`; Home redesigned in `874abe8`; Terminals directory added in `b0fa8af`.)
 - [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
 - [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as the default "General" render with OSM raster fallbacks, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (`js/` + `css/`, ≤500 lines/file); `npm run build:map` emits the single-file bundle `assets/generated/marinduque-map.html` the app embeds (generated output, gitignored — auto-rebuilt on start).
-- [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road route-details panel with turn-by-turn from Boac, and a preview AI-assistant chat (canned replies, no backend).
+- [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road route-details panel with turn-by-turn from Boac, and a preview AI-assistant chat (canned replies, no backend). POI markers are now per-town land-transport service areas (approximate, unverified) rather than ferry ports.
+- [x] **Done in local workspace** — Terminals directory screen (from Home explore banner): per-municipality land-transport terminals with locality filter and search, backed by sample/approximate data — not verified terminal records.
 - [x] **Done in current local workspace** — Native and browser Supabase client scaffolds plus initial migration defining tables, row-level security, and Realtime publication entries.
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
 - [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
@@ -29,7 +30,9 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 
 ### Latest public app changes (merged and pushed)
 
-- [x] **Done** — Trips tab and compact trip cards added publicly in `f2b1a88`; navigation is now Home, Trips, Map, Profile.
+- [x] **Done** — Terminals directory screen, inland-transport Explore banner, and land-transport hub POIs added publicly in `b0fa8af`/`ffcc59e`; Quick Access dark-mode icons fixed in `d2ac96c`.
+- [x] **Done** — Public branch merged into local `main` in `f3abd0d`; the public map-page edits (land-transport hub POIs, assistant reply) were ported into the MapLibre sources since the generated page is build output.
+- [x] **Done** — Trips tab and compact trip cards added publicly in `f2b1a88`; navigation is now Home, Map, Trips, Profile.
 - [x] **Done** — Profile menu, map markers, and the map assistant/filters/route-details UI added publicly in `00193e7`.
 - [x] **Done** — Public branch merged into local `main` in `f1dabcb`; the public Leaflet map additions were ported onto the MapLibre page.
 - [x] **Done** — Home travel dashboard and browser-specific Supabase client (`src/lib/supabase.web.ts`) were added in `3121b49`.
