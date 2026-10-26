@@ -1,0 +1,162 @@
+/* AI assistant FAB + preview chat panel. */
+/* ---- AI assistant FAB + preview chat panel ---- */
+  .assistant-fab {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.72);
+    border-radius: 17px;
+    color: var(--green-dark);
+    background: var(--lime);
+    box-shadow: var(--float-shadow);
+    cursor: pointer;
+  }
+  .assistant-fab:hover { filter: brightness(.96); transform: translateY(-1px); }
+  .assistant-fab svg { width: 23px; height: 23px; fill: currentColor; }
+  .assistant-fab[hidden] { display: none; }
+
+  .assistant-chat-panel {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+    width: min(370px, calc(100vw - 28px));
+    height: min(540px, calc(100vh - 28px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: 0 14px 40px rgba(12, 28, 20, .28);
+  }
+  .assistant-chat-panel.open { display: flex; }
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px 12px;
+    color: #fff;
+    background: var(--green);
+  }
+  .chat-avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    color: var(--green-dark);
+    background: var(--lime);
+  }
+  .chat-avatar svg { width: 21px; height: 21px; fill: currentColor; }
+  .chat-heading { flex: 1; min-width: 0; }
+  .chat-title { margin: 0; font-size: 13px; font-weight: 800; line-height: 18px; }
+  .chat-subtitle { margin: 2px 0 0; color: rgba(255,255,255,.78); font-size: 10px; line-height: 14px; }
+  .chat-close {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: rgba(255,255,255,.14);
+    cursor: pointer;
+  }
+  .chat-close:hover { background: rgba(255,255,255,.24); }
+  .chat-close svg { width: 18px; height: 18px; fill: currentColor; }
+  .chat-messages {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 130px;
+    overflow-y: auto;
+    padding: 15px 13px 10px;
+    background: #F7F9F6;
+  }
+  .chat-row { display: flex; width: 100%; }
+  .chat-row.user { justify-content: flex-end; }
+  .chat-bubble {
+    max-width: 84%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 15px 15px 15px 4px;
+    color: var(--ink);
+    background: #fff;
+    font-size: 11px;
+    line-height: 16px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .chat-row.user .chat-bubble {
+    border-color: var(--green);
+    border-radius: 15px 15px 4px 15px;
+    color: #fff;
+    background: var(--green);
+  }
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px 9px;
+    border-top: 1px solid var(--line);
+    background: var(--card);
+  }
+  .quick-reply {
+    min-height: 29px;
+    padding: 0 10px;
+    border: 1px solid #CFE2D4;
+    border-radius: 15px;
+    color: var(--green-dark);
+    background: #F3F8F3;
+    font: 700 9px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: pointer;
+  }
+  .quick-reply:hover { background: #E5F3EA; }
+  .chat-form {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 11px;
+    border-top: 1px solid var(--line);
+    background: var(--card);
+  }
+  #chat-input {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    outline: none;
+    color: var(--ink);
+    background: #FBFCFA;
+    font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #chat-input:focus { border-color: var(--green); }
+  #chat-input::placeholder { color: var(--muted); }
+  .chat-send {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: var(--green);
+    cursor: pointer;
+  }
+  .chat-send:hover { background: var(--green-dark); }
+  .chat-send svg { width: 19px; height: 19px; fill: currentColor; }
+  .chat-footnote { margin: 0; padding: 0 12px 10px; color: var(--muted); background: var(--card); font-size: 9px; line-height: 12px; }

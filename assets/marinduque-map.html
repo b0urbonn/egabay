@@ -179,7 +179,334 @@
   /* Bottom-right stack lifts above the assistant FAB. */
   .locate-fab { transform: translateY(-64px); }
 
-  /* ---- AI assistant FAB + preview chat panel ---- */
+
+  /* Basemap picker popover */
+  .basemap-ctrl { position: relative; }
+  .basemap-menu {
+    position: absolute;
+    top: 0;
+    right: 48px;
+    min-width: 150px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--float-shadow);
+    padding: 6px;
+    display: none;
+  }
+  .basemap-menu.open { display: block; }
+  .basemap-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: 0;
+    background: none;
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+  }
+  .basemap-menu button:hover { background: #E5F3EA; }
+  .basemap-menu button.active { color: var(--green-dark); }
+  .basemap-menu button.active::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+  .basemap-menu button:not(.active)::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+  }
+  .basemap-menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 4px; }
+  .basemap-menu .toggle-row { font-size: 12px; font-weight: 700; }
+
+  .panel-foot { margin-top: 8px; font-size: 9.5px; color: var(--muted); line-height: 14px; }
+
+  /* Compact mode when embedded in the app */
+  body.embedded .panel { top: 8px; left: 8px; width: auto; min-width: 128px; padding: 8px 11px; border-radius: 12px; }
+  body.embedded .panel-title { font-size: 14px; margin: 0; }
+  body.embedded .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
+  body.embedded .panel-sub { display: none; }
+  body.embedded .panel-foot { display: none; }
+  body.embedded .collapse-btn { display: block; }
+  body.embedded .panel.collapsed .panel-body { display: none; }
+  body.embedded .panel-body { margin-top: 6px; }
+  body.embedded .search-float { top: auto; bottom: 74px; left: 8px; transform: none; width: min(230px, calc(100vw - 76px)); }
+  body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; }
+  body.embedded #results { top: auto; bottom: 36px; }
+  body.embedded .locate-fab, body.embedded .expand-btn, body.embedded .basemap-btn { width: 34px; height: 34px; font-size: 16px; line-height: 32px; }
+
+  /* Narrow screens (phones): search on top, compact title chip below it */
+  @media (max-width: 860px) {
+    body:not(.embedded) .search-float { top: 12px; left: 12px; right: 58px; transform: none; width: auto; }
+    body:not(.embedded) .panel { top: 62px; left: 12px; width: auto; padding: 8px 12px; border-radius: 12px; }
+    body:not(.embedded) .panel-title { font-size: 14px; margin: 0; }
+    body:not(.embedded) .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
+    body:not(.embedded) .panel-sub, body:not(.embedded) .panel-body { display: none; }
+  }
+
+  /* ---- point-of-interest markers ---- */
+  .poi-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--orange);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+    cursor: pointer;
+  }
+
+  .island-label {
+    background: none;
+    border: 0;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-shadow: 0 1px 5px rgba(24, 35, 30, 0.65), 0 0 2px rgba(24, 35, 30, 0.5);
+    box-shadow: none;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .search-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid var(--orange);
+    background: rgba(233, 129, 63, 0.25);
+    pointer-events: none;
+  }
+  .locate-dot {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: var(--green);
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+    pointer-events: none;
+  }
+
+  /* ---- MapLibre chrome: floating cards like the search bar ---- */
+  .maplibregl-ctrl-top-right .maplibregl-ctrl { margin: 12px 12px 0 0; }
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl { margin: 0 12px 10px 0; }
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0 0 10px 12px; }
+
+  .maplibregl-ctrl-group {
+    border: 1px solid var(--line) !important;
+    border-radius: 20px !important;
+    overflow: hidden;
+    box-shadow: var(--float-shadow) !important;
+    background: var(--card) !important;
+  }
+  .maplibregl-ctrl-group button {
+    width: 40px !important;
+    height: 40px !important;
+    background: var(--card) !important;
+    border: 0 !important;
+    cursor: pointer;
+  }
+  .maplibregl-ctrl-group button + button { border-top: 1px solid var(--line) !important; }
+  .maplibregl-ctrl-group button:hover { background: #E5F3EA !important; }
+  .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    background-position: center;
+    margin: 0 auto;
+  }
+
+  .maplibregl-ctrl-attrib {
+    background: var(--card) !important;
+    color: var(--muted) !important;
+    font-size: 9px !important;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--float-shadow);
+    margin-right: 70px !important;
+  }
+  .maplibregl-ctrl-attrib a { color: var(--green) !important; }
+  .maplibregl-ctrl-attrib-button { filter: none; }
+
+  .maplibregl-ctrl-scale {
+    background: var(--card) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 8px 8px;
+    box-shadow: var(--float-shadow);
+    font-size: 9px !important;
+    padding: 2px 6px;
+  }
+
+  .maplibregl-popup-content {
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 12px !important;
+    box-shadow: 0 8px 22px rgba(24, 35, 30, 0.2) !important;
+    padding: 10px 13px;
+    font-family: inherit;
+  }
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--card); }
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--card); }
+  .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--card); }
+  .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--card); }
+  .maplibregl-popup-close-button { color: var(--muted); }
+  .popup-title { font-size: 13px; font-weight: 800; color: var(--ink); margin: 0 0 2px; }
+  .popup-sub { font-size: 11px; color: var(--muted); margin: 0; }
+  #toast {
+    position: absolute;
+    bottom: 30px;
+    right: 72px;
+    left: auto;
+    transform: translateY(20px);
+    z-index: 1000;
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    box-shadow: var(--float-shadow);
+    font-size: 12px;
+    padding: 9px 16px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    width: max-content;
+    max-width: min(360px, calc(100vw - 100px));
+    text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  #map-error {
+    position: absolute;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--sea);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+  }
+</style>
+<style data-src="features.css">
+/* Transport filter chips, route-details panel, route endpoints. */
+/* ---- Transport filter chips ---- */
+  .transport-filters {
+    position: absolute;
+    top: 98px;
+    left: 260px;
+    right: 14px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    pointer-events: none;
+  }
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 0 12px;
+    color: var(--ink);
+    background: rgba(255,255,255,.96);
+    box-shadow: var(--float-shadow);
+    font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .filter-chip svg { width: 15px; height: 15px; fill: currentColor; }
+  .filter-chip:hover { border-color: var(--green); }
+  .filter-chip.active { border-color: var(--green); color: #fff; background: var(--green); }
+  .filter-chip:disabled { opacity: .45; cursor: default; }
+
+  /* ---- Route details panel ---- */
+  .route-details {
+    position: absolute;
+    left: 14px;
+    bottom: 72px;
+    z-index: 1000;
+    display: none;
+    width: min(370px, calc(100vw - 84px));
+    max-height: min(350px, calc(100vh - 250px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    background: var(--card);
+    box-shadow: var(--float-shadow);
+  }
+  .route-details.open { display: block; }
+  .route-details-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px 7px; }
+  .route-title { color: var(--ink); font-size: 14px; font-weight: 800; margin: 0; }
+  .route-source { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: 1px; margin: 3px 0 0; }
+  .route-clear {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+  }
+  .route-clear:hover { background: #F0F6F1; color: var(--ink); }
+  .route-clear svg { width: 18px; height: 18px; fill: currentColor; }
+  .route-metrics { display: flex; gap: 16px; padding: 2px 14px 9px; color: var(--ink); font-size: 11px; font-weight: 800; }
+  .route-metrics[hidden], .route-instructions[hidden] { display: none; }
+  .route-metrics span { color: var(--muted); font-weight: 600; }
+  .route-state { padding: 4px 14px 12px; color: var(--muted); font-size: 11px; line-height: 16px; }
+  .route-instructions { max-height: 115px; overflow-y: auto; border-top: 1px solid var(--line); padding: 2px 14px 6px; }
+  .route-step { display: flex; gap: 8px; padding: 6px 0; color: var(--ink); font-size: 10px; line-height: 14px; border-bottom: 1px solid #F0F2EF; }
+  .route-step:last-child { border-bottom: 0; }
+  .route-step-index { flex: 0 0 16px; color: var(--green); font-weight: 900; }
+  .route-step-detail { flex: 1; }
+  .route-step-distance { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
+  .route-note { border-top: 1px solid var(--line); padding: 7px 14px 9px; color: var(--muted); font-size: 9px; line-height: 13px; }
+  .route-end-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+    pointer-events: none;
+  }
+
+  /* Compact mode when embedded in the app */
+  body.embedded .transport-filters { top: 96px; left: 8px; right: 8px; gap: 5px; }
+  body.embedded .filter-chip { min-height: 28px; padding: 0 10px; font-size: 9px; }
+  body.embedded .route-details { left: 8px; bottom: 72px; width: min(330px, calc(100vw - 70px)); max-height: 34vh; }
+
+  /* Narrow screens (phones) */
+  @media (max-width: 860px) {
+    body:not(.embedded) .transport-filters { top: 107px; left: 12px; right: 12px; gap: 6px; }
+    body:not(.embedded) .filter-chip { min-height: 30px; padding: 0 10px; font-size: 10px; }
+    body:not(.embedded) .route-details { left: 12px; bottom: 72px; width: min(360px, calc(100vw - 78px)); max-height: min(300px, 38vh); }
+    body:not(.embedded) .route-instructions { max-height: 84px; }
+  }
+</style>
+<style data-src="assistant.css">
+/* AI assistant FAB + preview chat panel. */
+/* ---- AI assistant FAB + preview chat panel ---- */
   .assistant-fab {
     position: absolute;
     right: 14px;
@@ -340,322 +667,6 @@
   .chat-send:hover { background: var(--green-dark); }
   .chat-send svg { width: 19px; height: 19px; fill: currentColor; }
   .chat-footnote { margin: 0; padding: 0 12px 10px; color: var(--muted); background: var(--card); font-size: 9px; line-height: 12px; }
-
-  /* ---- Transport filter chips ---- */
-  .transport-filters {
-    position: absolute;
-    top: 98px;
-    left: 260px;
-    right: 14px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    pointer-events: none;
-  }
-  .filter-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    flex: 0 0 auto;
-    min-height: 32px;
-    border: 1px solid var(--line);
-    border-radius: 17px;
-    padding: 0 12px;
-    color: var(--ink);
-    background: rgba(255,255,255,.96);
-    box-shadow: var(--float-shadow);
-    font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    white-space: nowrap;
-    cursor: pointer;
-    pointer-events: auto;
-  }
-  .filter-chip svg { width: 15px; height: 15px; fill: currentColor; }
-  .filter-chip:hover { border-color: var(--green); }
-  .filter-chip.active { border-color: var(--green); color: #fff; background: var(--green); }
-  .filter-chip:disabled { opacity: .45; cursor: default; }
-
-  /* ---- Route details panel ---- */
-  .route-details {
-    position: absolute;
-    left: 14px;
-    bottom: 72px;
-    z-index: 1000;
-    display: none;
-    width: min(370px, calc(100vw - 84px));
-    max-height: min(350px, calc(100vh - 250px));
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 17px;
-    background: var(--card);
-    box-shadow: var(--float-shadow);
-  }
-  .route-details.open { display: block; }
-  .route-details-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px 7px; }
-  .route-title { color: var(--ink); font-size: 14px; font-weight: 800; margin: 0; }
-  .route-source { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: 1px; margin: 3px 0 0; }
-  .route-clear {
-    width: 28px;
-    height: 28px;
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
-    padding: 0;
-    border: 0;
-    border-radius: 9px;
-    color: var(--muted);
-    background: transparent;
-    cursor: pointer;
-  }
-  .route-clear:hover { background: #F0F6F1; color: var(--ink); }
-  .route-clear svg { width: 18px; height: 18px; fill: currentColor; }
-  .route-metrics { display: flex; gap: 16px; padding: 2px 14px 9px; color: var(--ink); font-size: 11px; font-weight: 800; }
-  .route-metrics[hidden], .route-instructions[hidden] { display: none; }
-  .route-metrics span { color: var(--muted); font-weight: 600; }
-  .route-state { padding: 4px 14px 12px; color: var(--muted); font-size: 11px; line-height: 16px; }
-  .route-instructions { max-height: 115px; overflow-y: auto; border-top: 1px solid var(--line); padding: 2px 14px 6px; }
-  .route-step { display: flex; gap: 8px; padding: 6px 0; color: var(--ink); font-size: 10px; line-height: 14px; border-bottom: 1px solid #F0F2EF; }
-  .route-step:last-child { border-bottom: 0; }
-  .route-step-index { flex: 0 0 16px; color: var(--green); font-weight: 900; }
-  .route-step-detail { flex: 1; }
-  .route-step-distance { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
-  .route-note { border-top: 1px solid var(--line); padding: 7px 14px 9px; color: var(--muted); font-size: 9px; line-height: 13px; }
-  .route-end-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
-    pointer-events: none;
-  }
-
-  /* Basemap picker popover */
-  .basemap-ctrl { position: relative; }
-  .basemap-menu {
-    position: absolute;
-    top: 0;
-    right: 48px;
-    min-width: 150px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--float-shadow);
-    padding: 6px;
-    display: none;
-  }
-  .basemap-menu.open { display: block; }
-  .basemap-menu button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    border: 0;
-    background: none;
-    padding: 8px 10px;
-    border-radius: 9px;
-    font-size: 12px;
-    font-family: inherit;
-    font-weight: 700;
-    color: var(--ink);
-    cursor: pointer;
-    text-align: left;
-  }
-  .basemap-menu button:hover { background: #E5F3EA; }
-  .basemap-menu button.active { color: var(--green-dark); }
-  .basemap-menu button.active::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    flex-shrink: 0;
-  }
-  .basemap-menu button:not(.active)::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    flex-shrink: 0;
-  }
-  .basemap-menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 4px; }
-  .basemap-menu .toggle-row { font-size: 12px; font-weight: 700; }
-
-  .panel-foot { margin-top: 8px; font-size: 9.5px; color: var(--muted); line-height: 14px; }
-
-  /* Compact mode when embedded in the app */
-  body.embedded .panel { top: 8px; left: 8px; width: auto; min-width: 128px; padding: 8px 11px; border-radius: 12px; }
-  body.embedded .panel-title { font-size: 14px; margin: 0; }
-  body.embedded .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
-  body.embedded .panel-sub { display: none; }
-  body.embedded .panel-foot { display: none; }
-  body.embedded .collapse-btn { display: block; }
-  body.embedded .panel.collapsed .panel-body { display: none; }
-  body.embedded .panel-body { margin-top: 6px; }
-  body.embedded .search-float { top: auto; bottom: 74px; left: 8px; transform: none; width: min(230px, calc(100vw - 76px)); }
-  body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; }
-  body.embedded #results { top: auto; bottom: 36px; }
-  body.embedded .locate-fab, body.embedded .expand-btn, body.embedded .basemap-btn { width: 34px; height: 34px; font-size: 16px; line-height: 32px; }
-  body.embedded .transport-filters { top: 96px; left: 8px; right: 8px; gap: 5px; }
-  body.embedded .filter-chip { min-height: 28px; padding: 0 10px; font-size: 9px; }
-  body.embedded .route-details { left: 8px; bottom: 72px; width: min(330px, calc(100vw - 70px)); max-height: 34vh; }
-
-  /* Narrow screens (phones): search on top, compact title chip below it */
-  @media (max-width: 860px) {
-    body:not(.embedded) .search-float { top: 12px; left: 12px; right: 58px; transform: none; width: auto; }
-    body:not(.embedded) .panel { top: 62px; left: 12px; width: auto; padding: 8px 12px; border-radius: 12px; }
-    body:not(.embedded) .panel-title { font-size: 14px; margin: 0; }
-    body:not(.embedded) .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
-    body:not(.embedded) .panel-sub, body:not(.embedded) .panel-body { display: none; }
-    body:not(.embedded) .transport-filters { top: 107px; left: 12px; right: 12px; gap: 6px; }
-    body:not(.embedded) .filter-chip { min-height: 30px; padding: 0 10px; font-size: 10px; }
-    body:not(.embedded) .route-details { left: 12px; bottom: 72px; width: min(360px, calc(100vw - 78px)); max-height: min(300px, 38vh); }
-    body:not(.embedded) .route-instructions { max-height: 84px; }
-  }
-
-  /* ---- point-of-interest markers ---- */
-  .poi-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--orange);
-    border: 2px solid #fff;
-    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
-    cursor: pointer;
-  }
-
-  .island-label {
-    background: none;
-    border: 0;
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    text-shadow: 0 1px 5px rgba(24, 35, 30, 0.65), 0 0 2px rgba(24, 35, 30, 0.5);
-    box-shadow: none;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-
-  .search-dot {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 3px solid var(--orange);
-    background: rgba(233, 129, 63, 0.25);
-    pointer-events: none;
-  }
-  .locate-dot {
-    width: 17px;
-    height: 17px;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    background: var(--green);
-    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
-    pointer-events: none;
-  }
-
-  /* ---- MapLibre chrome: floating cards like the search bar ---- */
-  .maplibregl-ctrl-top-right .maplibregl-ctrl { margin: 12px 12px 0 0; }
-  .maplibregl-ctrl-bottom-right .maplibregl-ctrl { margin: 0 12px 10px 0; }
-  .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0 0 10px 12px; }
-
-  .maplibregl-ctrl-group {
-    border: 1px solid var(--line) !important;
-    border-radius: 20px !important;
-    overflow: hidden;
-    box-shadow: var(--float-shadow) !important;
-    background: var(--card) !important;
-  }
-  .maplibregl-ctrl-group button {
-    width: 40px !important;
-    height: 40px !important;
-    background: var(--card) !important;
-    border: 0 !important;
-    cursor: pointer;
-  }
-  .maplibregl-ctrl-group button + button { border-top: 1px solid var(--line) !important; }
-  .maplibregl-ctrl-group button:hover { background: #E5F3EA !important; }
-  .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
-    background-position: center;
-    margin: 0 auto;
-  }
-
-  .maplibregl-ctrl-attrib {
-    background: var(--card) !important;
-    color: var(--muted) !important;
-    font-size: 9px !important;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    box-shadow: var(--float-shadow);
-    margin-right: 70px !important;
-  }
-  .maplibregl-ctrl-attrib a { color: var(--green) !important; }
-  .maplibregl-ctrl-attrib-button { filter: none; }
-
-  .maplibregl-ctrl-scale {
-    background: var(--card) !important;
-    color: var(--ink) !important;
-    border: 1px solid var(--line) !important;
-    border-top: 0 !important;
-    border-radius: 0 0 8px 8px;
-    box-shadow: var(--float-shadow);
-    font-size: 9px !important;
-    padding: 2px 6px;
-  }
-
-  .maplibregl-popup-content {
-    background: var(--card);
-    color: var(--ink);
-    border: 1px solid var(--line);
-    border-radius: 12px !important;
-    box-shadow: 0 8px 22px rgba(24, 35, 30, 0.2) !important;
-    padding: 10px 13px;
-    font-family: inherit;
-  }
-  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--card); }
-  .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--card); }
-  .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--card); }
-  .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--card); }
-  .maplibregl-popup-close-button { color: var(--muted); }
-  .popup-title { font-size: 13px; font-weight: 800; color: var(--ink); margin: 0 0 2px; }
-  .popup-sub { font-size: 11px; color: var(--muted); margin: 0; }
-  #toast {
-    position: absolute;
-    bottom: 30px;
-    right: 72px;
-    left: auto;
-    transform: translateY(20px);
-    z-index: 1000;
-    background: var(--card);
-    color: var(--ink);
-    border: 1px solid var(--line);
-    box-shadow: var(--float-shadow);
-    font-size: 12px;
-    padding: 9px 16px;
-    border-radius: 20px;
-    opacity: 0;
-    transition: opacity 0.25s, transform 0.25s;
-    pointer-events: none;
-    width: max-content;
-    max-width: min(360px, calc(100vw - 100px));
-    text-align: center;
-  }
-  #toast.show { opacity: 1; transform: translateY(0); }
-
-  #map-error {
-    position: absolute;
-    inset: 0;
-    z-index: 2000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: var(--sea);
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 700;
-    text-align: center;
-  }
 </style>
 </head>
 <body>
@@ -813,21 +824,12 @@ return maplibregl$1;
 //# sourceMappingURL=maplibre-gl.js.map
 
 </script>
-<script data-src="marinduque-map.js">
-(function () {
-'use strict';
-
-// The map engine is vendored under assets/map/vendor/ and inlined into the
-// bundled page. If it somehow isn't there, fail visibly instead of showing
-// a bare sea-coloured box.
-if (typeof maplibregl === 'undefined') {
-  const box = document.getElementById('map-error');
-  if (box) {
-    box.textContent = 'Map engine failed to load — MapLibre GL is unavailable.';
-    box.style.display = 'flex';
-  }
-  return;
-}
+<!-- Load order matters: plain scripts share top-level scope, so each file
+     may use anything declared in the files above it. -->
+<script data-src="config.js">
+// Shared configuration for the Marinduque map page.
+// Plain scripts share top-level scope: everything declared here is visible
+// to the feature modules loaded after this file (see index.html order).
 
 // Compact UI when loaded with #embed (app card). #full or no hash = full UI.
 const EMBEDDED = /#embed/.test(location.hash);
@@ -837,6 +839,7 @@ if (EMBEDDED) document.body.classList.add('embedded');
 // MapLibre uses [lng, lat] ordering everywhere.
 const ISLAND_VIEW = [[121.74, 13.15], [122.22, 13.63]]; // initial frame
 const HARD_BOUNDS = [[121.62, 13.05], [122.32, 13.72]];   // panning limit
+let provinceBounds = HARD_BOUNDS;
 
 // Sea cover: world polygon; island ring is punched in once the boundary loads.
 const WORLD_RING = [[-180, -89], [180, -89], [180, 89], [-180, 89], [-180, -89]];
@@ -846,12 +849,17 @@ let seaData = {
   geometry: { type: 'Polygon', coordinates: [WORLD_RING] },
 };
 
-// ---------- Base layers (free, no API keys, CORS-enabled), each with its
-// water color. MapLibre fetches raster tiles via fetch(), so every host here
-// must return Access-Control-Allow-Origin — verified: OSM, CARTO, Esri,
-// osm.fr (CyclOSM). Do NOT add tile.memomaps.de: no CORS header, silently
-// renders nothing.
+// ---------- Base layers ----------
+// Render: OpenMapTiles vector tiles by default (VersaTiles free host, no key).
+// Fallbacks are raster tiles from OpenStreetMap-family servers.
+// MapLibre fetches tiles via fetch(), so every host must return
+// Access-Control-Allow-Origin — verified for all entries below.
+// Do NOT add tile.memomaps.de: no CORS header, silently renders nothing.
 const baseStyles = {
+  'OpenMapTiles': {
+    sea: '#aad3df',
+    styleUrl: 'https://tiles.versatiles.org/assets/styles/colorful/style.json',
+  },
   'Transport': {
     sea: '#a4c9d8',
     tiles: [
@@ -886,12 +894,14 @@ const baseStyles = {
     attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
   },
 };
-let activeBase = 'Transport';
+let activeBase = 'OpenMapTiles';
 let showRoutes = true;
 
 // Raster paint values approximate the old tile filter
 // (saturate 1.4, contrast 1.07, hue -8deg, brightness 0.98).
+// Vector styles are used as-is; raster entries get this light grade.
 function makeStyle(cfg) {
+  if (cfg.styleUrl) return cfg.styleUrl;
   return {
     version: 8,
     sources: {
@@ -902,7 +912,6 @@ function makeStyle(cfg) {
         maxzoom: cfg.maxZoom,
         attribution: cfg.attribution,
       },
-      sea: { type: 'geojson', data: seaData },
     },
     layers: [
       {
@@ -916,95 +925,17 @@ function makeStyle(cfg) {
           'raster-brightness-max': 0.98,
         },
       },
-      {
-        id: 'sea',
-        type: 'fill',
-        source: 'sea',
-        paint: { 'fill-color': cfg.sea, 'fill-opacity': 1 },
-      },
-      {
-        // Hairline highlight hides sub-pixel seams between mask and tiles.
-        id: 'coastline',
-        type: 'line',
-        source: 'sea',
-        paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 1 },
-      },
     ],
   };
 }
 
-const map = new maplibregl.Map({
-  container: 'map',
-  style: makeStyle(baseStyles[activeBase]),
-  bounds: ISLAND_VIEW,
-  doubleClickZoom: false, // double-click/tap resets the view instead
-  pitchWithRotate: false,
-  minZoom: 10,
-  maxZoom: 18,
-  maxBounds: HARD_BOUNDS,
-  attributionControl: { compact: true },
-});
-map.dragRotate.disable();
-map.touchZoomRotate.disableRotation();
-if (EMBEDDED) map.scrollZoom.disable(); // don't trap page scroll when embedded
+</script>
+<script data-src="data.js">
+// Static datasets for the Marinduque map page.
+// Coordinates are OpenStreetMap-derived; routes use OSRM road geometry with
+// a straight-line fallback. Replace with live data when available.
 
-map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
-
-// ---------- Basemap picker + route toggle ----------
-class BasemapControl {
-  onAdd() {
-    const box = document.createElement('div');
-    box.className = 'maplibregl-ctrl basemap-ctrl';
-    const btn = document.createElement('button');
-    btn.className = 'basemap-btn';
-    btn.textContent = '⧉';
-    btn.title = 'Map layers';
-    const menu = document.createElement('div');
-    menu.className = 'basemap-menu';
-    for (const name of Object.keys(baseStyles)) {
-      const opt = document.createElement('button');
-      opt.textContent = name;
-      if (name === activeBase) opt.classList.add('active');
-      opt.addEventListener('click', () => {
-        activeBase = name;
-        map.setStyle(makeStyle(baseStyles[name]));
-        document.getElementById('map').style.background = baseStyles[name].sea;
-        menu.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.textContent === name));
-        menu.classList.remove('open');
-      });
-      menu.appendChild(opt);
-    }
-    const hr = document.createElement('hr');
-    menu.appendChild(hr);
-    const routeRow = document.createElement('button');
-    routeRow.className = 'toggle-row';
-    routeRow.textContent = 'Commute routes';
-    routeRow.addEventListener('click', () => {
-      showRoutes = !showRoutes;
-      applyRouteVisibility();
-      routeRow.classList.toggle('active', showRoutes);
-    });
-    routeRow.classList.toggle('active', showRoutes);
-    menu.appendChild(routeRow);
-    btn.addEventListener('click', () => menu.classList.toggle('open'));
-    box.appendChild(btn);
-    box.appendChild(menu);
-    this._box = box;
-    return box;
-  }
-  onRemove() { this._box.remove(); }
-}
-map.addControl(new BasemapControl(), 'top-right');
-
-function applyRouteVisibility() {
-  const v = showRoutes ? 'visible' : 'none';
-  for (const id of ['routes-casing', 'routes-core']) {
-    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
-  }
-}
-
-// ---------- Towns & points of interest ----------
+// ---------- Towns ----------
 const TOWNS = [
   { name: 'Boac',       lat: 13.4463, lng: 121.8406, note: 'Provincial capital' },
   { name: 'Mogpog',     lat: 13.4745, lng: 121.8610, note: 'Northern gateway' },
@@ -1014,6 +945,10 @@ const TOWNS = [
   { name: 'Santa Cruz', lat: 13.4756, lng: 122.0525, note: 'Northeast' },
 ];
 
+// Route-details panel always measures from the provincial capital for now.
+const selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
+
+// ---------- Points of interest ----------
 const POIS = [
   { name: 'Balanacan Port Terminal', lat: 13.5334, lng: 121.8673, note: 'Main ferry gateway · Mogpog', category: 'terminal' },
   { name: 'Cawit Port Terminal',     lat: 13.4316, lng: 121.8326, note: 'RoRo/ferry pier · Boac', category: 'terminal' },
@@ -1022,20 +957,7 @@ const POIS = [
   { name: 'Poctoy White Beach',      lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos', category: 'place' },
 ];
 
-const terminalMarkers = [];
-const otherMarkers = [];
-for (const p of POIS) {
-  const el = document.createElement('div');
-  el.className = 'poi-dot';
-  const marker = new maplibregl.Marker({ element: el })
-    .setLngLat([p.lng, p.lat])
-    .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(
-      '<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>'))
-    .addTo(map);
-  (p.category === 'terminal' ? terminalMarkers : otherMarkers).push(marker);
-}
-
-// ---------- Commute routes (OSRM road geometry, straight-line fallback) ----------
+// ---------- Commute routes (drawn as lime lines on the map) ----------
 const ROUTES = [
   { name: 'Boac → Gasan',       from: [121.8406, 13.4463], to: [121.8465, 13.3224], meta: 'via Tugos · Laylay · Bunganay — 48 min · ₱60–₱75' },
   { name: 'Boac → Santa Cruz',  from: [121.8406, 13.4463], to: [122.0525, 13.4756], meta: 'via Capayang · Bangcuangan — 55 min · ₱70–₱90' },
@@ -1043,7 +965,312 @@ const ROUTES = [
   { name: 'Gasan → Buenavista', from: [121.8465, 13.3224], to: [121.9377, 13.2407], meta: 'via Bahi · Tapuyan — 40 min · ₱50–₱65' },
   { name: 'Boac → Torrijos',    from: [121.8406, 13.4463], to: [122.0849, 13.3197], meta: 'via Cawit · Malbog · Maranlig — 1 hr 30 min · ₱110–₱140' },
 ];
+
+</script>
+<script data-src="helpers.js">
+// Small shared utilities. Top-level declarations are visible to the other
+// plain scripts loaded after this file.
+
+// ---------- Toast ----------
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+// ---------- Host bridge (React Native WebView / parent iframe) ----------
+function notifyHost(msg) {
+  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(msg);
+  else if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+}
+
+// ---------- Geometry helpers ----------
+function circleRing(lng, lat, radiusMeters) {
+  const pts = [];
+  const dLng = radiusMeters / (111320 * Math.cos((lat * Math.PI) / 180));
+  const dLat = radiusMeters / 110540;
+  for (let i = 0; i <= 64; i++) {
+    const a = (i / 64) * 2 * Math.PI;
+    pts.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]);
+  }
+  return pts;
+}
+
+function boundsFromRings(rings) {
+  const b = new maplibregl.LngLatBounds();
+  for (const ring of rings) for (const c of ring) b.extend(c);
+  return b;
+}
+
+// MapLibre's LngLatBounds has no pad() (that was the Leaflet API); grow a
+// copy by `ratio` of each axis on every side instead. Accepts LngLatBounds
+// or a bounds-like array (provinceBounds falls back to HARD_BOUNDS).
+function padBounds(b, ratio) {
+  b = maplibregl.LngLatBounds.convert(b);
+  const dLng = (b.getEast() - b.getWest()) * ratio;
+  const dLat = (b.getNorth() - b.getSouth()) * ratio;
+  return new maplibregl.LngLatBounds(
+    [b.getWest() - dLng, b.getSouth() - dLat],
+    [b.getEast() + dLng, b.getNorth() + dLat],
+  );
+}
+
+</script>
+<script data-src="map-core.js">
+// MapLibre engine bootstrap: creates the map and all custom controls.
+// MapLibre GL owns every interaction (pan/zoom/popups/controls); the base
+// render is an OpenMapTiles vector style (or a raster fallback) and all data
+// comes from OpenStreetMap APIs + the static datasets in data.js.
+
+// The engine is vendored under vendor/ and inlined into the bundled page.
+// If it somehow isn't there, fail visibly instead of a bare sea-coloured box.
+var map = null;
+if (typeof maplibregl === 'undefined') {
+  const box = document.getElementById('map-error');
+  if (box) {
+    box.textContent = 'Map engine failed to load — MapLibre GL is unavailable.';
+    box.style.display = 'flex';
+  }
+} else {
+  document.getElementById('map').style.background = baseStyles[activeBase].sea;
+
+  map = new maplibregl.Map({
+    container: 'map',
+    style: makeStyle(baseStyles[activeBase]),
+    bounds: ISLAND_VIEW,
+    doubleClickZoom: false, // double-click/tap resets the view instead
+    pitchWithRotate: false,
+    minZoom: 10,
+    maxZoom: 18,
+    maxBounds: HARD_BOUNDS,
+    attributionControl: { compact: true },
+  });
+  map.dragRotate.disable();
+  map.touchZoomRotate.disableRotation();
+  if (EMBEDDED) map.scrollZoom.disable(); // don't trap page scroll when embedded
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
+
+  // ---------- Basemap picker + route toggle ----------
+  class BasemapControl {
+    onAdd() {
+      const box = document.createElement('div');
+      box.className = 'maplibregl-ctrl basemap-ctrl';
+      const btn = document.createElement('button');
+      btn.className = 'basemap-btn';
+      btn.textContent = '⧉';
+      btn.title = 'Map layers';
+      const menu = document.createElement('div');
+      menu.className = 'basemap-menu';
+      for (const name of Object.keys(baseStyles)) {
+        const opt = document.createElement('button');
+        opt.textContent = name;
+        if (name === activeBase) opt.classList.add('active');
+        opt.addEventListener('click', () => {
+          activeBase = name;
+          map.setStyle(makeStyle(baseStyles[name]));
+          document.getElementById('map').style.background = baseStyles[name].sea;
+          menu.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.textContent === name));
+          menu.classList.remove('open');
+        });
+        menu.appendChild(opt);
+      }
+      const hr = document.createElement('hr');
+      menu.appendChild(hr);
+      const routeRow = document.createElement('button');
+      routeRow.className = 'toggle-row';
+      routeRow.textContent = 'Commute routes';
+      routeRow.addEventListener('click', () => {
+        showRoutes = !showRoutes;
+        applyRouteVisibility();
+        routeRow.classList.toggle('active', showRoutes);
+      });
+      routeRow.classList.toggle('active', showRoutes);
+      menu.appendChild(routeRow);
+      btn.addEventListener('click', () => menu.classList.toggle('open'));
+      box.appendChild(btn);
+      box.appendChild(menu);
+      this._box = box;
+      return box;
+    }
+    onRemove() { this._box.remove(); }
+  }
+  map.addControl(new BasemapControl(), 'top-right');
+
+  // ---------- Expand-to-fullscreen bridge (embedded mode) ----------
+  if (EMBEDDED) {
+    class ExpandControl {
+      onAdd() {
+        const btn = document.createElement('button');
+        btn.className = 'maplibregl-ctrl expand-btn';
+        btn.textContent = '⛶';
+        btn.title = 'Open fullscreen map';
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          notifyHost('egabay:expand');
+        });
+        this._btn = btn;
+        return btn;
+      }
+      onRemove() { this._btn.remove(); }
+    }
+    map.addControl(new ExpandControl(), 'top-right');
+  }
+
+  // ---------- Bottom-right stack: compass chip + locate FAB ----------
+  class CompassControl {
+    onAdd() {
+      const chip = document.createElement('div');
+      chip.className = 'maplibregl-ctrl compass';
+      chip.innerHTML = '<span class="arrow">▲</span>N';
+      this._chip = chip;
+      return chip;
+    }
+    onRemove() { this._chip.remove(); }
+  }
+  map.addControl(new CompassControl(), 'bottom-right');
+
+  class LocateControl {
+    onAdd() {
+      const btn = document.createElement('button');
+      btn.className = 'maplibregl-ctrl locate-fab';
+      btn.textContent = '⌖';
+      btn.title = 'Locate me';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.classList.add('busy');
+        locateMe();
+        setTimeout(() => btn.classList.remove('busy'), 2500);
+      });
+      this._btn = btn;
+      return btn;
+    }
+    onRemove() { this._btn.remove(); }
+  }
+  map.addControl(new LocateControl(), 'bottom-right');
+
+  // ---------- Overlay sync ----------
+  // Sources/layers defined outside the style JSON are dropped by setStyle;
+  // re-add them whenever a style finishes loading (including the first).
+  let overlayReady = false;
+  function ensureOverlay() {
+    const sea = map.getSource('sea');
+    if (sea) {
+      sea.setData(seaData);
+      map.setPaintProperty('sea', 'fill-color', baseStyles[activeBase].sea);
+    } else {
+      map.addSource('sea', { type: 'geojson', data: seaData });
+      map.addLayer({
+        id: 'sea',
+        type: 'fill',
+        source: 'sea',
+        paint: { 'fill-color': baseStyles[activeBase].sea, 'fill-opacity': 1 },
+      });
+      map.addLayer({
+        // Hairline highlight hides sub-pixel seams between mask and tiles.
+        id: 'coastline',
+        type: 'line',
+        source: 'sea',
+        paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 1 },
+      });
+    }
+    drawRoutes();
+    drawSelectedRoute();
+  }
+  map.on('style.load', () => {
+    overlayReady = true;
+    ensureOverlay();
+  });
+
+  // If the initial (remote vector) style never becomes usable, drop to a
+  // raster fallback instead of leaving a blank canvas.
+  map.on('error', () => {
+    if (!overlayReady && activeBase !== 'Standard') {
+      activeBase = 'Standard';
+      map.setStyle(makeStyle(baseStyles.Standard));
+      document.getElementById('map').style.background = baseStyles.Standard.sea;
+    }
+  });
+
+  // ---------- Double-click / double-tap resets the view ----------
+  map.on('dblclick', () => {
+    map.fitBounds(provinceBounds === HARD_BOUNDS ? ISLAND_VIEW : provinceBounds, { duration: 800 });
+  });
+
+  // ---------- Panel collapse (embedded mode) ----------
+  const panel = document.getElementById('panel');
+  const collapseBtn = document.getElementById('collapse-btn');
+  if (EMBEDDED) panel.classList.add('collapsed');
+  collapseBtn.addEventListener('click', () => {
+    panel.classList.toggle('collapsed');
+    collapseBtn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
+  });
+}
+
+</script>
+<script data-src="markers.js">
+// POI markers and the transport filter chips (Jeepney / Tricycle / Terminal).
+// Marker data lives in data.js; the chips just show/hide marker groups —
+// only the Terminal group has verified points today.
+
+const terminalMarkers = [];
+const otherMarkers = [];
+if (map) {
+  for (const p of POIS) {
+    const el = document.createElement('div');
+    el.className = 'poi-dot';
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat([p.lng, p.lat])
+      .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(
+        '<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>'))
+      .addTo(map);
+    (p.category === 'terminal' ? terminalMarkers : otherMarkers).push(marker);
+  }
+}
+
+let activeTransportFilter = null;
+document.querySelectorAll('.filter-chip').forEach((button) => {
+  button.addEventListener('click', () => {
+    const filter = button.dataset.filter;
+    activeTransportFilter = activeTransportFilter === filter ? null : filter;
+    document.querySelectorAll('.filter-chip').forEach((chip) => {
+      const selected = chip.dataset.filter === activeTransportFilter;
+      chip.classList.toggle('active', selected);
+      chip.setAttribute('aria-pressed', String(selected));
+    });
+
+    const showAll = !activeTransportFilter;
+    for (const m of terminalMarkers) (showAll || activeTransportFilter === 'Terminal') ? m.addTo(map) : m.remove();
+    for (const m of otherMarkers) showAll ? m.addTo(map) : m.remove();
+    if (showAll) return;
+
+    clearSelectedRoute();
+    if (activeTransportFilter !== 'Terminal') {
+      showToast('No verified ' + activeTransportFilter + ' routes are mapped yet.');
+    }
+  });
+});
+
+</script>
+<script data-src="routes.js">
+// Commute routes and the selected road route.
+// Geometry comes from OSRM (OpenStreetMap road data) with a straight-line
+// fallback for the commute routes; the selected route uses OSRM steps for
+// turn-by-turn in the route-details panel.
+
+// ---------- Commute routes ----------
 let routesFC = null;
+
+function applyRouteVisibility() {
+  const v = showRoutes ? 'visible' : 'none';
+  for (const id of ['routes-casing', 'routes-core']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+  }
+}
 
 function drawRoutes() {
   if (!routesFC || map.getSource('routes')) return;
@@ -1090,83 +1317,17 @@ async function loadRoutes() {
   drawRoutes();
 }
 
-// ---------- Transport filters + selected road route ----------
+// ---------- Selected road route (route-details panel) ----------
 const routeDetails = document.getElementById('route-details');
 const routeTitle = document.getElementById('route-title');
 const routeMetrics = document.getElementById('route-metrics');
 const routeState = document.getElementById('route-state');
 const routeInstructions = document.getElementById('route-instructions');
-const selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
 let routeRequestId = 0;
 let selectedRouteFC = null;
 let routeEndMarkers = [];
-let activeTransportFilter = null;
 
-document.querySelectorAll('.filter-chip').forEach((button) => {
-  button.addEventListener('click', () => {
-    const filter = button.dataset.filter;
-    activeTransportFilter = activeTransportFilter === filter ? null : filter;
-    document.querySelectorAll('.filter-chip').forEach((chip) => {
-      const selected = chip.dataset.filter === activeTransportFilter;
-      chip.classList.toggle('active', selected);
-      chip.setAttribute('aria-pressed', String(selected));
-    });
-
-    const showAll = !activeTransportFilter;
-    for (const m of terminalMarkers) (showAll || activeTransportFilter === 'Terminal') ? m.addTo(map) : m.remove();
-    for (const m of otherMarkers) showAll ? m.addTo(map) : m.remove();
-    if (showAll) return;
-
-    clearSelectedRoute();
-    if (activeTransportFilter !== 'Terminal') {
-      showToast('No verified ' + activeTransportFilter + ' routes are mapped yet.');
-    }
-  });
-});
-
-function updateRouteInstructions(steps, destinationName) {
-  routeInstructions.replaceChildren();
-  steps.forEach((step, index) => {
-    const maneuver = step.maneuver || {};
-    const roadName = step.name || step.ref || '';
-    let instruction;
-    if (maneuver.type === 'depart') instruction = 'Start' + (roadName ? ' on ' + roadName : ' on the nearest road');
-    else if (maneuver.type === 'arrive') instruction = 'Arrive at ' + destinationName;
-    else if (maneuver.type === 'turn') instruction = 'Turn ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
-    else if (maneuver.type === 'fork') instruction = 'Keep ' + (maneuver.modifier || 'straight') + (roadName ? ' onto ' + roadName : ' at the fork');
-    else if (maneuver.type === 'merge') instruction = 'Merge ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
-    else if (maneuver.type === 'roundabout' || maneuver.type === 'rotary') instruction = 'Enter the roundabout' + (roadName ? ' toward ' + roadName : '');
-    else if (maneuver.type === 'exit roundabout' || maneuver.type === 'exit rotary') instruction = 'Take the roundabout exit' + (roadName ? ' onto ' + roadName : '');
-    else if (maneuver.type === 'new name') instruction = 'Continue' + (roadName ? ' onto ' + roadName : ' on the road');
-    else instruction = 'Continue' + (roadName ? ' on ' + roadName : ' on the road');
-
-    const row = document.createElement('div');
-    row.className = 'route-step';
-    const number = document.createElement('span');
-    number.className = 'route-step-index';
-    number.textContent = String(index + 1);
-    const detail = document.createElement('span');
-    detail.className = 'route-step-detail';
-    detail.textContent = instruction.trim();
-    const distance = document.createElement('span');
-    distance.className = 'route-step-distance';
-    distance.textContent = step.distance > 0 ? formatRouteDistance(step.distance) : '';
-    row.append(number, detail, distance);
-    routeInstructions.appendChild(row);
-  });
-}
-
-function formatRouteDistance(meters) {
-  return meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km';
-}
-
-function formatRouteDuration(seconds) {
-  const minutes = Math.max(1, Math.round(seconds / 60));
-  return minutes >= 60 ? Math.floor(minutes / 60) + ' hr ' + (minutes % 60) + ' min' : minutes + ' min';
-}
-
-// (Re)create the selected-route source/layers. Sources added outside the
-// style JSON are dropped by setStyle, so this is also called on style.load.
+// (Re)create the selected-route source/layers; also called on style.load.
 function drawSelectedRoute() {
   if (!selectedRouteFC) return;
   const src = map.getSource('selected-route');
@@ -1264,50 +1425,68 @@ function clearSelectedRoute() {
 
 document.getElementById('clear-route').addEventListener('click', clearSelectedRoute);
 
-// Sources/layers defined outside the style JSON are dropped by setStyle;
-// re-add them whenever a style finishes loading.
-map.on('style.load', () => {
-  const sea = map.getSource('sea');
-  if (sea) sea.setData(seaData);
-  drawRoutes();
-  drawSelectedRoute();
-});
-loadRoutes();
+function updateRouteInstructions(steps, destinationName) {
+  routeInstructions.replaceChildren();
+  steps.forEach((step, index) => {
+    const maneuver = step.maneuver || {};
+    const roadName = step.name || step.ref || '';
+    let instruction;
+    if (maneuver.type === 'depart') instruction = 'Start' + (roadName ? ' on ' + roadName : ' on the nearest road');
+    else if (maneuver.type === 'arrive') instruction = 'Arrive at ' + destinationName;
+    else if (maneuver.type === 'turn') instruction = 'Turn ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'fork') instruction = 'Keep ' + (maneuver.modifier || 'straight') + (roadName ? ' onto ' + roadName : ' at the fork');
+    else if (maneuver.type === 'merge') instruction = 'Merge ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'roundabout' || maneuver.type === 'rotary') instruction = 'Enter the roundabout' + (roadName ? ' toward ' + roadName : '');
+    else if (maneuver.type === 'exit roundabout' || maneuver.type === 'exit rotary') instruction = 'Take the roundabout exit' + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'new name') instruction = 'Continue' + (roadName ? ' onto ' + roadName : ' on the road');
+    else instruction = 'Continue' + (roadName ? ' on ' + roadName : ' on the road');
 
-map.on('click', 'routes-core', (e) => {
-  const f = e.features && e.features[0];
-  if (!f) return;
-  new maplibregl.Popup()
-    .setLngLat(e.lngLat)
-    .setHTML('<p class="popup-title">' + f.properties.name + '</p><p class="popup-sub">' + f.properties.meta + '</p>')
-    .addTo(map);
-});
-map.on('mouseenter', 'routes-core', () => { map.getCanvas().style.cursor = 'pointer'; });
-map.on('mouseleave', 'routes-core', () => { map.getCanvas().style.cursor = ''; });
-
-// ---------- Province boundary + sea mask via free Nominatim API ----------
-// Everything that is not Marinduque renders as open sea so the island reads
-// like land on a game chart, with nothing else on the map.
-let provinceBounds = HARD_BOUNDS;
-
-function boundsFromRings(rings) {
-  const b = new maplibregl.LngLatBounds();
-  for (const ring of rings) for (const c of ring) b.extend(c);
-  return b;
+    const row = document.createElement('div');
+    row.className = 'route-step';
+    const number = document.createElement('span');
+    number.className = 'route-step-index';
+    number.textContent = String(index + 1);
+    const detail = document.createElement('span');
+    detail.className = 'route-step-detail';
+    detail.textContent = instruction.trim();
+    const distance = document.createElement('span');
+    distance.className = 'route-step-distance';
+    distance.textContent = step.distance > 0 ? formatRouteDistance(step.distance) : '';
+    row.append(number, detail, distance);
+    routeInstructions.appendChild(row);
+  });
 }
 
-// MapLibre's LngLatBounds has no pad() (that was the Leaflet API); grow a
-// copy by `ratio` of each axis on every side instead. Accepts LngLatBounds
-// or a bounds-like array (provinceBounds falls back to HARD_BOUNDS).
-function padBounds(b, ratio) {
-  b = maplibregl.LngLatBounds.convert(b);
-  const dLng = (b.getEast() - b.getWest()) * ratio;
-  const dLat = (b.getNorth() - b.getSouth()) * ratio;
-  return new maplibregl.LngLatBounds(
-    [b.getWest() - dLng, b.getSouth() - dLat],
-    [b.getEast() + dLng, b.getNorth() + dLat],
-  );
+function formatRouteDistance(meters) {
+  return meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km';
 }
+
+function formatRouteDuration(seconds) {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return minutes >= 60 ? Math.floor(minutes / 60) + ' hr ' + (minutes % 60) + ' min' : minutes + ' min';
+}
+
+// ---------- Wiring (needs the map) ----------
+if (map) {
+  loadRoutes();
+
+  map.on('click', 'routes-core', (e) => {
+    const f = e.features && e.features[0];
+    if (!f) return;
+    new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML('<p class="popup-title">' + f.properties.name + '</p><p class="popup-sub">' + f.properties.meta + '</p>')
+      .addTo(map);
+  });
+  map.on('mouseenter', 'routes-core', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'routes-core', () => { map.getCanvas().style.cursor = ''; });
+}
+
+</script>
+<script data-src="boundary.js">
+// Province boundary + sea mask via the free Nominatim API (OpenStreetMap
+// data). Everything that is not Marinduque renders as open sea so the island
+// reads like land on a game chart, with nothing else on the map.
 
 // Reveal the basemap without the mask rather than leaving the sea cover up.
 function revealBasemap() {
@@ -1356,79 +1535,15 @@ async function loadBoundary() {
     revealBasemap();
   }
 }
-loadBoundary();
 
-// ---------- Expand-to-fullscreen bridge (embedded mode) ----------
-function notifyHost(msg) {
-  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(msg);
-  else if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
-}
-if (EMBEDDED) {
-  class ExpandControl {
-    onAdd() {
-      const btn = document.createElement('button');
-      btn.className = 'maplibregl-ctrl expand-btn';
-      btn.textContent = '⛶';
-      btn.title = 'Open fullscreen map';
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        notifyHost('egabay:expand');
-      });
-      this._btn = btn;
-      return btn;
-    }
-    onRemove() { this._btn.remove(); }
-  }
-  map.addControl(new ExpandControl(), 'top-right');
-}
+if (map) loadBoundary();
 
-// ---------- Bottom-right stack: compass chip + locate FAB ----------
-class CompassControl {
-  onAdd() {
-    const chip = document.createElement('div');
-    chip.className = 'maplibregl-ctrl compass';
-    chip.innerHTML = '<span class="arrow">▲</span>N';
-    this._chip = chip;
-    return chip;
-  }
-  onRemove() { this._chip.remove(); }
-}
-map.addControl(new CompassControl(), 'bottom-right');
+</script>
+<script data-src="search.js">
+// Place search (Nominatim / OpenStreetMap data) restricted to Marinduque,
+// plus the locate-me FAB behaviour.
 
-class LocateControl {
-  onAdd() {
-    const btn = document.createElement('button');
-    btn.className = 'maplibregl-ctrl locate-fab';
-    btn.textContent = '⌖';
-    btn.title = 'Locate me';
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      btn.classList.add('busy');
-      locateMe();
-      setTimeout(() => btn.classList.remove('busy'), 2500);
-    });
-    this._btn = btn;
-    return btn;
-  }
-  onRemove() { this._btn.remove(); }
-}
-map.addControl(new LocateControl(), 'bottom-right');
-
-// ---------- Double-click / double-tap resets the view ----------
-map.on('dblclick', () => {
-  map.fitBounds(provinceBounds === HARD_BOUNDS ? ISLAND_VIEW : provinceBounds, { duration: 800 });
-});
-
-// ---------- Panel collapse (embedded mode) ----------
-const panel = document.getElementById('panel');
-const collapseBtn = document.getElementById('collapse-btn');
-if (EMBEDDED) panel.classList.add('collapsed');
-collapseBtn.addEventListener('click', () => {
-  panel.classList.toggle('collapsed');
-  collapseBtn.textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
-});
-
-// ---------- Search restricted to Marinduque (Nominatim, free) ----------
+// ---------- Search ----------
 const searchInput = document.getElementById('search');
 const resultsBox = document.getElementById('results');
 let debounceTimer;
@@ -1506,28 +1621,8 @@ document.addEventListener('click', (e) => {
 });
 
 // ---------- Locate me ----------
-const toast = document.getElementById('toast');
-let toastTimer;
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
-}
-
 let locateMarker = null;
 let locateCircleFeat = null;
-
-function circleRing(lng, lat, radiusMeters) {
-  const pts = [];
-  const dLng = radiusMeters / (111320 * Math.cos((lat * Math.PI) / 180));
-  const dLat = radiusMeters / 110540;
-  for (let i = 0; i <= 64; i++) {
-    const a = (i / 64) * 2 * Math.PI;
-    pts.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]);
-  }
-  return pts;
-}
 
 function locateMe() {
   if (!navigator.geolocation) {
@@ -1577,7 +1672,10 @@ function locateMe() {
   );
 }
 
-// ---------- AI assistant (preview chat, canned replies — no backend) ----------
+</script>
+<script data-src="assistant.js">
+// AI assistant — preview chat with canned replies (no backend yet).
+
 const assistantButton = document.getElementById('assistant-btn');
 const assistantPanel = document.getElementById('assistant-chat-panel');
 const assistantClose = document.getElementById('chat-close');
@@ -1656,7 +1754,6 @@ document.querySelectorAll('.quick-reply').forEach((button) => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && assistantPanel.classList.contains('open')) closeAssistant();
 });
-})();
 
 </script>
 </body>

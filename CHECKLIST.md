@@ -1,14 +1,14 @@
 # eGABAY project checklist
 
-**Status snapshot:** 2026-10-24
+**Status snapshot:** 2026-10-26
 
-**Latest app change:** `874abe8` (Home screen redesign)
+**Latest app change:** `f1dabcb` (merge: MapLibre map + Trips tab + profile updates)
 
-**Public GitHub branch:** `origin/main` — includes `874abe8`, the merge `b869e8c`, the cleanup/docs commit `6e18cfb`, and the docs-only commit on top
+**Public GitHub branch:** `origin/main` — merged locally through `00193e7`; local `main` additionally has the MapLibre map rebuild and the `f1dabcb` merge
 
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public)
 
-Local `main` and `origin/main` match after this push; nothing is waiting to be pushed. See the commit log in [CHANGELOG.md](CHANGELOG.md) for per-commit details. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
+Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when ready. See the commit log in [CHANGELOG.md](CHANGELOG.md) for per-commit details. “Done” means code exists; it does not imply a deployed or field-tested service. Work in a Supabase dashboard or with local operators may not be visible here.
 
 ## Current state
 
@@ -16,7 +16,8 @@ Local `main` and `origin/main` match after this push; nothing is waiting to be p
 - [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, full-screen Map tab, Profile, and Settings sub-screen. (Profile redesigned and the top app header removed in `0097625`; Settings now opens from Profile → Preferences and was simplified in `5e10e85`; Home redesigned with a large-title header and grouped lists in `874abe8`.)
 - [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
-- [x] **Done in local workspace** — Map view using MapLibre GL (vendored), OpenStreetMap tiles, and Nominatim search.
+- [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as default render with OSM raster fallbacks, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (≤500 lines/file); `npm run build:map` emits the single-file bundle the app embeds.
+- [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road route-details panel with turn-by-turn from Boac, and a preview AI-assistant chat (canned replies, no backend).
 - [x] **Done in current local workspace** — Native and browser Supabase client scaffolds plus initial migration defining tables, row-level security, and Realtime publication entries.
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
 - [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
@@ -28,11 +29,12 @@ Local `main` and `origin/main` match after this push; nothing is waiting to be p
 
 ### Latest public app changes (merged and pushed)
 
+- [x] **Done** — Trips tab and compact trip cards added publicly in `f2b1a88`; navigation is now Home, Trips, Map, Profile.
+- [x] **Done** — Profile menu, map markers, and the map assistant/filters/route-details UI added publicly in `00193e7`.
+- [x] **Done** — Public branch merged into local `main` in `f1dabcb`; the public Leaflet map additions were ported onto the MapLibre page.
 - [x] **Done** — Home travel dashboard and browser-specific Supabase client (`src/lib/supabase.web.ts`) were added in `3121b49`.
-- [x] **Done** — Plan and Updates tabs/screens were removed in `b874c4e`; current navigation is Home, Map, and Profile, with Settings as a sub-screen.
-- [x] **Done** — The newer public app code is now included in local `main` by merge commit `93a6bda`.
+- [x] **Done** — Plan and Updates tabs/screens were removed in `b874c4e`; Trips now covers trip browsing.
 - [x] **Confirmed** — `HomeScreen` imports `demoRoutes` and `demoAlerts`; dashboard counts and previews are sample data, not Supabase results.
-- [ ] Decide whether to keep the Home/Map/Profile structure or restore separate Plan and Updates screens.
 
 ### Public documentation path status
 

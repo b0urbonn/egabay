@@ -1,0 +1,102 @@
+/* Transport filter chips, route-details panel, route endpoints. */
+/* ---- Transport filter chips ---- */
+  .transport-filters {
+    position: absolute;
+    top: 98px;
+    left: 260px;
+    right: 14px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    pointer-events: none;
+  }
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 0 12px;
+    color: var(--ink);
+    background: rgba(255,255,255,.96);
+    box-shadow: var(--float-shadow);
+    font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .filter-chip svg { width: 15px; height: 15px; fill: currentColor; }
+  .filter-chip:hover { border-color: var(--green); }
+  .filter-chip.active { border-color: var(--green); color: #fff; background: var(--green); }
+  .filter-chip:disabled { opacity: .45; cursor: default; }
+
+  /* ---- Route details panel ---- */
+  .route-details {
+    position: absolute;
+    left: 14px;
+    bottom: 72px;
+    z-index: 1000;
+    display: none;
+    width: min(370px, calc(100vw - 84px));
+    max-height: min(350px, calc(100vh - 250px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    background: var(--card);
+    box-shadow: var(--float-shadow);
+  }
+  .route-details.open { display: block; }
+  .route-details-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px 7px; }
+  .route-title { color: var(--ink); font-size: 14px; font-weight: 800; margin: 0; }
+  .route-source { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: 1px; margin: 3px 0 0; }
+  .route-clear {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+  }
+  .route-clear:hover { background: #F0F6F1; color: var(--ink); }
+  .route-clear svg { width: 18px; height: 18px; fill: currentColor; }
+  .route-metrics { display: flex; gap: 16px; padding: 2px 14px 9px; color: var(--ink); font-size: 11px; font-weight: 800; }
+  .route-metrics[hidden], .route-instructions[hidden] { display: none; }
+  .route-metrics span { color: var(--muted); font-weight: 600; }
+  .route-state { padding: 4px 14px 12px; color: var(--muted); font-size: 11px; line-height: 16px; }
+  .route-instructions { max-height: 115px; overflow-y: auto; border-top: 1px solid var(--line); padding: 2px 14px 6px; }
+  .route-step { display: flex; gap: 8px; padding: 6px 0; color: var(--ink); font-size: 10px; line-height: 14px; border-bottom: 1px solid #F0F2EF; }
+  .route-step:last-child { border-bottom: 0; }
+  .route-step-index { flex: 0 0 16px; color: var(--green); font-weight: 900; }
+  .route-step-detail { flex: 1; }
+  .route-step-distance { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
+  .route-note { border-top: 1px solid var(--line); padding: 7px 14px 9px; color: var(--muted); font-size: 9px; line-height: 13px; }
+  .route-end-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+    pointer-events: none;
+  }
+
+  /* Compact mode when embedded in the app */
+  body.embedded .transport-filters { top: 96px; left: 8px; right: 8px; gap: 5px; }
+  body.embedded .filter-chip { min-height: 28px; padding: 0 10px; font-size: 9px; }
+  body.embedded .route-details { left: 8px; bottom: 72px; width: min(330px, calc(100vw - 70px)); max-height: 34vh; }
+
+  /* Narrow screens (phones) */
+  @media (max-width: 860px) {
+    body:not(.embedded) .transport-filters { top: 107px; left: 12px; right: 12px; gap: 6px; }
+    body:not(.embedded) .filter-chip { min-height: 30px; padding: 0 10px; font-size: 10px; }
+    body:not(.embedded) .route-details { left: 12px; bottom: 72px; width: min(360px, calc(100vw - 78px)); max-height: min(300px, 38vh); }
+    body:not(.embedded) .route-instructions { max-height: 84px; }
+  }

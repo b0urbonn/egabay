@@ -2,6 +2,16 @@
 
 This file records repository changes visible in local Git history and `origin/main`. The [checklist](CHECKLIST.md) tracks implementation and the branch differences.
 
+## 2026-10-26
+
+- **Map page re-modularized (uncommitted)** — The map page sources under `assets/map/` were split further so no file exceeds ~500 lines: `config.js` (bounds/basemaps/style factory), `data.js` (towns/POIs/routes), `helpers.js` (toast, geometry, `padBounds`), `map-core.js` (MapLibre init + controls + overlay sync), `markers.js` (POIs + filter chips), `routes.js` (commute routes + route-details panel), `boundary.js` (Nominatim sea mask), `search.js` (search + locate), `assistant.js` (chat). CSS split into `marinduque-map.css` (chrome), `features.css` (filters + route panel), `assistant.css` (chat). Plain scripts share top-level scope, so `index.html` lists them in dependency order; `npm run build:map` still inlines everything into the single-file `assets/marinduque-map.html` the app embeds.
+- **Default basemap switched to OpenMapTiles vector tiles (uncommitted)** — The map render now defaults to OpenMapTiles vector tiles hosted by VersaTiles (`tiles.versatiles.org`, free, no key, CORS-enabled), keeping the layer separation: MapLibre GL for engine/interactions, OpenStreetMap for data (Nominatim + OSRM), OpenMapTiles for the render. The OSM-family raster fallbacks (CyclOSM "Transport", Standard, Dark, Satellite) remain in the basemap picker, and an `error` fallback drops to Standard raster if the vector style never becomes usable.
+- **Merge: MapLibre rebuild + public feature branch** — Merged `origin/main` (`00193e7`) into local `main`. The public map additions were built on the old Leaflet page, so they were ported onto the MapLibre sources instead of taken verbatim: transport filter chips, the OSRM route-details panel with turn-by-turn from Boac, the preview AI-assistant chat, and the bottom-right control/toast offsets for the assistant FAB. Town pin markers were dropped to match the public design. (`f1dabcb`)
+- **Map rebuilt on MapLibre GL** — Replaced the Leaflet page with MapLibre GL 4.7.1, vendored under `assets/map/vendor/` and inlined into the bundled page (no CDN/SRI dependency). Fixed porting bugs found in review: `LngLatBounds.pad()` is Leaflet-only (added `padBounds`), `tile.memomaps.de` sends no CORS header so its tiles can never load under MapLibre (replaced with CyclOSM for the Transport style), and a Nominatim no-feature path could leave the sea mask covering the world (now reveals the basemap). (`03c97f5`, uncommitted fix-ups after)
+- **Profile menu and map markers** — Updated the profile menu and map markers, and added the map page's transport filters, route-details panel, and assistant chat UI. (`00193e7`, Raphael Dale Ogbac)
+- **Trips tab** — Added a Trips tab and compact trip cards; bottom navigation is now Home, Trips, Map, Profile. (`f2b1a88`, Raphael Dale Ogbac)
+- **Travel dashboard + map assistant UI** — Built the travel dashboard and map assistant UI. (`292786f`, Raphael Dale Ogbac)
+
 ## 2026-10-24
 
 The repository is public. Every commit below is on public `origin/main`.
@@ -42,6 +52,12 @@ Every commit on `main`, newest first (from `git log`). Times are +0800. The comm
 
 | Commit | Date | Author | Message |
 | --- | --- | --- | --- |
+| `f1dabcb` | 2026-10-26 10:55 | TeskiBoi | Merge branch 'main' of https://github.com/b0urbonn/egabay |
+| `00193e7` | 2026-10-26 10:44 | Raphael Dale Ogbac | Update profile menu and map markers |
+| `03c97f5` | 2026-10-26 10:43 | TeskiBoi | replaced the openstreet map and leaflet with maplibregl js |
+| `f2b1a88` | 2026-10-26 10:28 | Raphael Dale Ogbac | Add Trips tab and compact trip cards |
+| `292786f` | 2026-10-26 09:54 | Raphael Dale Ogbac | Build travel dashboard and map assistant UI |
+| `48b5c1a` | 2026-10-24 16:06 | Raphael Dale Ogbac | Log the merge and docs commits in the changelog |
 | `6e18cfb` | 2026-10-24 16:04 | Raphael Dale Ogbac | Track Home redesign in docs and drop unused import |
 | `b869e8c` | 2026-10-24 16:03 | Raphael Dale Ogbac | Merge branch 'main' of https://github.com/b0urbonn/egabay |
 | `68ca474` | 2026-10-24 16:03 | Raphael Dale Ogbac | fixed whatever the heck happened |
