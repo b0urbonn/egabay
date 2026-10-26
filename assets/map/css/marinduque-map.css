@@ -204,8 +204,8 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 3px solid var(--orange);
-    background: rgba(233, 129, 63, 0.25);
+    border: 3px solid var(--green);
+    background: rgba(23, 107, 75, 0.25);
     pointer-events: none;
   }
   .locate-dot {
