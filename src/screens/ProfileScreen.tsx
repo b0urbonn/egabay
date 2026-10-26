@@ -1,41 +1,43 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
 import { Button, Card } from '../components/ui';
 import type { AppMode } from '../lib/appMode';
 import type { Session } from '../lib/session';
-import { useThemeStyles } from '../lib/theme';
+import { useColors, useThemeStyles } from '../lib/theme';
 import { radius, spacing, type ThemeColors } from '../theme';
 
-function SettingsRow({
+const profileMenu: { label: string; icon: MaterialIconName }[] = [
+  { label: 'My Information', icon: 'person' },
+  { label: 'Favorites', icon: 'favorite' },
+  { label: 'Notifications', icon: 'notifications' },
+  { label: 'Settings', icon: 'settings' },
+  { label: 'Help & Support', icon: 'help' },
+];
+
+function ProfileMenuRow({
   label,
-  value,
+  icon,
   onPress,
 }: {
   label: string;
-  value?: string;
-  onPress?: () => void;
+  icon: MaterialIconName;
+  onPress: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
-  const rowContent = (
-    <>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <View style={styles.rowTrailing}>
-        {value && <Text style={styles.rowValue}>{value}</Text>}
-        {onPress && <Text style={styles.rowChevron}>›</Text>}
-      </View>
-    </>
-  );
-
-  if (!onPress) return <View style={styles.settingsRow}>{rowContent}</View>;
-
+  const colors = useColors();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => [styles.settingsRow, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
     >
-      {rowContent}
+      <View style={[styles.menuIconWrap, label === 'Favorites' && styles.menuIconWarm]}>
+        <MaterialIcon name={icon} size={19} color={label === 'Favorites' ? colors.orange : colors.green} />
+      </View>
+      <Text style={styles.menuLabel}>{label}</Text>
+      <MaterialIcon name="chevronRight" size={20} color={colors.muted} />
     </Pressable>
   );
 }
@@ -57,23 +59,60 @@ export function ProfileScreen({
 }) {
   const styles = useThemeStyles(createStyles);
   const isAccount = session.kind === 'account';
-  const initials = isAccount
-    ? session.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
-    : 'G';
+  const name = isAccount ? session.name : 'Guest commuter';
+  const email = isAccount ? session.email : 'Sign in to add your email';
+
+  const handleMenuPress = (label: string) => {
+    if (label === 'Settings') {
+      onOpenSettings();
+      return;
+    }
+    if (label === 'My Information') {
+      Alert.alert('My Information', isAccount
+        ? `Name: ${session.name}\nEmail: ${session.email}`
+        : 'You are browsing as a guest. Sign in or create an account to add your name and email.');
+      return;
+    }
+
+    const messages: Record<string, string> = {
+      Favorites: 'Saved places and routes will appear here once you add favorites.',
+      Notifications: 'Notification preferences will be available here soon.',
+      'Help & Support': 'For current fares and departures, confirm details with local transport operators. eGABAY support options are coming soon.',
+    };
+    Alert.alert(label, messages[label] ?? 'This section is coming soon.');
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
       <Text accessibilityRole="header" style={styles.pageTitle}>Profile</Text>
 
       <Card style={styles.identityCard}>
-        <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
+        <View style={styles.avatarFrame}>
+          <Image
+            source={require('../../assets/profile-avatar.png')}
+            style={styles.avatar}
+            resizeMode="cover"
+            accessibilityLabel="Default commuter profile photo"
+          />
+        </View>
         <View style={styles.identityCopy}>
-          <Text style={styles.name}>{isAccount ? session.name : 'Guest mode'}</Text>
-          <Text style={styles.identityDetail} numberOfLines={1}>
-            {isAccount ? session.email : 'Using saved travel information'}
-          </Text>
+          <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          <Text style={styles.identityDetail} numberOfLines={1}>{email}</Text>
+          {isAccount && <Text style={styles.accountLabel}>eGABAY commuter</Text>}
         </View>
       </Card>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Menu</Text>
+        <Card style={styles.menuCard}>
+          {profileMenu.map((item, index) => (
+            <View key={item.label}>
+              <ProfileMenuRow label={item.label} icon={item.icon} onPress={() => handleMenuPress(item.label)} />
+              {index < profileMenu.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+        </Card>
+      </View>
 
       {isAccount ? (
         <View style={styles.section}>
@@ -105,20 +144,13 @@ export function ProfileScreen({
         </View>
       ) : (
         <Card style={styles.guestCard}>
-          <Text style={styles.guestTitle}>Get more from eGABAY</Text>
-          <Text style={styles.guestDetail}>Sign in to sync your trips and receive live service updates.</Text>
-          <Button label="Create account or sign in" onPress={onAuthRequest} />
+          <View style={styles.guestCopy}>
+            <Text style={styles.guestTitle}>Sync your travel details</Text>
+            <Text style={styles.guestDetail}>Create an account to save favorites and receive service updates.</Text>
+          </View>
+          <Button label="Sign in or create account" onPress={onAuthRequest} />
         </Card>
       )}
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
-        <Card style={styles.settingsGroup}>
-          <SettingsRow label="Settings" onPress={onOpenSettings} />
-          <View style={styles.divider} />
-          <SettingsRow label="Service area" value="Marinduque, Philippines" />
-        </Card>
-      </View>
 
       <Text style={styles.footerNote}>Route and fare details are sample information. Confirm locally before travel.</Text>
 
@@ -129,35 +161,36 @@ export function ProfileScreen({
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
-    pressed: { opacity: 0.7 },
-    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 32, gap: 20 },
-    pageTitle: { color: colors.ink, fontSize: 32, lineHeight: 38, letterSpacing: -0.8, fontWeight: '700' },
-    identityCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
-    avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' },
-    avatarText: { color: colors.greenDark, fontSize: 18, fontWeight: '700' },
+    pressed: { opacity: 0.72 },
+    pageContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 32, gap: 17 },
+    pageTitle: { color: colors.ink, fontSize: 30, lineHeight: 36, letterSpacing: -0.7, fontWeight: '700' },
+    identityCard: { flexDirection: 'row', alignItems: 'center', gap: 15, padding: 16 },
+    avatarFrame: { width: 76, height: 76, padding: 3, borderRadius: 38, backgroundColor: colors.greenLight },
+    avatar: { width: 70, height: 70, borderRadius: 35 },
     identityCopy: { flex: 1, gap: 4 },
-    name: { color: colors.ink, fontSize: 16, fontWeight: '700' },
-    identityDetail: { color: colors.muted, fontSize: 13 },
-    section: { gap: 6 },
-    sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },
-    sectionDetail: { color: colors.muted, fontSize: 13, lineHeight: 18, marginBottom: 5 },
-    modeCard: { gap: 12 },
+    name: { color: colors.ink, fontSize: 17, lineHeight: 22, fontWeight: '700' },
+    identityDetail: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+    accountLabel: { color: colors.green, fontSize: 10, lineHeight: 14, fontWeight: '800', letterSpacing: 0.25, marginTop: 2 },
+    section: { gap: 8 },
+    sectionTitle: { color: colors.ink, fontSize: 16, lineHeight: 21, fontWeight: '700', letterSpacing: -0.15 },
+    menuCard: { paddingHorizontal: 12, paddingVertical: 4, overflow: 'hidden' },
+    menuRow: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    menuIconWrap: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight },
+    menuIconWarm: { backgroundColor: colors.orangeLight },
+    menuLabel: { flex: 1, color: colors.ink, fontSize: 14, lineHeight: 19, fontWeight: '600' },
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 46 },
+    modeCard: { gap: 11 },
     modeOptions: { flexDirection: 'row', backgroundColor: colors.canvas, borderRadius: radius.md, padding: 4, gap: 4 },
-    modeOption: { minHeight: 44, flex: 1, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+    modeOption: { minHeight: 42, flex: 1, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
     modeOptionSelected: { backgroundColor: colors.green },
-    modeOptionText: { color: colors.muted, fontSize: 14, fontWeight: '600' },
+    modeOptionText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
     modeOptionTextSelected: { color: '#FFFFFF' },
-    modeFootnote: { color: colors.muted, fontSize: 12, lineHeight: 17 },
-    guestCard: { gap: 12 },
-    guestTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
-    guestDetail: { color: colors.muted, fontSize: 13, lineHeight: 19 },
-    settingsGroup: { paddingVertical: 4, paddingHorizontal: 14 },
-    settingsRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-    rowLabel: { flex: 1, color: colors.ink, fontSize: 15 },
-    rowTrailing: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    rowValue: { color: colors.muted, fontSize: 13, textAlign: 'right', maxWidth: '55%' },
-    rowChevron: { color: colors.muted, fontSize: 22, lineHeight: 24 },
-    divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
-    footerNote: { color: colors.muted, fontSize: 12, lineHeight: 17, paddingHorizontal: 2 },
+    modeFootnote: { color: colors.muted, fontSize: 11, lineHeight: 16 },
+    sectionDetail: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: -4 },
+    guestCard: { gap: 13, padding: 15 },
+    guestCopy: { gap: 4 },
+    guestTitle: { color: colors.ink, fontSize: 15, lineHeight: 20, fontWeight: '700' },
+    guestDetail: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+    footerNote: { color: colors.muted, fontSize: 11, lineHeight: 16, paddingHorizontal: 2 },
   });
 }

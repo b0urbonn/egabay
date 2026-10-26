@@ -461,15 +461,7 @@
     body:not(.embedded) .route-instructions { max-height: 84px; }
   }
 
-  /* ---- town pins & labels ---- */
-  .pin-marker {
-    width: 30px;
-    height: 30px;
-    display: block;
-    filter: drop-shadow(0 2px 3px rgba(24, 35, 30, 0.45));
-  }
-  .pin-marker path { fill: var(--green); stroke: #fff; stroke-width: 1.4; stroke-linejoin: round; }
-  .pin-marker circle { fill: #fff; }
+  /* ---- point-of-interest markers ---- */
   .poi-dot {
     width: 10px;
     height: 10px;
@@ -479,18 +471,6 @@
     box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
   }
 
-  .town-label {
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    color: var(--green-dark);
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    padding: 3px 7px;
-    box-shadow: 0 2px 6px rgba(24, 35, 30, 0.18);
-  }
-  .town-label::before { display: none; }
   .island-label {
     background: none;
     border: 0;
@@ -762,8 +742,7 @@ const baseLayers = {
 baseLayers['Standard'].layer.addTo(map);
 let seaColor = baseLayers['Standard'].sea;
 
-// ---------- Towns & points of interest ----------
-const townsLayer = L.layerGroup();
+// ---------- Route endpoints & points of interest ----------
 const terminalsLayer = L.layerGroup();
 const otherPoisLayer = L.layerGroup();
 
@@ -793,33 +772,11 @@ function dotIcon(cls, size) {
   });
 }
 
-// Map-pin marker ("this place is here"). The pin's tip sits exactly on the
-// town coordinate; popups and labels open above the pin head.
-const PIN_ICON = L.divIcon({
-  className: '',
-  html: '<svg class="pin-marker" viewBox="0 0 24 24" aria-hidden="true">'
-    + '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>'
-    + '<circle cx="12" cy="9" r="2.6"/></svg>',
-  iconSize: [30, 30],
-  iconAnchor: [15, 28],
-  popupAnchor: [0, -26],
-  tooltipAnchor: [0, -26],
-});
-
-for (const t of TOWNS) {
-  L.marker([t.lat, t.lng], { icon: PIN_ICON })
-    .bindPopup('<p class="popup-title">' + t.name + '</p><p class="popup-sub">' + t.note + ' · Marinduque</p>')
-    .bindTooltip(t.name.toUpperCase(), {
-      permanent: true, direction: 'top', offset: [0, -2], className: 'town-label',
-    })
-    .addTo(townsLayer);
-}
 for (const p of POIS) {
   L.marker([p.lat, p.lng], { icon: dotIcon('poi-dot', 10) })
     .bindPopup('<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>')
     .addTo(p.category === 'terminal' ? terminalsLayer : otherPoisLayer);
 }
-townsLayer.addTo(map);
 terminalsLayer.addTo(map);
 otherPoisLayer.addTo(map);
 
@@ -980,7 +937,7 @@ const overlayLayers = {};
 for (const name of Object.keys(baseLayers)) overlayLayers[name] = baseLayers[name].layer;
 L.control.layers(
   overlayLayers,
-  { 'Towns': townsLayer, 'Terminals': terminalsLayer, 'Other places': otherPoisLayer },
+  { 'Terminals': terminalsLayer, 'Other places': otherPoisLayer },
   { position: 'topright' }
 ).addTo(map);
 
