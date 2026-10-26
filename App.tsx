@@ -22,6 +22,8 @@ import {
   type Session,
 } from './src/lib/session';
 import { ColorsContext } from './src/lib/theme';
+import { ChairpersonConsoleScreen } from './src/screens/ChairpersonConsoleScreen';
+import { DriverWorkspaceScreen } from './src/screens/DriverWorkspaceScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { MainShell } from './src/screens/MainShell';
 import { PasswordRecoveryScreen } from './src/screens/PasswordRecoveryScreen';
@@ -31,7 +33,7 @@ import { SignUpScreen } from './src/screens/SignUpScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { darkColors, lightColors } from './src/theme';
 
-type Stage = 'onboarding' | 'welcome' | 'login' | 'signup' | 'app';
+type Stage = 'onboarding' | 'welcome' | 'login' | 'signup' | 'chairperson' | 'driver' | 'app';
 
 function initialStage(): Stage {
   if (!isOnboardingDone()) return 'onboarding';
@@ -72,7 +74,7 @@ export default function App() {
 
   const isDark = appearance === 'dark' || (appearance === 'system' && systemScheme === 'dark');
   const themeColors = isDark ? darkColors : lightColors;
-  const isWideWeb = Platform.OS === 'web' && width >= 1024;
+  const isWideWeb = Platform.OS === 'web' && width >= 1024 && stage !== 'chairperson' && stage !== 'driver';
   const staffAccount = session?.kind === 'account' && session.role !== 'commuter' ? session : null;
   const isAdminWorkspace = stage === 'app' && staffAccount?.role === 'super_admin' && !showCommuterView;
   const styles = createAppStyles(themeColors);
@@ -140,7 +142,14 @@ export default function App() {
             <>
               {stage === 'onboarding' && <OnboardingScreen onDone={finishOnboarding} />}
               {stage === 'welcome' && <WelcomeScreen onLogin={() => setStage('login')} onSignUp={() => setStage('signup')} onOffline={enterAsGuest} />}
-              {stage === 'login' && <LoginScreen onBack={() => setStage('welcome')} onSignUp={() => setStage('signup')} />}
+              {stage === 'login' && <LoginScreen
+                onBack={() => setStage('welcome')}
+                onSignUp={() => setStage('signup')}
+                onChairpersonPreview={() => setStage('chairperson')}
+                onDriverPreview={() => setStage('driver')}
+              />}
+              {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
+              {stage === 'driver' && <DriverWorkspaceScreen onBack={() => setStage('login')} />}
               {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
               {stage === 'app' && session && (staffAccount && !showCommuterView ? (
                 <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />

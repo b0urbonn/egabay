@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import { Button, ErrorBanner, ScreenHeader, TextField } from '../components/ui';
+import { Button, Card, ErrorBanner, ScreenHeader, TextField } from '../components/ui';
 import { sendPasswordReset, signInWithEmail, signInWithGoogle } from '../lib/auth';
 import { useThemeStyles } from '../lib/theme';
 import { spacing, type ThemeColors } from '../theme';
@@ -21,9 +21,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function LoginScreen({
   onBack,
   onSignUp,
+  onChairpersonPreview,
+  onDriverPreview,
 }: {
   onBack: () => void;
   onSignUp: () => void;
+  onChairpersonPreview: () => void;
+  onDriverPreview: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const [email, setEmail] = useState('');
@@ -89,6 +93,12 @@ export function LoginScreen({
             title="Log in to eGABAY"
             intro="Sign in to access your profile and transport services."
           />
+          <Card style={styles.previewCard}>
+            <Text style={styles.previewTitle}>Driver & chairperson demos</Text>
+            <Text style={styles.hintBody}>No account needed. Sample changes reset when you leave.</Text>
+            <Button label="Open driver preview" variant="secondary" onPress={onDriverPreview} />
+            <Button label="Open chairperson preview" variant="secondary" onPress={onChairpersonPreview} />
+          </Card>
           <Button label="Continue with Google" variant="secondary" onPress={googleSignIn} loading={googleLoading} disabled={loading} />
           <Text style={styles.separator}>or sign in with email</Text>
           {formError && <ErrorBanner message={formError} />}
@@ -140,6 +150,9 @@ function createStyles(colors: ThemeColors) {
     backGlyph: { color: colors.greenDark, fontSize: 18, fontWeight: '700' },
     backText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
     separator: { color: colors.muted, fontSize: 12, textAlign: 'center' },
+    previewCard: { gap: 8 },
+    previewTitle: { color: colors.ink, fontSize: 13, lineHeight: 18, fontWeight: '800' },
+    hintBody: { color: colors.muted, fontSize: 11 },
     passwordBlock: { gap: 6 },
     forgotLink: { alignSelf: 'flex-end' },
     forgotText: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
