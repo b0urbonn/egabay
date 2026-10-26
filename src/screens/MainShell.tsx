@@ -51,7 +51,6 @@ export function MainShell({
   const [activeTab, setActiveTab] = useState<Tab>('Home');
   const [showSettings, setShowSettings] = useState(false);
   const [showTerminals, setShowTerminals] = useState(false);
-
   useEffect(() => {
     if (!showSettings) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {

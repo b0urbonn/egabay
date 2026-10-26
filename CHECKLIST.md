@@ -2,7 +2,7 @@
 
 **Status snapshot:** 2026-10-26
 
-**Current source state:** Supabase authentication and access foundation, Super Admin standby console, and clearer owner bootstrap steps.
+**Current source state:** Supabase authentication and access foundation, Super Admin standby console, driver/chairperson previews, and clearer owner bootstrap steps.
 
 **Current local phase:** Super Admin standby console UI and build-plan follow-through. Live database setup and operational mutation flows remain pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
@@ -12,7 +12,7 @@
 
 - [x] **Done in local workspace** — Expo + React Native + TypeScript scaffold; `npm run web` is the web start command.
 - [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, Map, Trips, Profile tabs plus Settings (from Profile) and Terminals (from Home) sub-screens. (Profile redesigned and the top app header removed in `0097625`; Settings simplified in `5e10e85`; Home redesigned in `874abe8`; Terminals directory added in `b0fa8af`.)
-- [x] **Local source complete** — Supabase Google/email browser sign-in, session restoration, recovery, protected profile reads, guest preferences, and initial role workspaces. Live project verification is pending.
+- [x] **Source complete** — Supabase Google/email browser sign-in, session restoration, recovery, protected profile reads, guest preferences, and initial role workspaces. Live project verification is pending.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
 - [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as the default "General" render with OSM raster fallbacks, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (`js/` + `css/`, ≤500 lines/file); `npm run build:map` emits the single-file bundle `assets/generated/marinduque-map.html` the app embeds (generated output, gitignored — auto-rebuilt on start).
 - [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road route-details panel with turn-by-turn from Boac, and a preview AI-assistant chat (canned replies, no backend). POI markers are now per-town land-transport service areas (approximate, unverified) rather than ferry ports.
@@ -23,6 +23,8 @@
 - [~] **Partial** — Map provider is implemented, but local coverage, offline support, licensing, and cost are not documented as evaluated.
 - [x] **Done in local workspace** — Build plan defines the four-role access model: Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, plus commuters as public users. Includes the permissions matrix, group-scoped Supabase tables/relations, per-role screens, and the backend/app changes needed before implementing.
 - [~] **Partial** — Supabase auth source and initial role workspaces are implemented. Live migration/bootstrap and full driver/chairperson/super-admin operational workflows remain pending.
+- [~] **UI preview only** — Chairperson console is reachable from the Login screen with five mobile bottom tabs, contextual forms, a dedicated assignment flow, application decisions/history, coordinate validation, and announcements. Eight mobile wireframes are documented in `docs/design/`. Its records and actions are local demo state; it is not role-gated or connected to Supabase.
+- [~] **UI preview only** — Driver workspace is reachable from the Login screen with three bottom tabs (Home, Updates, Profile) in an Apple-HIG-style layout: iOS segmented availability control, grouped-list assignment rows, trip start/stop consent sheet, read-only group announcements, a validated profile editor, and a group application flow with a pending-review state. Six mobile wireframes and interaction notes are documented in `docs/design/`. All records are sample/local state; no GPS access or Supabase calls.
 - [ ] **Not started** — Verified pilot route, group, and terminal data and named data/update owners.
 - [ ] **Not started** — Live vehicle sharing and group announcement publishing.
 - [ ] **Not started** — Field pilot, measures, and AI route ranking.
@@ -32,6 +34,7 @@
 - [x] **Done** — Terminals directory screen, inland-transport Explore banner, and land-transport hub POIs added publicly in `b0fa8af`/`ffcc59e`; Quick Access dark-mode icons fixed in `d2ac96c`.
 - [x] **Done** — Public branch merged into local `main` in `f3abd0d`; the public map-page edits (land-transport hub POIs, assistant reply) were ported into the MapLibre sources since the generated page is build output.
 - [x] **Done** — Trips tab and compact trip cards added publicly in `f2b1a88`; navigation is now Home, Map, Trips, Profile.
+- [x] **Done** — Supabase browser authentication, password recovery, group-scoped access foundation, and initial role workspaces added in `bbc391b`; pulled into local `main` at `643b638`. Live Supabase setup remains pending.
 - [x] **Done** — Profile menu, map markers, and the map assistant/filters/route-details UI added publicly in `00193e7`.
 - [x] **Done** — Public branch merged into local `main` in `f1dabcb`; the public Leaflet map additions were ported onto the MapLibre page.
 - [x] **Done** — Home travel dashboard and browser-specific Supabase client (`src/lib/supabase.web.ts`) were added in `3121b49`.
@@ -42,7 +45,7 @@
 
 - [x] **Local workspace** — `CHECKLIST.md`, `CHANGELOG.md`, and README links are at the repository root.
 - [x] **Public `origin/main`** — `CHECKLIST.md` and `CHANGELOG.md` are at the repository root (the nested `CHECKLIST.md/CHECKLIST.md` is gone), and the public README links both.
-- [x] Push the local merge and root documentation commits so the public repo matches this workspace. (Pushed in `392bd4b`; `origin/main` is now at `0097625`.)
+- [x] Push the local merge and root documentation commits so the public repo matches this workspace. (Pushed in `392bd4b`; later updates are now included through `643b638`.)
 
 ## Build plan progress
 
@@ -84,8 +87,10 @@
 - [x] Add role-gated browser workspaces for the four roles.
 - [x] Add the Super Admin standby console: overview, group/terminal/vehicle directories, user roles, reports, audit log, search, filters, and responsive navigation.
 - [x] Load Super Admin counts and records from Supabase; role changes use the checked RPC.
-- [ ] Build the driver flow: group application, profile editor, availability, read-only announcements, trip start/stop consent.
-- [ ] Build the chairperson console: group dashboard, terminals manager, vehicle roster, driver approvals, assignments, announcement composer.
+- [~] **UI preview implemented** — Driver flow: group application with pending state, profile editor, segmented availability control on Home, read-only announcements, and trip start/stop consent sheet. Six Apple-HIG mobile wireframes cover the primary screens. Sample data only; no GPS, role gating, or Supabase writes.
+- [~] **UI preview implemented** — Chairperson group dashboard, searchable terminal/vehicle lists, validated coordinate and roster forms, assignments, driver approval/rejection with confirmation/history, and announcement composer. Mobile bottom navigation, keyboard handling, desktop adaptation, and eight wireframes are implemented. All records/actions are sample/local state.
+- [ ] Connect driver application, profile, availability, and announcements to group-scoped Supabase reads/writes.
+- [ ] Connect chairperson screens to group-scoped Supabase reads and writes, including audit-log-backed mutations and the terminal map-pin picker.
 - [ ] Connect Super Admin group creation/edit/deactivation, chairperson assignment, terminal/vehicle override forms, and approval actions.
 - [ ] Send location only during an active trip and show its last-updated time.
 - [ ] Subscribe to Supabase Realtime for authorized live positions and current alerts.
@@ -108,6 +113,6 @@
 1. Confirm pilot route data, pilot TODA/jeepney groups and their chairpersons, and trusted data owners (Milestone 0).
 2. Apply the migrations in Supabase, provision the first super admin, verify policies, and add only confirmed seed records (Milestone 1).
 3. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
-4. Complete Super Admin mutations, then build the driver and chairperson consoles (Milestone 3).
+4. Complete Super Admin mutations and connect the driver/chairperson previews to authorized group data (Milestone 3).
 5. Add authorized live positions and service alerts after registry data and location consent are verified.
 

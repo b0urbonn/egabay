@@ -8,6 +8,9 @@ This file records repository changes visible in local Git history and `origin/ma
 
 - **Super Admin standby console** — Added responsive navigation for overview, groups, terminals, vehicles, users and roles, reports, and audit history. Counts and directories read Supabase records; role updates use the checked admin RPC. Group, terminal, and vehicle mutation workflows remain staged for the next build-plan step. The owner bootstrap now returns the assigned role and clearly rejects the unfilled source template.
 
+- **Driver workspace UI preview (UI preview)** — Added `DriverWorkspaceScreen`, reachable from the Log in screen next to the chairperson preview. Organized around three bottom tabs (Home, Updates, Profile), a centered navigation bar, large system-font titles, grouped list rows, and controls at least 44 pt high. Home shows Available/On trip/Offline and the assigned group, vehicle, and terminal. Starting a trip requires consent; an always-visible Stop sharing action remains available while active. Updates are read-only and group-scoped. Profile includes contact/license editing, a photo entry point, and a group-application preview with a pending-review state. Six editable mobile wireframes and an interaction spec are in `docs/design/`. Data stays local; GPS is not accessed and no Supabase calls are made pending backend role access.
+- **Chairperson mobile UI and wireframes (UI preview)** — Implemented five mobile bottom tabs, contextual back/cancel actions, searchable terminal and vehicle lists, coordinate and roster validation, explicit driver/terminal/status selection, a dedicated Assignments screen, application confirmation/history, and a group announcement composer. Populated terminals must have their vehicles moved before removal. Added keyboard handling, readable controls, a wider web console, and an eight-screen SVG wireframe board with interaction notes under `docs/design/`. The preview opens from the Log in screen and is removed from the commuter Profile menu. Data remains local preview state; authenticated role routing, interactive geographic map picking, and Supabase reads/writes remain pending.
+
 - **Build plan: four-role access model** — `BUILD_PLAN.md` specifies the hierarchy Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, with commuters outside the operator hierarchy. The RBAC migration, access policies, role RPCs, audit foundation, and initial role workspaces are now implemented; live database setup and operational management flows remain pending.
 - **Web SVG icon fix (uncommitted)** — `MaterialIcon` passed `accessibilityElementsHidden` (an iOS-only RN prop) to `<Svg>`; on web, react-native-svg's `WebShape` forwards every prop to the DOM element through `unstable_createElement`, so React flagged the unrecognized DOM prop at `WebShape.js:74` in the dev overlay. Switched to `aria-hidden`, which react-native-web maps to the DOM `aria-hidden` attribute and RN maps to native accessibility hiding.
 - **Docs (uncommitted)** — README "Project map" reformatted as a directory tree and corrected to the four-tab shell (Home, Trips, Map, Profile); `CHECKLIST.md` realigned to the updated build plan's milestones and role names.
@@ -50,7 +53,7 @@ The repository is public. Every commit below is on public `origin/main`.
 
 ## Changelog notes
 
-- A migration file and Supabase client scaffold are in the repository; a deployed Supabase backend and live app data are not evidenced by repository code.
+- Supabase authentication and group-access migrations and client code are in the repository; a deployed backend and live app data are not evidenced by repository code.
 - Route names, fares, times, vehicle counts, and service notices are demo content until verified with local transport sources.
 - The nested `CHECKLIST.md/CHECKLIST.md` path is fixed on public `origin/main`; the checklist and changelog are at the repository root.
 - Public `origin/main` includes every commit in the log below. Check `git status` for anything newer.
@@ -62,6 +65,12 @@ Every commit on `main`, newest first (from `git log`). Times are +0800. The comm
 
 | Commit | Date | Author | Message |
 | --- | --- | --- | --- |
+| `643b638` | 2026-10-26 15:16 | Raphael Dale Ogbac | Merge remote-tracking branch 'origin/main' |
+| `bbc391b` | 2026-10-26 15:16 | Raphael Dale Ogbac | feat: add Supabase auth and role workspaces |
+| `9d8e9c9` | 2026-10-26 14:59 | TeskiBoi | alright.. i give up on the color fuck this |
+| `236e61c` | 2026-10-26 14:52 | TeskiBoi | changed color of the route discovery |
+| `1781ac9` | 2026-10-26 14:46 | TeskiBoi | added routing using ant algo, and added estimated time of arrival |
+| `5cb71e9` | 2026-10-26 14:28 | TeskiBoi | fixed the map zoom |
 | `8e8af40` | 2026-10-26 11:55 | TeskiBoi | Fix absoluteFillObject not in RN type defs |
 | `f3abd0d` | 2026-10-26 11:54 | TeskiBoi | Merge remote-tracking branch 'origin/main' |
 | `9f1643a` | 2026-10-26 11:44 | TeskiBoi | fixed whatever crap just happend |
