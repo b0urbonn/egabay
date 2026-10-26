@@ -26,6 +26,7 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { MainShell } from './src/screens/MainShell';
 import { PasswordRecoveryScreen } from './src/screens/PasswordRecoveryScreen';
 import { RoleWorkspaceScreen } from './src/screens/RoleWorkspaceScreen';
+import { SuperAdminWorkspaceScreen } from './src/screens/SuperAdminWorkspaceScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SignUpScreen } from './src/screens/SignUpScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
@@ -143,7 +144,11 @@ export default function App() {
               {stage === 'login' && <LoginScreen onBack={() => setStage('welcome')} onSignUp={() => setStage('signup')} />}
               {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
               {stage === 'app' && session && (staffAccount && !showCommuterView ? (
-                <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
+                staffAccount.role === 'super_admin' ? (
+                  <SuperAdminWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
+                ) : (
+                  <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
+                )
               ) : (
                 <>
                   {staffAccount && <Button label="Return to your workspace" variant="secondary" onPress={() => setShowCommuterView(false)} />}

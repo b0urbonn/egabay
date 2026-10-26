@@ -2,11 +2,11 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest committed app state:** `905e0ed`, including the MaterialIcon fix and map title-panel removal.
+**Current source state:** Supabase authentication and access foundation, Super Admin standby console, and clearer owner bootstrap steps.
 
-**Current local phase:** browser Supabase authentication and group-scoped access foundation. Code and migrations are prepared locally; live database setup, owner promotion, and real sign-in verification are pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
+**Current local phase:** Super Admin standby console UI and build-plan follow-through. Live database setup and operational mutation flows remain pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
-**Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public). The authentication integration below is not yet committed or pushed. “Done” means code exists; it does not imply a deployed or field-tested service.
+**Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public). “Done” means code exists; it does not imply a deployed or field-tested service.
 
 ## Current state
 
@@ -78,13 +78,15 @@
 - [ ] Add useful cached reads and clear loading, empty, and stale-data states.
 - [ ] Keep suggested routes explainable and available without an AI service.
 
-### 3. Deliver the role consoles, service updates, and live operations — Not started
+### 3. Deliver the role consoles, service updates, and live operations — Partial
 
-- [x] Replace mock auth with Supabase Auth in local source; resolve profile and role at sign-in (live login still pending).
-- [x] Add initial role-gated browser workspaces (operational management screens remain below).
+- [x] Replace mock auth with Supabase Auth; resolve profile and role at sign-in (live project setup remains pending).
+- [x] Add role-gated browser workspaces for the four roles.
+- [x] Add the Super Admin standby console: overview, group/terminal/vehicle directories, user roles, reports, audit log, search, filters, and responsive navigation.
+- [x] Load Super Admin counts and records from Supabase; role changes use the checked RPC.
 - [ ] Build the driver flow: group application, profile editor, availability, read-only announcements, trip start/stop consent.
 - [ ] Build the chairperson console: group dashboard, terminals manager, vehicle roster, driver approvals, assignments, announcement composer.
-- [ ] Build the super admin console: groups manager, chairperson assignment, user management, reports, override edits, audit log viewer.
+- [ ] Connect Super Admin group creation/edit/deactivation, chairperson assignment, terminal/vehicle override forms, and approval actions.
 - [ ] Send location only during an active trip and show its last-updated time.
 - [ ] Subscribe to Supabase Realtime for authorized live positions and current alerts.
 - [ ] Set and document location access, retention, battery, and connectivity behavior.
@@ -104,9 +106,8 @@
 ## Next work in dependency order
 
 1. Confirm pilot route data, pilot TODA/jeepney groups and their chairpersons, and trusted data owners (Milestone 0).
-2. Write and review the RBAC migration per `BUILD_PLAN.md` → "Changes needed before implementing RBAC" (Milestone 1).
-3. Configure Supabase, apply the migrations, provision super admin/chairperson accounts, and add verified seed records (Milestone 1).
-4. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
-5. Add real sign-in and role-gated navigation, then build the driver, chairperson, and super admin surfaces (Milestone 3).
-6. ~~Push the local merge and root docs so public `main` matches the workspace.~~ Done in `392bd4b`; repeat for the current uncommitted docs/RBAC edits when ready.
+2. Apply the migrations in Supabase, provision the first super admin, verify policies, and add only confirmed seed records (Milestone 1).
+3. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
+4. Complete Super Admin mutations, then build the driver and chairperson consoles (Milestone 3).
+5. Add authorized live positions and service alerts after registry data and location consent are verified.
 

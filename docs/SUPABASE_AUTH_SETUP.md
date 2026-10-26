@@ -94,10 +94,15 @@ After the designated owner has signed in, run the generated file
 reusable source template is `supabase/admin/bootstrap_super_admin.sql`.
 
 The script requires an existing verified auth user and a profile. It performs the
-promotion on the database side; it is never executed by the frontend. Sign out and
-sign back in, or reload the app, to fetch the updated role. The desktop super-admin
+promotion on the database side; it is never executed by the frontend. Its final
+query displays the owner's email and role; confirm it says `super_admin`, then sign
+out and sign back in so the app fetches the updated role. The desktop super-admin
 workspace includes group/terminal/driver counts and role management for up to 50
 accounts. The last super admin cannot demote themselves.
+
+`supabase/admin/bootstrap_super_admin.sql` is only the source template. Do not run
+it directly; it contains an email placeholder. Run the generated file under
+`supabase/generated/` instead.
 
 The additional tester remains a commuter unless a super admin explicitly changes
 their role. A chairperson role also needs a group chairperson assignment, and a
