@@ -48,7 +48,7 @@ function getAssistantReply(question) {
     return 'Before leaving, confirm current fares and departure times with local operators. Allow extra time for road conditions, and keep a little cash for local rides.';
   }
   if (/terminal|port|ferry/.test(query)) {
-    return 'The map includes sample markers for Balanacan, Cawit, and Buyabod port terminals. Please confirm current ferry departures locally before traveling.';
+    return 'The map shows approximate land-transport service areas in each town. Jeepney routes are sample routes; tricycle routes and live schedules are not mapped yet. Confirm pickup points with local operators.';
   }
   return 'I’m a preview assistant, so I don’t have live schedules, fares, or vehicle updates yet. Try asking about trip planning, map help, or travel tips.';
 }

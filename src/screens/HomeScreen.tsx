@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { MaterialIcon } from '../components/MaterialIcon';
 import { demoRoutes } from '../data/demo';
@@ -13,7 +13,7 @@ type HomeDestination = 'Map' | 'Profile';
 const quickAccess = [
   { label: 'Plan a Trip', icon: 'route' as const, destination: 'Map' as const },
   { label: 'Live Trips', icon: 'liveTrips' as const, destination: 'Map' as const },
-  { label: 'Terminals', icon: 'terminals' as const, destination: 'Map' as const },
+  { label: 'Terminals', icon: 'terminals' as const, destination: 'Terminals' as const },
   { label: 'AI Assistant', icon: 'assistant' as const, destination: 'assistant' as const },
   { label: 'Map', icon: 'map' as const, destination: 'Map' as const },
   { label: 'More', icon: 'more' as const, destination: 'Profile' as const },
@@ -30,11 +30,13 @@ export function HomeScreen({
   session,
   mode,
   onNavigate,
+  onOpenTerminals,
   onOpenSettings,
 }: {
   session: Session;
   mode: AppMode;
   onNavigate: (tab: HomeDestination) => void;
+  onOpenTerminals: () => void;
   onOpenSettings: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
@@ -43,9 +45,13 @@ export function HomeScreen({
   const name = session.kind === 'account' ? session.name.split(' ')[0] : 'commuter';
   const today = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
 
-  const handleQuickAccess = (destination: HomeDestination | 'assistant') => {
+  const handleQuickAccess = (destination: HomeDestination | 'Terminals' | 'assistant') => {
     if (destination === 'assistant') {
       Alert.alert('AI Assistant', 'Your travel assistant is coming soon.');
+      return;
+    }
+    if (destination === 'Terminals') {
+      onOpenTerminals();
       return;
     }
     onNavigate(destination);
@@ -123,7 +129,7 @@ export function HomeScreen({
                     <MaterialIcon
                       name={item.icon}
                       size={22}
-                      color={item.label === 'AI Assistant' ? colors.orange : colors.green}
+                      color={item.label === 'AI Assistant' ? colors.quickIconAccent : colors.quickIcon}
                     />
                   </View>
                   <Text style={styles.tileLabel}>{item.label}</Text>
@@ -134,7 +140,14 @@ export function HomeScreen({
         </View>
       </View>
 
-      <View style={styles.exploreBanner}>
+      <ImageBackground
+        source={require('../../assets/marinduque-sta-cruz-boac-terminal-banner.jpg')}
+        resizeMode="cover"
+        style={styles.exploreBanner}
+        imageStyle={styles.bannerImage}
+        accessible={false}
+      >
+        <View pointerEvents="none" style={styles.bannerScrim} />
         <View style={styles.bannerCopy}>
           <Text style={styles.bannerEyebrow}>YOUR ISLAND, YOUR WAY</Text>
           <Text style={styles.bannerTitle}>Explore{'\n'}Marinduque</Text>
@@ -148,14 +161,7 @@ export function HomeScreen({
             <MaterialIcon name="arrowForward" size={16} color={colors.lime} />
           </Pressable>
         </View>
-        <View pointerEvents="none" style={styles.bannerArt}>
-          <View style={styles.bannerOrbOuter} />
-          <View style={styles.bannerOrbInner} />
-          <View style={styles.bannerRoute} />
-          <View style={styles.bannerPin}><MaterialIcon name="location" size={23} color={colors.greenDark} /></View>
-          <View style={styles.bannerTownTag}><Text style={styles.bannerTownTagText}>6 towns</Text></View>
-        </View>
-      </View>
+      </ImageBackground>
 
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
@@ -216,20 +222,15 @@ function createStyles(colors: ThemeColors) {
     tilePressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
     tileIcon: { width: 39, height: 39, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight },
     tileIconAccent: { backgroundColor: colors.orangeLight },
-    tileLabel: { color: colors.ink, fontSize: 11, lineHeight: 14, fontWeight: '600', textAlign: 'center' },
-    exploreBanner: { height: 174, marginTop: 23, paddingLeft: 19, paddingVertical: 17, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.green, flexDirection: 'row' },
-    bannerCopy: { zIndex: 2, flex: 1, justifyContent: 'center', alignItems: 'flex-start' },
+    tileLabel: { color: colors.ink, fontSize: 12, lineHeight: 16, fontWeight: '600', textAlign: 'center' },
+    exploreBanner: { height: 174, marginTop: 23, paddingLeft: 19, paddingVertical: 17, paddingRight: 14, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.green, justifyContent: 'center' },
+    bannerImage: { borderRadius: 22 },
+    bannerScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(8,34,27,0.48)' },
+    bannerCopy: { zIndex: 2, alignItems: 'flex-start' },
     bannerEyebrow: { color: '#D5E9D9', fontSize: 9, lineHeight: 12, fontWeight: '800', letterSpacing: 1.05, marginBottom: 5 },
     bannerTitle: { color: '#FFFFFF', fontSize: 25, lineHeight: 27, fontWeight: '800', letterSpacing: -0.55 },
     bannerButton: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, minHeight: 30 },
     bannerButtonText: { color: colors.lime, fontSize: 12, lineHeight: 16, fontWeight: '800' },
-    bannerArt: { position: 'absolute', right: -3, top: 0, bottom: 0, width: 162 },
-    bannerOrbOuter: { position: 'absolute', width: 164, height: 164, borderRadius: 82, right: -12, top: 12, backgroundColor: '#2C805F' },
-    bannerOrbInner: { position: 'absolute', width: 119, height: 119, borderRadius: 60, right: 13, top: 34, borderWidth: 1, borderColor: 'rgba(230,246,226,0.35)', backgroundColor: 'rgba(16,84,58,0.33)' },
-    bannerRoute: { position: 'absolute', width: 70, height: 70, borderTopWidth: 2, borderRightWidth: 2, borderColor: '#C6F06A', borderTopRightRadius: 36, transform: [{ rotate: '18deg' }], right: 39, top: 61 },
-    bannerPin: { position: 'absolute', width: 38, height: 38, borderRadius: 14, right: 44, top: 46, backgroundColor: colors.lime, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '8deg' }] },
-    bannerTownTag: { position: 'absolute', right: 9, bottom: 25, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#FFFFFF' },
-    bannerTownTagText: { color: colors.greenDark, fontSize: 9, lineHeight: 12, fontWeight: '800' },
     routeGroup: { borderRadius: 17, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 67 },
     routeRow: { minHeight: 70, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },
