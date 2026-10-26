@@ -2,7 +2,7 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest app change:** `f3abd0d` (merge: MapLibre map + Terminals screen + land-transport hubs); plus uncommitted working-tree edits — RBAC build plan, README tree map, web SVG icon fix
+**Latest app change:** `f3abd0d` (merge: MapLibre map + Terminals screen + land-transport hubs); plus uncommitted working-tree edits — RBAC build plan, README tree map, web SVG icon fix, interactive map routing + palette updates, ACO route-ordering prototype script
 
 **Public GitHub branch:** `origin/main` — merged locally through `ffcc59e`; local `main` additionally has the MapLibre map rebuild and both merges
 
@@ -16,8 +16,8 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 - [x] **Done in current local workspace** — Onboarding, welcome, Home travel dashboard, Map, Trips, Profile tabs plus Settings (from Profile) and Terminals (from Home) sub-screens. (Profile redesigned and the top app header removed in `0097625`; Settings simplified in `5e10e85`; Home redesigned in `874abe8`; Terminals directory added in `b0fa8af`.)
 - [x] **Done in local workspace** — Local demo sign-in/guest flow and persisted session/preferences.
 - [x] **Done in local workspace** — Sample routes and service notices, explicitly marked as demo content.
-- [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as the default "General" render with OSM raster fallbacks, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (`js/` + `css/`, ≤500 lines/file); `npm run build:map` emits the single-file bundle `assets/generated/marinduque-map.html` the app embeds (generated output, gitignored — auto-rebuilt on start).
-- [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road route-details panel with turn-by-turn from Boac, and a preview AI-assistant chat (canned replies, no backend). POI markers are now per-town land-transport service areas (approximate, unverified) rather than ferry ports.
+- [x] **Done in local workspace** — Map view: MapLibre GL (vendored) for engine/interactions, OpenMapTiles vector tiles (VersaTiles) as the default "General" render with an OSM Standard raster fallback, and OpenStreetMap data (Nominatim boundary + search, OSRM routing). Sources modularized under `assets/map/` (`js/` + `css/`, ≤500 lines/file); `npm run build:map` emits the single-file bundle `assets/generated/marinduque-map.html` the app embeds (generated output, gitignored — auto-rebuilt on start).
+- [x] **Done in local workspace** — Map features merged from public branch: transport filter chips (Terminal group live; Jeepney/Tricycle show "not verified" toast), OSRM road routing with a compact details card (distance, drive time, ETA), and a preview AI-assistant chat (canned replies, no backend). The routing origin is no longer fixed to Boac: it follows locate-me GPS or a "Set as start" marker action, and every POI popup has a "Directions" action. POI markers are per-town land-transport service areas (approximate, unverified).
 - [x] **Done in local workspace** — Terminals directory screen (from Home explore banner): per-municipality land-transport terminals with locality filter and search, backed by sample/approximate data — not verified terminal records.
 - [x] **Done in current local workspace** — Native and browser Supabase client scaffolds plus initial migration defining tables, row-level security, and Realtime publication entries.
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
@@ -72,6 +72,8 @@ Local `main` is ahead of `origin/main` (MapLibre rebuild + merge); push when rea
 
 - [x] Home dashboard presents sample route and service notice previews.
 - [x] Terminals directory screen exists, backed by sample data.
+- [x] Map page routes interactively: any POI marker or search result can be the destination, and the origin is the GPS position (locate-me), a "Set as start" marker, or Boac by default — drawn via OSRM driving with distance, duration, and ETA.
+- [x] Ant-colony optimization prototype for stop ordering exists as `scripts/route-aco-demo.mjs` (haversine matrix over the sample towns, seeded, verified against exhaustive search). Not wired to the map; needs a road-distance matrix (OSRM `/table`) and a transit graph before it means anything to commuters.
 - [ ] Wire the Terminals directory and terminal detail to the `terminals` table, with a public-safe vehicle board.
 - [ ] Replace sample routes and notices with Supabase reads.
 - [ ] Add destination search and locality/mode filtering backed by verified route records.
