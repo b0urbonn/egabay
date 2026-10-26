@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
-import { MapTabIcon } from '../components/MapTabIcon';
+import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
 import { MarinduqueMap } from '../components/MarinduqueMap';
 import type { AppMode } from '../lib/appMode';
 import type { AppearanceSetting } from '../lib/appearance';
@@ -11,13 +11,15 @@ import type { ThemeColors } from '../theme';
 import { HomeScreen } from './HomeScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { TripsScreen } from './TripsScreen';
 
-export type Tab = 'Home' | 'Map' | 'Profile';
+export type Tab = 'Home' | 'Map' | 'Trips' | 'Profile';
 
-const tabs: { label: Tab; glyph?: string }[] = [
-  { label: 'Home', glyph: '⌂' },
-  { label: 'Map' },
-  { label: 'Profile', glyph: '○' },
+const tabs: { label: Tab; icon: MaterialIconName }[] = [
+  { label: 'Home', icon: 'home' },
+  { label: 'Map', icon: 'map' },
+  { label: 'Trips', icon: 'liveTrips' },
+  { label: 'Profile', icon: 'person' },
 ];
 
 function MapScreen() {
@@ -69,8 +71,16 @@ export function MainShell({
           />
         ) : (
           <>
-            {activeTab === 'Home' && <HomeScreen session={session} mode={mode} onNavigate={setActiveTab} />}
+            {activeTab === 'Home' && (
+              <HomeScreen
+                session={session}
+                mode={mode}
+                onNavigate={setActiveTab}
+                onOpenSettings={() => setShowSettings(true)}
+              />
+            )}
             {activeTab === 'Map' && <MapScreen />}
+            {activeTab === 'Trips' && <TripsScreen />}
             {activeTab === 'Profile' && (
               <ProfileScreen
                 session={session}
@@ -88,16 +98,16 @@ export function MainShell({
         {tabs.map((tab) => {
           const selected = !showSettings && activeTab === tab.label;
           return (
-            <Pressable style={styles.tabItem} key={tab.label} onPress={() => { setShowSettings(false); setActiveTab(tab.label); }}>
+            <Pressable
+              style={styles.tabItem}
+              key={tab.label}
+              accessibilityRole="button"
+              accessibilityLabel={`${tab.label} tab`}
+              accessibilityState={{ selected }}
+              onPress={() => { setShowSettings(false); setActiveTab(tab.label); }}
+            >
               <View style={[styles.tabGlyphWrap, selected && styles.tabGlyphWrapSelected]}>
-                {tab.label === 'Map' ? (
-                  <MapTabIcon
-                    color={selected ? colors.green : colors.muted}
-                    background={selected ? colors.greenLight : colors.card}
-                  />
-                ) : (
-                  <Text style={[styles.tabGlyph, selected && styles.tabGlyphSelected]}>{tab.glyph}</Text>
-                )}
+                <MaterialIcon name={tab.icon} size={21} color={selected ? colors.green : colors.muted} />
               </View>
               <Text style={[styles.tabLabel, selected && styles.tabLabelSelected]}>{tab.label}</Text>
             </Pressable>
@@ -112,13 +122,11 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: colors.canvas },
     screen: { flex: 1 },
-    tabBar: { minHeight: 67, paddingHorizontal: 14, paddingTop: 7, paddingBottom: 5, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.card, flexDirection: 'row', justifyContent: 'space-around' },
+    tabBar: { minHeight: 70, paddingHorizontal: 14, paddingTop: 7, paddingBottom: 6, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.card, flexDirection: 'row', justifyContent: 'space-around' },
     tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
-    tabGlyphWrap: { width: 34, height: 29, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+    tabGlyphWrap: { width: 38, height: 30, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     tabGlyphWrapSelected: { backgroundColor: colors.greenLight },
-    tabGlyph: { color: colors.muted, fontSize: 18, lineHeight: 21, fontWeight: '600' },
-    tabGlyphSelected: { color: colors.green, fontWeight: '900' },
-    tabLabel: { color: colors.muted, fontSize: 8, fontWeight: '700' },
+    tabLabel: { color: colors.muted, fontSize: 10, lineHeight: 12, fontWeight: '700' },
     tabLabelSelected: { color: colors.greenDark },
   });
 }

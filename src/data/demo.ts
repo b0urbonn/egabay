@@ -19,6 +19,27 @@ export type ServiceAlert = {
   severity: 'info' | 'notice';
 };
 
+export type TripStatus = 'Approved' | 'Pending' | 'Completed';
+export type TripProgressStatus = 'On the way' | 'Boarding' | 'Available' | 'Arrived';
+
+export type TripScheduleType = 'Location-based' | 'Standard schedule';
+
+export type ScheduledTrip = {
+  id: string;
+  route: string;
+  date: string;
+  time: string;
+  estimatedArrival: string;
+  pickup: string;
+  destination: string;
+  vehicleType: string;
+  vehicleNumber: string;
+  scheduleType: TripScheduleType;
+  estimatedTravelTime: string;
+  status: TripStatus;
+  progressStatus?: TripProgressStatus;
+};
+
 // Replace these samples with Supabase data after localities, routes, and fares
 // have been confirmed with transport operators.
 export const demoRoutes: CommuteRoute[] = [
@@ -111,5 +132,87 @@ export const demoAlerts: ServiceAlert[] = [
     locality: 'Torrijos',
     time: 'Updated 5 hrs ago',
     severity: 'notice',
+  },
+];
+
+// Sample schedules for the Trips screen. Replace with a user's saved trips when
+// trip booking and location services are connected.
+export const demoOngoingTrips: ScheduledTrip[] = [
+  {
+    id: 'trip-boac-gasan',
+    route: 'Boac to Gasan',
+    date: 'Today',
+    time: '9:30 AM',
+    estimatedArrival: '10:18 AM',
+    pickup: 'Boac Town Plaza',
+    destination: 'Gasan Town Center',
+    vehicleType: 'Jeepney',
+    vehicleNumber: 'MJB 4821',
+    scheduleType: 'Location-based',
+    estimatedTravelTime: '48 min',
+    status: 'Approved',
+    progressStatus: 'On the way',
+  },
+  {
+    id: 'trip-boac-santa-cruz',
+    route: 'Boac to Santa Cruz',
+    date: 'Today',
+    time: '10:15 AM',
+    estimatedArrival: '11:10 AM',
+    pickup: 'Boac Public Market',
+    destination: 'Santa Cruz Terminal',
+    vehicleType: 'UV Express',
+    vehicleNumber: 'MBL 2104',
+    scheduleType: 'Standard schedule',
+    estimatedTravelTime: '55 min',
+    status: 'Approved',
+    progressStatus: 'Boarding',
+  },
+  {
+    id: 'trip-boac-mogpog-available',
+    route: 'Boac to Mogpog',
+    date: 'Today',
+    time: '10:30 AM',
+    estimatedArrival: '11:05 AM',
+    pickup: 'Boac Town Plaza',
+    destination: 'Mogpog Public Market',
+    vehicleType: 'Jeepney',
+    vehicleNumber: 'MJB 6381',
+    scheduleType: 'Location-based',
+    estimatedTravelTime: '35 min',
+    status: 'Pending',
+    progressStatus: 'Available',
+  },
+  {
+    id: 'trip-gasan-buenavista-arrived',
+    route: 'Gasan to Buenavista',
+    date: 'Today',
+    time: '11:00 AM',
+    estimatedArrival: '11:40 AM',
+    pickup: 'Gasan Town Center',
+    destination: 'Buenavista Port Area',
+    vehicleType: 'Multicab',
+    vehicleNumber: 'MCD 3072',
+    scheduleType: 'Standard schedule',
+    estimatedTravelTime: '40 min',
+    status: 'Approved',
+    progressStatus: 'Arrived',
+  },
+];
+
+export const demoTripHistory: ScheduledTrip[] = [
+  {
+    id: 'trip-boac-mogpog',
+    route: 'Boac to Mogpog',
+    date: 'Oct 24',
+    time: '2:10 PM',
+    estimatedArrival: '2:45 PM',
+    pickup: 'Boac Town Plaza',
+    destination: 'Mogpog Public Market',
+    vehicleType: 'Jeepney',
+    vehicleNumber: 'MJB 4821',
+    scheduleType: 'Standard schedule',
+    estimatedTravelTime: '35 min',
+    status: 'Completed',
   },
 ];

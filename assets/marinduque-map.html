@@ -54,6 +54,7 @@
     line-height: 1;
     padding-top: 6px;
     box-shadow: var(--float-shadow);
+    transform: translateY(-64px);
   }
   .compass .arrow { display: block; font-size: 13px; margin-bottom: 2px; }
 
@@ -175,6 +176,259 @@
   }
   .locate-fab:hover, .expand-btn:hover, .basemap-btn:hover { background: #E5F3EA; }
   .locate-fab.busy { opacity: 0.6; }
+  /* Bottom-right stack lifts above the assistant FAB. */
+  .locate-fab { transform: translateY(-64px); }
+
+  /* ---- AI assistant FAB + preview chat panel ---- */
+  .assistant-fab {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.72);
+    border-radius: 17px;
+    color: var(--green-dark);
+    background: var(--lime);
+    box-shadow: var(--float-shadow);
+    cursor: pointer;
+  }
+  .assistant-fab:hover { filter: brightness(.96); transform: translateY(-1px); }
+  .assistant-fab svg { width: 23px; height: 23px; fill: currentColor; }
+  .assistant-fab[hidden] { display: none; }
+
+  .assistant-chat-panel {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+    width: min(370px, calc(100vw - 28px));
+    height: min(540px, calc(100vh - 28px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: 0 14px 40px rgba(12, 28, 20, .28);
+  }
+  .assistant-chat-panel.open { display: flex; }
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px 12px;
+    color: #fff;
+    background: var(--green);
+  }
+  .chat-avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    color: var(--green-dark);
+    background: var(--lime);
+  }
+  .chat-avatar svg { width: 21px; height: 21px; fill: currentColor; }
+  .chat-heading { flex: 1; min-width: 0; }
+  .chat-title { margin: 0; font-size: 13px; font-weight: 800; line-height: 18px; }
+  .chat-subtitle { margin: 2px 0 0; color: rgba(255,255,255,.78); font-size: 10px; line-height: 14px; }
+  .chat-close {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: rgba(255,255,255,.14);
+    cursor: pointer;
+  }
+  .chat-close:hover { background: rgba(255,255,255,.24); }
+  .chat-close svg { width: 18px; height: 18px; fill: currentColor; }
+  .chat-messages {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 130px;
+    overflow-y: auto;
+    padding: 15px 13px 10px;
+    background: #F7F9F6;
+  }
+  .chat-row { display: flex; width: 100%; }
+  .chat-row.user { justify-content: flex-end; }
+  .chat-bubble {
+    max-width: 84%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 15px 15px 15px 4px;
+    color: var(--ink);
+    background: #fff;
+    font-size: 11px;
+    line-height: 16px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .chat-row.user .chat-bubble {
+    border-color: var(--green);
+    border-radius: 15px 15px 4px 15px;
+    color: #fff;
+    background: var(--green);
+  }
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px 9px;
+    border-top: 1px solid var(--line);
+    background: var(--card);
+  }
+  .quick-reply {
+    min-height: 29px;
+    padding: 0 10px;
+    border: 1px solid #CFE2D4;
+    border-radius: 15px;
+    color: var(--green-dark);
+    background: #F3F8F3;
+    font: 700 9px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: pointer;
+  }
+  .quick-reply:hover { background: #E5F3EA; }
+  .chat-form {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 11px;
+    border-top: 1px solid var(--line);
+    background: var(--card);
+  }
+  #chat-input {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    outline: none;
+    color: var(--ink);
+    background: #FBFCFA;
+    font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #chat-input:focus { border-color: var(--green); }
+  #chat-input::placeholder { color: var(--muted); }
+  .chat-send {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: var(--green);
+    cursor: pointer;
+  }
+  .chat-send:hover { background: var(--green-dark); }
+  .chat-send svg { width: 19px; height: 19px; fill: currentColor; }
+  .chat-footnote { margin: 0; padding: 0 12px 10px; color: var(--muted); background: var(--card); font-size: 9px; line-height: 12px; }
+
+  /* ---- Transport filter chips ---- */
+  .transport-filters {
+    position: absolute;
+    top: 98px;
+    left: 260px;
+    right: 14px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    pointer-events: none;
+  }
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 0 12px;
+    color: var(--ink);
+    background: rgba(255,255,255,.96);
+    box-shadow: var(--float-shadow);
+    font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .filter-chip svg { width: 15px; height: 15px; fill: currentColor; }
+  .filter-chip:hover { border-color: var(--green); }
+  .filter-chip.active { border-color: var(--green); color: #fff; background: var(--green); }
+  .filter-chip:disabled { opacity: .45; cursor: default; }
+
+  /* ---- Route details panel ---- */
+  .route-details {
+    position: absolute;
+    left: 14px;
+    bottom: 72px;
+    z-index: 1000;
+    display: none;
+    width: min(370px, calc(100vw - 84px));
+    max-height: min(350px, calc(100vh - 250px));
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    background: var(--card);
+    box-shadow: var(--float-shadow);
+  }
+  .route-details.open { display: block; }
+  .route-details-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px 7px; }
+  .route-title { color: var(--ink); font-size: 14px; font-weight: 800; margin: 0; }
+  .route-source { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: 1px; margin: 3px 0 0; }
+  .route-clear {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+  }
+  .route-clear:hover { background: #F0F6F1; color: var(--ink); }
+  .route-clear svg { width: 18px; height: 18px; fill: currentColor; }
+  .route-metrics { display: flex; gap: 16px; padding: 2px 14px 9px; color: var(--ink); font-size: 11px; font-weight: 800; }
+  .route-metrics[hidden], .route-instructions[hidden] { display: none; }
+  .route-metrics span { color: var(--muted); font-weight: 600; }
+  .route-state { padding: 4px 14px 12px; color: var(--muted); font-size: 11px; line-height: 16px; }
+  .route-instructions { max-height: 115px; overflow-y: auto; border-top: 1px solid var(--line); padding: 2px 14px 6px; }
+  .route-step { display: flex; gap: 8px; padding: 6px 0; color: var(--ink); font-size: 10px; line-height: 14px; border-bottom: 1px solid #F0F2EF; }
+  .route-step:last-child { border-bottom: 0; }
+  .route-step-index { flex: 0 0 16px; color: var(--green); font-weight: 900; }
+  .route-step-detail { flex: 1; }
+  .route-step-distance { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
+  .route-note { border-top: 1px solid var(--line); padding: 7px 14px 9px; color: var(--muted); font-size: 9px; line-height: 13px; }
+  .route-end-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(24, 35, 30, 0.45);
+    pointer-events: none;
+  }
 
   /* Basemap picker popover */
   .basemap-ctrl { position: relative; }
@@ -241,6 +495,9 @@
   body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; }
   body.embedded #results { top: auto; bottom: 36px; }
   body.embedded .locate-fab, body.embedded .expand-btn, body.embedded .basemap-btn { width: 34px; height: 34px; font-size: 16px; line-height: 32px; }
+  body.embedded .transport-filters { top: 96px; left: 8px; right: 8px; gap: 5px; }
+  body.embedded .filter-chip { min-height: 28px; padding: 0 10px; font-size: 9px; }
+  body.embedded .route-details { left: 8px; bottom: 72px; width: min(330px, calc(100vw - 70px)); max-height: 34vh; }
 
   /* Narrow screens (phones): search on top, compact title chip below it */
   @media (max-width: 860px) {
@@ -249,23 +506,13 @@
     body:not(.embedded) .panel-title { font-size: 14px; margin: 0; }
     body:not(.embedded) .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
     body:not(.embedded) .panel-sub, body:not(.embedded) .panel-body { display: none; }
+    body:not(.embedded) .transport-filters { top: 107px; left: 12px; right: 12px; gap: 6px; }
+    body:not(.embedded) .filter-chip { min-height: 30px; padding: 0 10px; font-size: 10px; }
+    body:not(.embedded) .route-details { left: 12px; bottom: 72px; width: min(360px, calc(100vw - 78px)); max-height: min(300px, 38vh); }
+    body:not(.embedded) .route-instructions { max-height: 84px; }
   }
 
-  /* ---- town pins & labels ---- */
-  .town-marker {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-  }
-  .pin-marker {
-    width: 30px;
-    height: 30px;
-    display: block;
-    filter: drop-shadow(0 2px 3px rgba(24, 35, 30, 0.45));
-  }
-  .pin-marker path { fill: var(--green); stroke: #fff; stroke-width: 1.4; stroke-linejoin: round; }
-  .pin-marker circle { fill: #fff; }
+  /* ---- point-of-interest markers ---- */
   .poi-dot {
     width: 10px;
     height: 10px;
@@ -276,19 +523,6 @@
     cursor: pointer;
   }
 
-  .town-label {
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    color: var(--green-dark);
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    padding: 3px 7px;
-    margin-bottom: 3px;
-    box-shadow: 0 2px 6px rgba(24, 35, 30, 0.18);
-    pointer-events: none;
-  }
   .island-label {
     background: none;
     border: 0;
@@ -353,6 +587,7 @@
     border: 1px solid var(--line);
     border-radius: 10px;
     box-shadow: var(--float-shadow);
+    margin-right: 70px !important;
   }
   .maplibregl-ctrl-attrib a { color: var(--green) !important; }
   .maplibregl-ctrl-attrib-button { filter: none; }
@@ -387,8 +622,9 @@
   #toast {
     position: absolute;
     bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
+    right: 72px;
+    left: auto;
+    transform: translateY(20px);
     z-index: 1000;
     background: var(--card);
     color: var(--ink);
@@ -400,9 +636,11 @@
     opacity: 0;
     transition: opacity 0.25s, transform 0.25s;
     pointer-events: none;
-    white-space: nowrap;
+    width: max-content;
+    max-width: min(360px, calc(100vw - 100px));
+    text-align: center;
   }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.show { opacity: 1; transform: translateY(0); }
 
   #map-error {
     position: absolute;
@@ -445,6 +683,71 @@
     <div id="results"></div>
   </div>
 </div>
+
+<div class="transport-filters" role="group" aria-label="Filter map by transport type">
+  <button class="filter-chip" type="button" data-filter="Jeepney" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V5c0-3.5-3.58-4-8-4S4 1.5 4 5v11zm5.5 2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM18 13H6V8h12v5zm0-7H6V5h12v1z"/></svg>
+    <span>Jeepney</span>
+  </button>
+  <button class="filter-chip" type="button" data-filter="Tricycle" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 6A1.5 1.5 0 1 0 5.5 3a1.5 1.5 0 0 0 0 3zM4 7h3l1.8 2.4-2 2.8H5v4H3v-5l2-3H4V7zm14.5 6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm-11 0a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 2a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1zm11 0a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1zM8 10l2.5 1.5H15l1 2h2l-2-4h-5l-2-2H8z"/></svg>
+    <span>Tricycle</span>
+  </button>
+  <button class="filter-chip" type="button" data-filter="Terminal" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+    <span>Terminal</span>
+  </button>
+</div>
+
+<section class="route-details" id="route-details" aria-live="polite" aria-label="Route details">
+  <div class="route-details-head">
+    <div>
+      <p class="route-title" id="route-title"></p>
+      <p class="route-source">ROAD ROUTE · OPENSTREETMAP</p>
+    </div>
+    <button class="route-clear" id="clear-route" aria-label="Clear route" title="Clear route">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </button>
+  </div>
+  <div class="route-metrics" id="route-metrics" hidden></div>
+  <div class="route-state" id="route-state">Search for a place to see its road route from Boac.</div>
+  <div class="route-instructions" id="route-instructions" hidden></div>
+  <div class="route-note">Road directions follow OpenStreetMap roads. Public transport stops and service patterns are not verified.</div>
+</section>
+
+<button class="assistant-fab" id="assistant-btn" aria-label="Open AI Assistant" aria-controls="assistant-chat-panel" aria-expanded="false" title="AI Assistant">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zM11.5 9L9 3 6.5 9 1 11.5 6.5 14 9 20l2.5-6 5.5-2.5L11.5 9zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+</button>
+
+<section class="assistant-chat-panel" id="assistant-chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title">
+  <div class="chat-header">
+    <div class="chat-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zM11.5 9L9 3 6.5 9 1 11.5 6.5 14 9 20l2.5-6 5.5-2.5L11.5 9zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+    </div>
+    <div class="chat-heading">
+      <p class="chat-title" id="chat-title">eGABAY Assistant</p>
+      <p class="chat-subtitle">Marinduque travel help · Preview</p>
+    </div>
+    <button class="chat-close" id="chat-close" type="button" aria-label="Close assistant">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </button>
+  </div>
+  <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-relevant="additions">
+    <div class="chat-row bot"><div class="chat-bubble">Hi! I can help with trip planning, using the map, or general travel tips for Marinduque. What would you like to know?</div></div>
+  </div>
+  <div class="quick-replies" id="quick-replies" aria-label="Suggested questions">
+    <button class="quick-reply" type="button">Plan a trip</button>
+    <button class="quick-reply" type="button">Map help</button>
+    <button class="quick-reply" type="button">Travel tips</button>
+  </div>
+  <form class="chat-form" id="chat-form">
+    <input id="chat-input" type="text" placeholder="Ask about your trip…" autocomplete="off" aria-label="Message the assistant" />
+    <button class="chat-send" type="submit" aria-label="Send message" title="Send">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </form>
+  <p class="chat-footnote">Preview chat with sample replies. Live AI assistance is not connected yet.</p>
+</section>
 
 <div id="toast"></div>
 
@@ -712,36 +1015,24 @@ const TOWNS = [
 ];
 
 const POIS = [
-  { name: 'Balanacan Port',       lat: 13.5334, lng: 121.8673, note: 'Main ferry gateway · Mogpog' },
-  { name: 'Cawit Port',           lat: 13.4316, lng: 121.8326, note: 'RoRo/ferry pier · Boac' },
-  { name: 'Marinduque Airport',   lat: 13.3607, lng: 121.8257, note: 'Masiga · Gasan' },
-  { name: 'Buyabod Port',         lat: 13.4412, lng: 122.0443, note: 'Ferry pier · Santa Cruz' },
-  { name: 'Poctoy White Beach',   lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos' },
+  { name: 'Balanacan Port Terminal', lat: 13.5334, lng: 121.8673, note: 'Main ferry gateway · Mogpog', category: 'terminal' },
+  { name: 'Cawit Port Terminal',     lat: 13.4316, lng: 121.8326, note: 'RoRo/ferry pier · Boac', category: 'terminal' },
+  { name: 'Marinduque Airport',      lat: 13.3607, lng: 121.8257, note: 'Masiga · Gasan', category: 'place' },
+  { name: 'Buyabod Port Terminal',   lat: 13.4412, lng: 122.0443, note: 'Ferry pier · Santa Cruz', category: 'terminal' },
+  { name: 'Poctoy White Beach',      lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos', category: 'place' },
 ];
 
-const PIN_SVG = '<svg class="pin-marker" viewBox="0 0 24 24" aria-hidden="true">'
-  + '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>'
-  + '<circle cx="12" cy="9" r="2.6"/></svg>';
-
-// Town marker = label above a pin; anchor 'bottom' puts the pin tip on the point.
-for (const t of TOWNS) {
-  const el = document.createElement('div');
-  el.className = 'town-marker';
-  el.innerHTML = '<span class="town-label">' + t.name.toUpperCase() + '</span>' + PIN_SVG;
-  new maplibregl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat([t.lng, t.lat])
-    .setPopup(new maplibregl.Popup({ offset: 36 }).setHTML(
-      '<p class="popup-title">' + t.name + '</p><p class="popup-sub">' + t.note + ' · Marinduque</p>'))
-    .addTo(map);
-}
+const terminalMarkers = [];
+const otherMarkers = [];
 for (const p of POIS) {
   const el = document.createElement('div');
   el.className = 'poi-dot';
-  new maplibregl.Marker({ element: el })
+  const marker = new maplibregl.Marker({ element: el })
     .setLngLat([p.lng, p.lat])
     .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(
       '<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>'))
     .addTo(map);
+  (p.category === 'terminal' ? terminalMarkers : otherMarkers).push(marker);
 }
 
 // ---------- Commute routes (OSRM road geometry, straight-line fallback) ----------
@@ -799,12 +1090,187 @@ async function loadRoutes() {
   drawRoutes();
 }
 
+// ---------- Transport filters + selected road route ----------
+const routeDetails = document.getElementById('route-details');
+const routeTitle = document.getElementById('route-title');
+const routeMetrics = document.getElementById('route-metrics');
+const routeState = document.getElementById('route-state');
+const routeInstructions = document.getElementById('route-instructions');
+const selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
+let routeRequestId = 0;
+let selectedRouteFC = null;
+let routeEndMarkers = [];
+let activeTransportFilter = null;
+
+document.querySelectorAll('.filter-chip').forEach((button) => {
+  button.addEventListener('click', () => {
+    const filter = button.dataset.filter;
+    activeTransportFilter = activeTransportFilter === filter ? null : filter;
+    document.querySelectorAll('.filter-chip').forEach((chip) => {
+      const selected = chip.dataset.filter === activeTransportFilter;
+      chip.classList.toggle('active', selected);
+      chip.setAttribute('aria-pressed', String(selected));
+    });
+
+    const showAll = !activeTransportFilter;
+    for (const m of terminalMarkers) (showAll || activeTransportFilter === 'Terminal') ? m.addTo(map) : m.remove();
+    for (const m of otherMarkers) showAll ? m.addTo(map) : m.remove();
+    if (showAll) return;
+
+    clearSelectedRoute();
+    if (activeTransportFilter !== 'Terminal') {
+      showToast('No verified ' + activeTransportFilter + ' routes are mapped yet.');
+    }
+  });
+});
+
+function updateRouteInstructions(steps, destinationName) {
+  routeInstructions.replaceChildren();
+  steps.forEach((step, index) => {
+    const maneuver = step.maneuver || {};
+    const roadName = step.name || step.ref || '';
+    let instruction;
+    if (maneuver.type === 'depart') instruction = 'Start' + (roadName ? ' on ' + roadName : ' on the nearest road');
+    else if (maneuver.type === 'arrive') instruction = 'Arrive at ' + destinationName;
+    else if (maneuver.type === 'turn') instruction = 'Turn ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'fork') instruction = 'Keep ' + (maneuver.modifier || 'straight') + (roadName ? ' onto ' + roadName : ' at the fork');
+    else if (maneuver.type === 'merge') instruction = 'Merge ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'roundabout' || maneuver.type === 'rotary') instruction = 'Enter the roundabout' + (roadName ? ' toward ' + roadName : '');
+    else if (maneuver.type === 'exit roundabout' || maneuver.type === 'exit rotary') instruction = 'Take the roundabout exit' + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'new name') instruction = 'Continue' + (roadName ? ' onto ' + roadName : ' on the road');
+    else instruction = 'Continue' + (roadName ? ' on ' + roadName : ' on the road');
+
+    const row = document.createElement('div');
+    row.className = 'route-step';
+    const number = document.createElement('span');
+    number.className = 'route-step-index';
+    number.textContent = String(index + 1);
+    const detail = document.createElement('span');
+    detail.className = 'route-step-detail';
+    detail.textContent = instruction.trim();
+    const distance = document.createElement('span');
+    distance.className = 'route-step-distance';
+    distance.textContent = step.distance > 0 ? formatRouteDistance(step.distance) : '';
+    row.append(number, detail, distance);
+    routeInstructions.appendChild(row);
+  });
+}
+
+function formatRouteDistance(meters) {
+  return meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km';
+}
+
+function formatRouteDuration(seconds) {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return minutes >= 60 ? Math.floor(minutes / 60) + ' hr ' + (minutes % 60) + ' min' : minutes + ' min';
+}
+
+// (Re)create the selected-route source/layers. Sources added outside the
+// style JSON are dropped by setStyle, so this is also called on style.load.
+function drawSelectedRoute() {
+  if (!selectedRouteFC) return;
+  const src = map.getSource('selected-route');
+  if (src) { src.setData(selectedRouteFC); return; }
+  map.addSource('selected-route', { type: 'geojson', data: selectedRouteFC });
+  map.addLayer({
+    id: 'selected-route-casing',
+    type: 'line',
+    source: 'selected-route',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#FFFFFF', 'line-width': 9, 'line-opacity': 0.95 },
+  });
+  map.addLayer({
+    id: 'selected-route-core',
+    type: 'line',
+    source: 'selected-route',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#E9813F', 'line-width': 5, 'line-opacity': 1 },
+  });
+}
+
+function showRoadRoute(origin, destination) {
+  const requestId = ++routeRequestId;
+  routeTitle.textContent = origin.name + ' to ' + destination.name;
+  routeMetrics.hidden = true;
+  routeInstructions.hidden = true;
+  routeState.textContent = 'Finding the fastest mapped road route…';
+  routeDetails.classList.add('open');
+
+  const coordinates = origin.lng + ',' + origin.lat + ';' + destination.lng + ',' + destination.lat;
+  const url = 'https://router.project-osrm.org/route/v1/driving/' + coordinates
+    + '?overview=full&geometries=geojson&steps=true&alternatives=false';
+  fetch(url, { signal: AbortSignal.timeout(12000) })
+    .then((response) => response.json())
+    .then((data) => {
+      if (requestId !== routeRequestId) return;
+      const route = data.routes && data.routes[0];
+      if (data.code !== 'Ok' || !route || !route.geometry || !route.geometry.coordinates.length) {
+        routeState.textContent = data.code === 'NoRoute'
+          ? 'No drivable road route was found between these town centers.'
+          : 'Road routing is unavailable right now. Try again when you are online.';
+        return;
+      }
+
+      selectedRouteFC = { type: 'Feature', properties: {}, geometry: route.geometry };
+      drawSelectedRoute();
+
+      for (const m of routeEndMarkers) m.remove();
+      routeEndMarkers = [];
+      if (data.waypoints && data.waypoints.length >= 2) {
+        const ends = [data.waypoints[0], data.waypoints[data.waypoints.length - 1]];
+        for (const [i, wp] of ends.entries()) {
+          const el = document.createElement('div');
+          el.className = 'route-end-dot';
+          el.style.background = i === 0 ? '#176B4B' : '#E9813F';
+          routeEndMarkers.push(
+            new maplibregl.Marker({ element: el, interactive: false })
+              .setLngLat(wp.location)
+              .addTo(map));
+        }
+      }
+
+      const bounds = new maplibregl.LngLatBounds();
+      for (const c of route.geometry.coordinates) bounds.extend(c);
+      map.fitBounds(bounds, {
+        maxZoom: 15,
+        duration: 800,
+        padding: { top: 190, bottom: 72, left: 18, right: 18 },
+      });
+
+      routeMetrics.innerHTML = '<div>' + formatRouteDistance(route.distance) + ' <span>road distance</span></div>'
+        + '<div>' + formatRouteDuration(route.duration) + ' <span>driving estimate</span></div>';
+      routeMetrics.hidden = false;
+      updateRouteInstructions(route.legs && route.legs[0] ? route.legs[0].steps || [] : [], destination.name);
+      routeInstructions.hidden = false;
+      routeState.textContent = 'Route line follows mapped roads between the selected points.';
+    })
+    .catch(() => {
+      if (requestId !== routeRequestId) return;
+      routeState.textContent = 'Road routing is unavailable right now. Try again when you are online.';
+    });
+}
+
+function clearSelectedRoute() {
+  routeRequestId += 1;
+  selectedRouteFC = null;
+  const src = map.getSource('selected-route');
+  if (src) src.setData({ type: 'FeatureCollection', features: [] });
+  for (const m of routeEndMarkers) m.remove();
+  routeEndMarkers = [];
+  routeDetails.classList.remove('open');
+  routeMetrics.hidden = true;
+  routeInstructions.hidden = true;
+}
+
+document.getElementById('clear-route').addEventListener('click', clearSelectedRoute);
+
 // Sources/layers defined outside the style JSON are dropped by setStyle;
 // re-add them whenever a style finishes loading.
 map.on('style.load', () => {
   const sea = map.getSource('sea');
   if (sea) sea.setData(seaData);
   drawRoutes();
+  drawSelectedRoute();
 });
 loadRoutes();
 
@@ -1027,6 +1493,11 @@ function goToPlace(place) {
     .addTo(map);
   map.flyTo({ center: ll, zoom: 15, duration: 900 });
   closeResults();
+  showRoadRoute(selectedOrigin, {
+    name: place.display_name.split(',')[0],
+    lat: ll[1],
+    lng: ll[0],
+  });
 }
 
 function closeResults() { resultsBox.classList.remove('open'); }
@@ -1105,6 +1576,86 @@ function locateMe() {
     { enableHighAccuracy: true }
   );
 }
+
+// ---------- AI assistant (preview chat, canned replies — no backend) ----------
+const assistantButton = document.getElementById('assistant-btn');
+const assistantPanel = document.getElementById('assistant-chat-panel');
+const assistantClose = document.getElementById('chat-close');
+const chatMessages = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+
+function openAssistant() {
+  assistantPanel.classList.add('open');
+  assistantButton.hidden = true;
+  assistantButton.setAttribute('aria-expanded', 'true');
+  chatInput.focus();
+}
+
+function closeAssistant() {
+  assistantPanel.classList.remove('open');
+  assistantButton.hidden = false;
+  assistantButton.setAttribute('aria-expanded', 'false');
+  assistantButton.focus();
+}
+
+function addChatMessage(text, sender) {
+  const row = document.createElement('div');
+  row.className = 'chat-row ' + sender;
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  chatMessages.appendChild(row);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return bubble;
+}
+
+function getAssistantReply(question) {
+  const query = question.toLowerCase();
+  if (/\b(hi|hello|hey|good morning|good afternoon)\b/.test(query)) {
+    return 'Hello! I can help you think through a Marinduque trip. Ask me about map help, travel tips, or planning a route.';
+  }
+  if (/trip|route|destination|plan|travel to/.test(query)) {
+    return 'Tell me your starting point and destination, and I can help you plan the next step. Map directions are road estimates; they do not include verified jeepney or tricycle schedules.';
+  }
+  if (/map|search|find|place/.test(query)) {
+    return 'Use the search box at the top of the map to find a place in Marinduque. Select a result to see its location and a mapped road route from Boac.';
+  }
+  if (/tip|safety|prepare|before/.test(query)) {
+    return 'Before leaving, confirm current fares and departure times with local operators. Allow extra time for road conditions, and keep a little cash for local rides.';
+  }
+  if (/terminal|port|ferry/.test(query)) {
+    return 'The map includes sample markers for Balanacan, Cawit, and Buyabod port terminals. Please confirm current ferry departures locally before traveling.';
+  }
+  return 'I’m a preview assistant, so I don’t have live schedules, fares, or vehicle updates yet. Try asking about trip planning, map help, or travel tips.';
+}
+
+function sendChatMessage(message) {
+  const text = message.trim();
+  if (!text) return;
+  addChatMessage(text, 'user');
+  chatInput.value = '';
+  const pendingReply = addChatMessage('One moment…', 'bot');
+  setTimeout(() => {
+    pendingReply.textContent = getAssistantReply(text);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }, 320);
+}
+
+assistantButton.addEventListener('click', openAssistant);
+assistantClose.addEventListener('click', closeAssistant);
+chatForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  sendChatMessage(chatInput.value);
+  chatInput.focus();
+});
+document.querySelectorAll('.quick-reply').forEach((button) => {
+  button.addEventListener('click', () => sendChatMessage(button.textContent));
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && assistantPanel.classList.contains('open')) closeAssistant();
+});
 })();
 
 </script>

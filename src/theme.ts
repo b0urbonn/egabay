@@ -10,7 +10,12 @@ export type ThemeColors = {
   lime: string;
   onLime: string;
   orange: string;
+  orangeDark: string;
   orangeLight: string;
+  blue: string;
+  blueLight: string;
+  purple: string;
+  purpleLight: string;
   red: string;
   chipBg: string;
   statusBg: string;
@@ -43,7 +48,12 @@ export const lightColors: ThemeColors = {
   lime: '#C6F06A',
   onLime: '#10543A',
   orange: '#E9813F',
+  orangeDark: '#8A430B',
   orangeLight: '#FFF0E4',
+  blue: '#0A66C2',
+  blueLight: '#E8F3FF',
+  purple: '#6F42C1',
+  purpleLight: '#F1EAFE',
   red: '#B5473A',
   chipBg: '#FBFCFA',
   statusBg: '#F0F7EF',
@@ -76,7 +86,12 @@ export const darkColors: ThemeColors = {
   lime: '#C6F06A',
   onLime: '#10543A',
   orange: '#F09A5F',
+  orangeDark: '#F5AF78',
   orangeLight: '#332519',
+  blue: '#8FC7FF',
+  blueLight: '#19314A',
+  purple: '#D6B7FF',
+  purpleLight: '#342744',
   red: '#E07A6A',
   chipBg: '#212A24',
   statusBg: '#203328',

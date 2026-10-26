@@ -199,36 +199,24 @@ const TOWNS = [
 ];
 
 const POIS = [
-  { name: 'Balanacan Port',       lat: 13.5334, lng: 121.8673, note: 'Main ferry gateway · Mogpog' },
-  { name: 'Cawit Port',           lat: 13.4316, lng: 121.8326, note: 'RoRo/ferry pier · Boac' },
-  { name: 'Marinduque Airport',   lat: 13.3607, lng: 121.8257, note: 'Masiga · Gasan' },
-  { name: 'Buyabod Port',         lat: 13.4412, lng: 122.0443, note: 'Ferry pier · Santa Cruz' },
-  { name: 'Poctoy White Beach',   lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos' },
+  { name: 'Balanacan Port Terminal', lat: 13.5334, lng: 121.8673, note: 'Main ferry gateway · Mogpog', category: 'terminal' },
+  { name: 'Cawit Port Terminal',     lat: 13.4316, lng: 121.8326, note: 'RoRo/ferry pier · Boac', category: 'terminal' },
+  { name: 'Marinduque Airport',      lat: 13.3607, lng: 121.8257, note: 'Masiga · Gasan', category: 'place' },
+  { name: 'Buyabod Port Terminal',   lat: 13.4412, lng: 122.0443, note: 'Ferry pier · Santa Cruz', category: 'terminal' },
+  { name: 'Poctoy White Beach',      lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos', category: 'place' },
 ];
 
-const PIN_SVG = '<svg class="pin-marker" viewBox="0 0 24 24" aria-hidden="true">'
-  + '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>'
-  + '<circle cx="12" cy="9" r="2.6"/></svg>';
-
-// Town marker = label above a pin; anchor 'bottom' puts the pin tip on the point.
-for (const t of TOWNS) {
-  const el = document.createElement('div');
-  el.className = 'town-marker';
-  el.innerHTML = '<span class="town-label">' + t.name.toUpperCase() + '</span>' + PIN_SVG;
-  new maplibregl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat([t.lng, t.lat])
-    .setPopup(new maplibregl.Popup({ offset: 36 }).setHTML(
-      '<p class="popup-title">' + t.name + '</p><p class="popup-sub">' + t.note + ' · Marinduque</p>'))
-    .addTo(map);
-}
+const terminalMarkers = [];
+const otherMarkers = [];
 for (const p of POIS) {
   const el = document.createElement('div');
   el.className = 'poi-dot';
-  new maplibregl.Marker({ element: el })
+  const marker = new maplibregl.Marker({ element: el })
     .setLngLat([p.lng, p.lat])
     .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(
       '<p class="popup-title">' + p.name + '</p><p class="popup-sub">' + p.note + '</p>'))
     .addTo(map);
+  (p.category === 'terminal' ? terminalMarkers : otherMarkers).push(marker);
 }
 
 // ---------- Commute routes (OSRM road geometry, straight-line fallback) ----------
@@ -286,12 +274,187 @@ async function loadRoutes() {
   drawRoutes();
 }
 
+// ---------- Transport filters + selected road route ----------
+const routeDetails = document.getElementById('route-details');
+const routeTitle = document.getElementById('route-title');
+const routeMetrics = document.getElementById('route-metrics');
+const routeState = document.getElementById('route-state');
+const routeInstructions = document.getElementById('route-instructions');
+const selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
+let routeRequestId = 0;
+let selectedRouteFC = null;
+let routeEndMarkers = [];
+let activeTransportFilter = null;
+
+document.querySelectorAll('.filter-chip').forEach((button) => {
+  button.addEventListener('click', () => {
+    const filter = button.dataset.filter;
+    activeTransportFilter = activeTransportFilter === filter ? null : filter;
+    document.querySelectorAll('.filter-chip').forEach((chip) => {
+      const selected = chip.dataset.filter === activeTransportFilter;
+      chip.classList.toggle('active', selected);
+      chip.setAttribute('aria-pressed', String(selected));
+    });
+
+    const showAll = !activeTransportFilter;
+    for (const m of terminalMarkers) (showAll || activeTransportFilter === 'Terminal') ? m.addTo(map) : m.remove();
+    for (const m of otherMarkers) showAll ? m.addTo(map) : m.remove();
+    if (showAll) return;
+
+    clearSelectedRoute();
+    if (activeTransportFilter !== 'Terminal') {
+      showToast('No verified ' + activeTransportFilter + ' routes are mapped yet.');
+    }
+  });
+});
+
+function updateRouteInstructions(steps, destinationName) {
+  routeInstructions.replaceChildren();
+  steps.forEach((step, index) => {
+    const maneuver = step.maneuver || {};
+    const roadName = step.name || step.ref || '';
+    let instruction;
+    if (maneuver.type === 'depart') instruction = 'Start' + (roadName ? ' on ' + roadName : ' on the nearest road');
+    else if (maneuver.type === 'arrive') instruction = 'Arrive at ' + destinationName;
+    else if (maneuver.type === 'turn') instruction = 'Turn ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'fork') instruction = 'Keep ' + (maneuver.modifier || 'straight') + (roadName ? ' onto ' + roadName : ' at the fork');
+    else if (maneuver.type === 'merge') instruction = 'Merge ' + (maneuver.modifier || '') + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'roundabout' || maneuver.type === 'rotary') instruction = 'Enter the roundabout' + (roadName ? ' toward ' + roadName : '');
+    else if (maneuver.type === 'exit roundabout' || maneuver.type === 'exit rotary') instruction = 'Take the roundabout exit' + (roadName ? ' onto ' + roadName : '');
+    else if (maneuver.type === 'new name') instruction = 'Continue' + (roadName ? ' onto ' + roadName : ' on the road');
+    else instruction = 'Continue' + (roadName ? ' on ' + roadName : ' on the road');
+
+    const row = document.createElement('div');
+    row.className = 'route-step';
+    const number = document.createElement('span');
+    number.className = 'route-step-index';
+    number.textContent = String(index + 1);
+    const detail = document.createElement('span');
+    detail.className = 'route-step-detail';
+    detail.textContent = instruction.trim();
+    const distance = document.createElement('span');
+    distance.className = 'route-step-distance';
+    distance.textContent = step.distance > 0 ? formatRouteDistance(step.distance) : '';
+    row.append(number, detail, distance);
+    routeInstructions.appendChild(row);
+  });
+}
+
+function formatRouteDistance(meters) {
+  return meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km';
+}
+
+function formatRouteDuration(seconds) {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return minutes >= 60 ? Math.floor(minutes / 60) + ' hr ' + (minutes % 60) + ' min' : minutes + ' min';
+}
+
+// (Re)create the selected-route source/layers. Sources added outside the
+// style JSON are dropped by setStyle, so this is also called on style.load.
+function drawSelectedRoute() {
+  if (!selectedRouteFC) return;
+  const src = map.getSource('selected-route');
+  if (src) { src.setData(selectedRouteFC); return; }
+  map.addSource('selected-route', { type: 'geojson', data: selectedRouteFC });
+  map.addLayer({
+    id: 'selected-route-casing',
+    type: 'line',
+    source: 'selected-route',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#FFFFFF', 'line-width': 9, 'line-opacity': 0.95 },
+  });
+  map.addLayer({
+    id: 'selected-route-core',
+    type: 'line',
+    source: 'selected-route',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#E9813F', 'line-width': 5, 'line-opacity': 1 },
+  });
+}
+
+function showRoadRoute(origin, destination) {
+  const requestId = ++routeRequestId;
+  routeTitle.textContent = origin.name + ' to ' + destination.name;
+  routeMetrics.hidden = true;
+  routeInstructions.hidden = true;
+  routeState.textContent = 'Finding the fastest mapped road route…';
+  routeDetails.classList.add('open');
+
+  const coordinates = origin.lng + ',' + origin.lat + ';' + destination.lng + ',' + destination.lat;
+  const url = 'https://router.project-osrm.org/route/v1/driving/' + coordinates
+    + '?overview=full&geometries=geojson&steps=true&alternatives=false';
+  fetch(url, { signal: AbortSignal.timeout(12000) })
+    .then((response) => response.json())
+    .then((data) => {
+      if (requestId !== routeRequestId) return;
+      const route = data.routes && data.routes[0];
+      if (data.code !== 'Ok' || !route || !route.geometry || !route.geometry.coordinates.length) {
+        routeState.textContent = data.code === 'NoRoute'
+          ? 'No drivable road route was found between these town centers.'
+          : 'Road routing is unavailable right now. Try again when you are online.';
+        return;
+      }
+
+      selectedRouteFC = { type: 'Feature', properties: {}, geometry: route.geometry };
+      drawSelectedRoute();
+
+      for (const m of routeEndMarkers) m.remove();
+      routeEndMarkers = [];
+      if (data.waypoints && data.waypoints.length >= 2) {
+        const ends = [data.waypoints[0], data.waypoints[data.waypoints.length - 1]];
+        for (const [i, wp] of ends.entries()) {
+          const el = document.createElement('div');
+          el.className = 'route-end-dot';
+          el.style.background = i === 0 ? '#176B4B' : '#E9813F';
+          routeEndMarkers.push(
+            new maplibregl.Marker({ element: el, interactive: false })
+              .setLngLat(wp.location)
+              .addTo(map));
+        }
+      }
+
+      const bounds = new maplibregl.LngLatBounds();
+      for (const c of route.geometry.coordinates) bounds.extend(c);
+      map.fitBounds(bounds, {
+        maxZoom: 15,
+        duration: 800,
+        padding: { top: 190, bottom: 72, left: 18, right: 18 },
+      });
+
+      routeMetrics.innerHTML = '<div>' + formatRouteDistance(route.distance) + ' <span>road distance</span></div>'
+        + '<div>' + formatRouteDuration(route.duration) + ' <span>driving estimate</span></div>';
+      routeMetrics.hidden = false;
+      updateRouteInstructions(route.legs && route.legs[0] ? route.legs[0].steps || [] : [], destination.name);
+      routeInstructions.hidden = false;
+      routeState.textContent = 'Route line follows mapped roads between the selected points.';
+    })
+    .catch(() => {
+      if (requestId !== routeRequestId) return;
+      routeState.textContent = 'Road routing is unavailable right now. Try again when you are online.';
+    });
+}
+
+function clearSelectedRoute() {
+  routeRequestId += 1;
+  selectedRouteFC = null;
+  const src = map.getSource('selected-route');
+  if (src) src.setData({ type: 'FeatureCollection', features: [] });
+  for (const m of routeEndMarkers) m.remove();
+  routeEndMarkers = [];
+  routeDetails.classList.remove('open');
+  routeMetrics.hidden = true;
+  routeInstructions.hidden = true;
+}
+
+document.getElementById('clear-route').addEventListener('click', clearSelectedRoute);
+
 // Sources/layers defined outside the style JSON are dropped by setStyle;
 // re-add them whenever a style finishes loading.
 map.on('style.load', () => {
   const sea = map.getSource('sea');
   if (sea) sea.setData(seaData);
   drawRoutes();
+  drawSelectedRoute();
 });
 loadRoutes();
 
@@ -514,6 +677,11 @@ function goToPlace(place) {
     .addTo(map);
   map.flyTo({ center: ll, zoom: 15, duration: 900 });
   closeResults();
+  showRoadRoute(selectedOrigin, {
+    name: place.display_name.split(',')[0],
+    lat: ll[1],
+    lng: ll[0],
+  });
 }
 
 function closeResults() { resultsBox.classList.remove('open'); }
@@ -592,4 +760,84 @@ function locateMe() {
     { enableHighAccuracy: true }
   );
 }
+
+// ---------- AI assistant (preview chat, canned replies — no backend) ----------
+const assistantButton = document.getElementById('assistant-btn');
+const assistantPanel = document.getElementById('assistant-chat-panel');
+const assistantClose = document.getElementById('chat-close');
+const chatMessages = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+
+function openAssistant() {
+  assistantPanel.classList.add('open');
+  assistantButton.hidden = true;
+  assistantButton.setAttribute('aria-expanded', 'true');
+  chatInput.focus();
+}
+
+function closeAssistant() {
+  assistantPanel.classList.remove('open');
+  assistantButton.hidden = false;
+  assistantButton.setAttribute('aria-expanded', 'false');
+  assistantButton.focus();
+}
+
+function addChatMessage(text, sender) {
+  const row = document.createElement('div');
+  row.className = 'chat-row ' + sender;
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  chatMessages.appendChild(row);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return bubble;
+}
+
+function getAssistantReply(question) {
+  const query = question.toLowerCase();
+  if (/\b(hi|hello|hey|good morning|good afternoon)\b/.test(query)) {
+    return 'Hello! I can help you think through a Marinduque trip. Ask me about map help, travel tips, or planning a route.';
+  }
+  if (/trip|route|destination|plan|travel to/.test(query)) {
+    return 'Tell me your starting point and destination, and I can help you plan the next step. Map directions are road estimates; they do not include verified jeepney or tricycle schedules.';
+  }
+  if (/map|search|find|place/.test(query)) {
+    return 'Use the search box at the top of the map to find a place in Marinduque. Select a result to see its location and a mapped road route from Boac.';
+  }
+  if (/tip|safety|prepare|before/.test(query)) {
+    return 'Before leaving, confirm current fares and departure times with local operators. Allow extra time for road conditions, and keep a little cash for local rides.';
+  }
+  if (/terminal|port|ferry/.test(query)) {
+    return 'The map includes sample markers for Balanacan, Cawit, and Buyabod port terminals. Please confirm current ferry departures locally before traveling.';
+  }
+  return 'I’m a preview assistant, so I don’t have live schedules, fares, or vehicle updates yet. Try asking about trip planning, map help, or travel tips.';
+}
+
+function sendChatMessage(message) {
+  const text = message.trim();
+  if (!text) return;
+  addChatMessage(text, 'user');
+  chatInput.value = '';
+  const pendingReply = addChatMessage('One moment…', 'bot');
+  setTimeout(() => {
+    pendingReply.textContent = getAssistantReply(text);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }, 320);
+}
+
+assistantButton.addEventListener('click', openAssistant);
+assistantClose.addEventListener('click', closeAssistant);
+chatForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  sendChatMessage(chatInput.value);
+  chatInput.focus();
+});
+document.querySelectorAll('.quick-reply').forEach((button) => {
+  button.addEventListener('click', () => sendChatMessage(button.textContent));
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && assistantPanel.classList.contains('open')) closeAssistant();
+});
 })();
