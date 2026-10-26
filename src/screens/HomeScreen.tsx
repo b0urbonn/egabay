@@ -13,7 +13,7 @@ type HomeDestination = 'Map' | 'Profile';
 const quickAccess = [
   { label: 'Plan a Trip', icon: 'route' as const, destination: 'Map' as const },
   { label: 'Live Trips', icon: 'liveTrips' as const, destination: 'Map' as const },
-  { label: 'Terminals', icon: 'terminals' as const, destination: 'Map' as const },
+  { label: 'Terminals', icon: 'terminals' as const, destination: 'Terminals' as const },
   { label: 'AI Assistant', icon: 'assistant' as const, destination: 'assistant' as const },
   { label: 'Map', icon: 'map' as const, destination: 'Map' as const },
   { label: 'More', icon: 'more' as const, destination: 'Profile' as const },
@@ -30,11 +30,13 @@ export function HomeScreen({
   session,
   mode,
   onNavigate,
+  onOpenTerminals,
   onOpenSettings,
 }: {
   session: Session;
   mode: AppMode;
   onNavigate: (tab: HomeDestination) => void;
+  onOpenTerminals: () => void;
   onOpenSettings: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
@@ -43,9 +45,13 @@ export function HomeScreen({
   const name = session.kind === 'account' ? session.name.split(' ')[0] : 'commuter';
   const today = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
 
-  const handleQuickAccess = (destination: HomeDestination | 'assistant') => {
+  const handleQuickAccess = (destination: HomeDestination | 'Terminals' | 'assistant') => {
     if (destination === 'assistant') {
       Alert.alert('AI Assistant', 'Your travel assistant is coming soon.');
+      return;
+    }
+    if (destination === 'Terminals') {
+      onOpenTerminals();
       return;
     }
     onNavigate(destination);

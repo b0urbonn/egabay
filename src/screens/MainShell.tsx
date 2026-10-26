@@ -11,6 +11,7 @@ import type { ThemeColors } from '../theme';
 import { HomeScreen } from './HomeScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { TerminalsScreen } from './TerminalsScreen';
 import { TripsScreen } from './TripsScreen';
 
 export type Tab = 'Home' | 'Map' | 'Trips' | 'Profile';
@@ -49,6 +50,7 @@ export function MainShell({
   const colors = useColors();
   const [activeTab, setActiveTab] = useState<Tab>('Home');
   const [showSettings, setShowSettings] = useState(false);
+  const [showTerminals, setShowTerminals] = useState(false);
 
   useEffect(() => {
     if (!showSettings) return;
@@ -69,6 +71,8 @@ export function MainShell({
             onReset={onReset}
             onBack={() => setShowSettings(false)}
           />
+        ) : showTerminals ? (
+          <TerminalsScreen onBack={() => setShowTerminals(false)} />
         ) : (
           <>
             {activeTab === 'Home' && (
@@ -76,6 +80,7 @@ export function MainShell({
                 session={session}
                 mode={mode}
                 onNavigate={setActiveTab}
+                onOpenTerminals={() => setShowTerminals(true)}
                 onOpenSettings={() => setShowSettings(true)}
               />
             )}
@@ -96,7 +101,7 @@ export function MainShell({
       </View>
       <View style={styles.tabBar}>
         {tabs.map((tab) => {
-          const selected = !showSettings && activeTab === tab.label;
+          const selected = !showSettings && !showTerminals && activeTab === tab.label;
           return (
             <Pressable
               style={styles.tabItem}
@@ -104,7 +109,7 @@ export function MainShell({
               accessibilityRole="button"
               accessibilityLabel={`${tab.label} tab`}
               accessibilityState={{ selected }}
-              onPress={() => { setShowSettings(false); setActiveTab(tab.label); }}
+              onPress={() => { setShowSettings(false); setShowTerminals(false); setActiveTab(tab.label); }}
             >
               <View style={[styles.tabGlyphWrap, selected && styles.tabGlyphWrapSelected]}>
                 <MaterialIcon name={tab.icon} size={21} color={selected ? colors.green : colors.muted} />
