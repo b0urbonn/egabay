@@ -38,50 +38,6 @@
   }
   .compass .arrow { display: block; font-size: 13px; margin-bottom: 2px; }
 
-  /* ---- Panel (app theme) ---- */
-  .panel {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 1000;
-    width: min(230px, calc(100vw - 96px));
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    box-shadow: var(--float-shadow);
-    padding: 14px;
-  }
-  .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-  .panel-eyebrow {
-    color: var(--green);
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 1.3px;
-    margin: 0 0 3px;
-  }
-  .panel-title {
-    color: var(--ink);
-    font-size: 17px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    margin: 0 0 2px;
-  }
-  .panel-sub { color: var(--muted); font-size: 11px; margin: 0 0 11px; }
-
-  .collapse-btn {
-    display: none;
-    border: 1px solid var(--line);
-    background: #FBFCFA;
-    color: var(--ink);
-    border-radius: 9px;
-    width: 26px;
-    height: 26px;
-    font-size: 13px;
-    line-height: 1;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
   /* Floating search bar, top-center */
   .search-float {
     position: absolute;
@@ -209,29 +165,15 @@
   }
   .basemap-menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 4px; display: none; }
 
-  .panel-foot { margin-top: 8px; font-size: 9.5px; color: var(--muted); line-height: 14px; }
-
   /* Compact mode when embedded in the app */
-  body.embedded .panel { top: 8px; left: 8px; width: auto; min-width: 128px; padding: 8px 11px; border-radius: 12px; }
-  body.embedded .panel-title { font-size: 14px; margin: 0; }
-  body.embedded .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
-  body.embedded .panel-sub { display: none; }
-  body.embedded .panel-foot { display: none; }
-  body.embedded .collapse-btn { display: block; }
-  body.embedded .panel.collapsed .panel-body { display: none; }
-  body.embedded .panel-body { margin-top: 6px; }
   body.embedded .search-float { top: auto; bottom: 74px; left: 8px; transform: none; width: min(230px, calc(100vw - 76px)); }
   body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; }
   body.embedded #results { top: auto; bottom: 36px; }
   body.embedded .locate-fab, body.embedded .expand-btn, body.embedded .basemap-btn { width: 34px; height: 34px; font-size: 16px; line-height: 32px; }
 
-  /* Narrow screens (phones): search on top, compact title chip below it */
+  /* Narrow screens (phones): search on top, filters directly beneath it */
   @media (max-width: 860px) {
     body:not(.embedded) .search-float { top: 12px; left: 12px; right: 58px; transform: none; width: auto; }
-    body:not(.embedded) .panel { top: 62px; left: 12px; width: auto; padding: 8px 12px; border-radius: 12px; }
-    body:not(.embedded) .panel-title { font-size: 14px; margin: 0; }
-    body:not(.embedded) .panel-eyebrow { font-size: 8px; margin-bottom: 1px; }
-    body:not(.embedded) .panel-sub, body:not(.embedded) .panel-body { display: none; }
   }
 
   /* ---- point-of-interest markers ---- */
