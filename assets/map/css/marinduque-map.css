@@ -283,6 +283,21 @@
   .maplibregl-popup-close-button { color: var(--muted); }
   .popup-title { font-size: 13px; font-weight: 800; color: var(--ink); margin: 0 0 2px; }
   .popup-sub { font-size: 11px; color: var(--muted); margin: 0; }
+  .popup-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .popup-btn {
+    border: 0;
+    border-radius: 10px;
+    background: var(--green);
+    color: #fff;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .popup-btn:hover { background: var(--green-dark); }
+  .popup-btn-quiet { background: var(--line); color: var(--ink); }
+  .popup-btn-quiet:hover { background: #d8ded6; }
   #toast {
     position: absolute;
     bottom: 30px;

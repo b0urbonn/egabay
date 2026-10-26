@@ -94,6 +94,8 @@ function locateMe() {
         showToast('You appear to be outside the Marinduque coverage area.');
         return;
       }
+      selectedOrigin = { name: 'My location', lat: ll[1], lng: ll[0] };
+      showToast('Routes will now start from your location.');
       if (locateMarker) locateMarker.remove();
       const el = document.createElement('div');
       el.className = 'locate-dot';

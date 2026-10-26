@@ -43,38 +43,11 @@ const baseStyles = {
     sea: '#bfd9f2',
     styleUrl: 'https://tiles.versatiles.org/assets/styles/colorful/style.json',
   },
-  'Transport': {
-    sea: '#a4c9d8',
-    tiles: [
-      'https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-      'https://b.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-      'https://c.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-    ],
-    maxZoom: 18,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Style: <a href="https://www.cyclosm.org">CyclOSM</a>',
-  },
   'Standard': {
     sea: '#aad3df',
     tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  },
-  'Dark': {
-    sea: '#101216',
-    tiles: [
-      'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-      'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-      'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-      'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    ],
-    maxZoom: 20,
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-  },
-  'Satellite': {
-    sea: '#123b52',
-    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-    maxZoom: 19,
-    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
   },
 };
 let activeBase = 'General';
