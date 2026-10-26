@@ -225,7 +225,7 @@ function createStyles(colors: ThemeColors) {
     tileLabel: { color: colors.ink, fontSize: 12, lineHeight: 16, fontWeight: '600', textAlign: 'center' },
     exploreBanner: { height: 174, marginTop: 23, paddingLeft: 19, paddingVertical: 17, paddingRight: 14, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.green, justifyContent: 'center' },
     bannerImage: { borderRadius: 22 },
-    bannerScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(8,34,27,0.48)' },
+    bannerScrim: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(8,34,27,0.48)' },
     bannerCopy: { zIndex: 2, alignItems: 'flex-start' },
     bannerEyebrow: { color: '#D5E9D9', fontSize: 9, lineHeight: 12, fontWeight: '800', letterSpacing: 1.05, marginBottom: 5 },
     bannerTitle: { color: '#FFFFFF', fontSize: 25, lineHeight: 27, fontWeight: '800', letterSpacing: -0.55 },
