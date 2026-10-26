@@ -123,7 +123,7 @@ export function HomeScreen({
                     <MaterialIcon
                       name={item.icon}
                       size={22}
-                      color={item.label === 'AI Assistant' ? colors.orange : colors.green}
+                      color={item.label === 'AI Assistant' ? colors.quickIconAccent : colors.quickIcon}
                     />
                   </View>
                   <Text style={styles.tileLabel}>{item.label}</Text>
@@ -216,7 +216,7 @@ function createStyles(colors: ThemeColors) {
     tilePressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
     tileIcon: { width: 39, height: 39, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight },
     tileIconAccent: { backgroundColor: colors.orangeLight },
-    tileLabel: { color: colors.ink, fontSize: 11, lineHeight: 14, fontWeight: '600', textAlign: 'center' },
+    tileLabel: { color: colors.ink, fontSize: 12, lineHeight: 16, fontWeight: '600', textAlign: 'center' },
     exploreBanner: { height: 174, marginTop: 23, paddingLeft: 19, paddingVertical: 17, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.green, flexDirection: 'row' },
     bannerCopy: { zIndex: 2, flex: 1, justifyContent: 'center', alignItems: 'flex-start' },
     bannerEyebrow: { color: '#D5E9D9', fontSize: 9, lineHeight: 12, fontWeight: '800', letterSpacing: 1.05, marginBottom: 5 },

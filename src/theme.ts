@@ -16,6 +16,8 @@ export type ThemeColors = {
   blueLight: string;
   purple: string;
   purpleLight: string;
+  quickIcon: string;
+  quickIconAccent: string;
   red: string;
   chipBg: string;
   statusBg: string;
@@ -54,6 +56,8 @@ export const lightColors: ThemeColors = {
   blueLight: '#E8F3FF',
   purple: '#6F42C1',
   purpleLight: '#F1EAFE',
+  quickIcon: '#176B4B',
+  quickIconAccent: '#E9813F',
   red: '#B5473A',
   chipBg: '#FBFCFA',
   statusBg: '#F0F7EF',
@@ -92,6 +96,8 @@ export const darkColors: ThemeColors = {
   blueLight: '#19314A',
   purple: '#D6B7FF',
   purpleLight: '#342744',
+  quickIcon: '#FFFFFF',
+  quickIconAccent: '#FFFFFF',
   red: '#E07A6A',
   chipBg: '#212A24',
   statusBg: '#203328',
