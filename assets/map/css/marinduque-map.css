@@ -186,6 +186,16 @@
     cursor: pointer;
   }
 
+  /* Directory-backed terminals: larger lime-ringed square to mark verified
+     operator data vs the small sample dots. */
+  .terminal-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 2px solid var(--lime);
+    box-shadow: 0 0 0 2px rgba(23, 107, 75, 0.35), 0 1px 6px rgba(24, 35, 30, 0.45);
+  }
+
   .island-label {
     background: none;
     border: 0;

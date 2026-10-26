@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Asset } from 'expo-asset';
-import { WebView } from 'react-native-webview';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
+import { fetchPublicTerminals, subscribePublicTerminals } from '../lib/terminals';
 import { useColors, useThemeStyles } from '../lib/theme';
 import { radius, type ThemeColors } from '../theme';
 
@@ -20,7 +21,17 @@ type MarinduqueMapProps = {
 export function MarinduqueMap({ height = 300, fullscreen = false, onExpand }: MarinduqueMapProps) {
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebView's generic P=undefined breaks JSX ref inference
+  const webRef = useRef<any>(null);
   const [uri, setUri] = useState<string | null>(mapAsset.localUri);
+
+  // Push live terminal rows into the embedded map; re-push on DB changes.
+  const pushTerminals = useCallback(async (): Promise<void> => {
+    const terminals = await fetchPublicTerminals();
+    webRef.current?.postMessage(JSON.stringify({ type: 'egabay:terminals', terminals }));
+  }, []);
+
+  useEffect(() => subscribePublicTerminals(pushTerminals), [pushTerminals]);
 
   useEffect(() => {
     let mounted = true;
@@ -38,6 +49,7 @@ export function MarinduqueMap({ height = 300, fullscreen = false, onExpand }: Ma
     <View style={[styles.wrap, fullscreen ? styles.fullscreen : [styles.card, { height }]]}>
       {uri ? (
         <WebView
+          ref={webRef}
           source={{ uri: `${uri}#${fullscreen ? 'full' : 'embed'}` }}
           style={styles.webview}
           originWhitelist={['*']}
@@ -46,8 +58,9 @@ export function MarinduqueMap({ height = 300, fullscreen = false, onExpand }: Ma
           domStorageEnabled
           scrollEnabled={false}
           setSupportMultipleWindows={false}
-          onMessage={(event) => {
+          onMessage={(event: WebViewMessageEvent): void => {
             if (event.nativeEvent.data === 'egabay:expand') onExpand?.();
+            if (event.nativeEvent.data === 'egabay:ready') void pushTerminals();
           }}
         />
       ) : (

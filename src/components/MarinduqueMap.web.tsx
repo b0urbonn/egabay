@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Asset } from 'expo-asset';
 
+import { fetchPublicTerminals, subscribePublicTerminals } from '../lib/terminals';
 import { useThemeStyles } from '../lib/theme';
 import { radius, type ThemeColors } from '../theme';
 
@@ -18,19 +19,32 @@ type MarinduqueMapProps = {
 
 export function MarinduqueMap({ height = 300, fullscreen = false, onExpand }: MarinduqueMapProps) {
   const styles = useThemeStyles(createStyles);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Push live terminal rows into the embedded map; re-push on DB changes.
+  const pushTerminals = useCallback(async () => {
+    const terminals = await fetchPublicTerminals();
+    frameRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ type: 'egabay:terminals', terminals }),
+      '*',
+    );
+  }, []);
+
+  useEffect(() => subscribePublicTerminals(pushTerminals), [pushTerminals]);
 
   useEffect(() => {
-    if (!onExpand) return;
     const handler = (event: MessageEvent) => {
-      if (event.data === 'egabay:expand') onExpand();
+      if (event.data === 'egabay:expand') onExpand?.();
+      if (event.data === 'egabay:ready') void pushTerminals();
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [onExpand]);
+  }, [onExpand, pushTerminals]);
 
   return (
     <View style={[styles.wrap, fullscreen ? styles.fullscreen : [styles.card, { height }]]}>
       <iframe
+        ref={frameRef}
         src={`${mapAsset.uri}#${fullscreen ? 'full' : 'embed'}`}
         title="Marinduque map"
         allow="geolocation"

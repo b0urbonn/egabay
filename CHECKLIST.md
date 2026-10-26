@@ -2,7 +2,7 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest committed app state:** merge of `origin/main` `0664c57` (driver + chairperson preview workspaces) onto local desktop layout work (`62a6f15`: wide-web layout, animated hidable rail, multi-column screens). Supabase auth integrated earlier via `f756072`.
+**Latest committed app state:** merge `7b95273` — `origin/main` `0664c57` (driver + chairperson preview workspaces) onto local desktop layout work (`62a6f15`: wide-web layout, animated hidable rail, multi-column screens). Supabase auth integrated earlier via `f756072`. Plus uncommitted: map ↔ `public.terminals` data bridge and `supabase/seed.sql`.
 
 **Current local phase:** browser Supabase authentication and group-scoped access foundation. Code and migrations are committed on `origin/main`; live database setup, owner promotion, and real sign-in verification are pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
@@ -20,6 +20,7 @@
 - [x] **Done in local workspace** — Terminals directory screen (from Home explore banner): per-municipality land-transport terminals with locality filter and search, backed by sample/approximate data — not verified terminal records.
 - [x] **Done in current local workspace** — Native and browser Supabase clients plus catalog and group-access migrations defining tables, row-level security, role RPCs, and audit records; 13 isolated database integration checks pass.
 - [~] **Partial** — Offline mode is a saved app mode; route and notice content remains demo data, with no Supabase-backed cache/sync flow.
+- [x] **Done in local workspace** — Map consumes live terminal data: `src/lib/terminals.ts` reads `public.terminals` (anon `terminals_public` policy) + realtime; both `MarinduqueMap` wrappers push rows into the map on `egabay:ready`; `assets/map/js/terminals.js` swaps sample hubs for lime-ringed `terminal-dot` markers with Directions/Set-as-start popups. `supabase/seed.sql` seeds 6 groups + 7 terminals (4 OSM-derived, 3 flagged approximate). Needs `EXPO_PUBLIC_SUPABASE_*` in `.env` to go live.
 - [~] **Partial** — Supabase clients/schema are scaffolded, but the code does not evidence a connected project, verified seed rows, or live queries.
 - [~] **Partial** — Map provider is implemented, but local coverage, offline support, licensing, and cost are not documented as evaluated.
 - [x] **Done in local workspace** — Build plan defines the four-role access model: Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, plus commuters as public users. Includes the permissions matrix, group-scoped Supabase tables/relations, per-role screens, and the backend/app changes needed before implementing.
