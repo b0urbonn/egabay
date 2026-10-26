@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Platform, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { Button, ErrorBanner } from './src/components/ui';
+import { signOut } from './src/lib/auth';
+import { useAuthSession } from './src/lib/useAuthSession';
 
 import {
   clearStoredAppearance,
@@ -21,6 +24,8 @@ import {
 import { ColorsContext } from './src/lib/theme';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { MainShell } from './src/screens/MainShell';
+import { PasswordRecoveryScreen } from './src/screens/PasswordRecoveryScreen';
+import { RoleWorkspaceScreen } from './src/screens/RoleWorkspaceScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SignUpScreen } from './src/screens/SignUpScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
@@ -36,64 +41,72 @@ function initialStage(): Stage {
 export default function App() {
   const systemScheme = useColorScheme();
   const { width } = useWindowDimensions();
+  const auth = useAuthSession();
   const [stage, setStage] = useState<Stage>(initialStage);
   const [session, setSession] = useState<Session | null>(() => getStoredSession());
-  const [mode, setMode] = useState<AppMode>(() => {
-    const stored = getStoredMode();
-    if (stored) return stored;
-    return getStoredSession()?.kind === 'guest' ? 'offline' : 'online';
-  });
+  const [mode, setMode] = useState<AppMode>(() => getStoredMode() ?? (getStoredSession()?.kind === 'guest' ? 'offline' : 'online'));
   const [appearance, setAppearance] = useState<AppearanceSetting>(() => getStoredAppearance());
+  const [showCommuterView, setShowCommuterView] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    if (!auth.account) return;
+    setStoredSession(auth.account);
+    setOnboardingDone();
+    setSession(auth.account);
+    setStage('app');
+  }, [auth.account]);
+
+  useEffect(() => {
+    if (!auth.loading && !auth.userId && session?.kind === 'account') {
+      clearStoredSession();
+      setSession(null);
+      setStage('welcome');
+    }
+  }, [auth.loading, auth.userId, session]);
+
+  const accountId = session?.kind === 'account' ? session.id : null;
+  const accountRole = session?.kind === 'account' ? session.role : null;
+  useEffect(() => { setShowCommuterView(false); }, [accountId, accountRole]);
 
   const isDark = appearance === 'dark' || (appearance === 'system' && systemScheme === 'dark');
   const themeColors = isDark ? darkColors : lightColors;
   const isWideWeb = Platform.OS === 'web' && width >= 1024;
+  const staffAccount = session?.kind === 'account' && session.role !== 'commuter' ? session : null;
+  const isAdminWorkspace = stage === 'app' && staffAccount?.role === 'super_admin' && !showCommuterView;
   const styles = createAppStyles(themeColors);
 
-  const chooseMode = (next: AppMode) => {
-    setStoredMode(next);
-    setMode(next);
+  const chooseMode = (next: AppMode) => { setStoredMode(next); setMode(next); };
+  const chooseAppearance = (next: AppearanceSetting) => { setStoredAppearance(next); setAppearance(next); };
+  const finishOnboarding = () => { setOnboardingDone(); setStage('welcome'); };
+  const enterAsGuest = () => {
+    const guest = { kind: 'guest' } as const;
+    setStoredSession(guest); setSession(guest); chooseMode('offline'); setStage('app');
   };
-
-  const chooseAppearance = (next: AppearanceSetting) => {
-    setStoredAppearance(next);
-    setAppearance(next);
+  const leaveSession = async (): Promise<boolean> => {
+    setSigningOut(true);
+    setActionError(null);
+    try {
+      await signOut();
+      clearStoredSession(); setSession(null); setStage('welcome'); setShowCommuterView(false);
+      return true;
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'Sign out failed. Please try again.');
+      return false;
+    } finally { setSigningOut(false); }
   };
-
-  const finishOnboarding = () => {
-    setOnboardingDone();
-    setStage('welcome');
+  const resetApp = async () => {
+    if (!await leaveSession()) return;
+    clearOnboardingDone(); clearStoredMode(); clearStoredAppearance();
+    setMode('online'); setAppearance('system'); setStage('onboarding');
   };
-
-  const enterWithSession = (next: Session, nextMode: AppMode) => {
-    setStoredSession(next);
-    setStoredMode(nextMode);
-    setSession(next);
-    setMode(nextMode);
-    setStage('app');
-  };
-
-  const leaveSession = (target: Stage) => {
-    clearStoredSession();
-    setSession(null);
-    setStage(target);
-  };
-
-  const resetApp = () => {
-    clearOnboardingDone();
-    clearStoredSession();
-    clearStoredMode();
-    clearStoredAppearance();
-    setSession(null);
-    setMode('online');
-    setAppearance('system');
-    setStage('onboarding');
-  };
+  const requestAuth = () => { clearStoredSession(); setSession(null); setStage('login'); };
 
   return (
     <ColorsContext.Provider value={themeColors}>
-      <View style={[styles.page, isWideWeb && styles.desktopPage]}>
-        {isWideWeb && (
+      <View style={[styles.page, isWideWeb && !isAdminWorkspace && styles.desktopPage]}>
+        {isWideWeb && !isAdminWorkspace && (
           <View style={styles.introPanel}>
             <View style={styles.introBrandRow}>
               <View style={styles.brandMark}><Text style={styles.brandMarkText}>e</Text></View>
@@ -101,9 +114,7 @@ export default function App() {
             </View>
             <Text style={styles.introEyebrow}>MARINDUQUE, PHILIPPINES</Text>
             <Text style={styles.introTitle}>Getting around the island, made easier.</Text>
-            <Text style={styles.introBody}>
-              Explore local routes, plan your next ride, and check service updates in one place.
-            </Text>
+            <Text style={styles.introBody}>Explore local routes, plan your next ride, and check service updates in one place.</Text>
             <View style={styles.introTags}>
               <Text style={styles.introTag}>Route planning</Text>
               <Text style={styles.introTag}>Local updates</Text>
@@ -111,41 +122,35 @@ export default function App() {
             </View>
           </View>
         )}
-        <View style={[styles.appFrameFill, isWideWeb && styles.appFrame]}>
+        <View style={isWideWeb && !isAdminWorkspace ? styles.appFrame : styles.appFrameFill}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
-          {stage === 'onboarding' && <OnboardingScreen onDone={finishOnboarding} />}
-          {stage === 'welcome' && (
-            <WelcomeScreen
-              onLogin={() => setStage('login')}
-              onSignUp={() => setStage('signup')}
-              onOffline={() => enterWithSession({ kind: 'guest' }, 'offline')}
-            />
-          )}
-          {stage === 'login' && (
-            <LoginScreen
-              onBack={() => setStage('welcome')}
-              onSignUp={() => setStage('signup')}
-              onSuccess={(s) => enterWithSession(s, 'online')}
-            />
-          )}
-          {stage === 'signup' && (
-            <SignUpScreen
-              onBack={() => setStage('welcome')}
-              onLogin={() => setStage('login')}
-              onSuccess={(s) => enterWithSession(s, 'online')}
-            />
-          )}
-          {stage === 'app' && session && (
-            <MainShell
-              session={session}
-              mode={mode}
-              onChangeMode={chooseMode}
-              appearance={appearance}
-              onChangeAppearance={chooseAppearance}
-              onReset={resetApp}
-              onLogout={() => leaveSession('welcome')}
-              onAuthRequest={() => leaveSession('welcome')}
-            />
+          {actionError && <ErrorBanner message={actionError} />}
+          {auth.loading ? (
+            <View style={styles.authStatus}><ActivityIndicator color={themeColors.greenDark} /><Text style={styles.authStatusCopy}>Connecting your account…</Text></View>
+          ) : auth.error ? (
+            <View style={styles.authStatus}>
+              <Text style={styles.authStatusTitle}>We couldn’t open your account</Text>
+              <Text style={styles.authStatusCopy}>{auth.error}</Text>
+              <Button label="Retry" onPress={() => { if (!auth.userId) setStage('login'); auth.retry(); }} />
+              <Button label="Sign out" variant="ghost" onPress={() => void leaveSession()} loading={signingOut} />
+            </View>
+          ) : auth.recovering && auth.userId ? (
+            <PasswordRecoveryScreen onDone={() => { auth.finishRecovery(); setStage('app'); }} onCancel={() => void leaveSession()} />
+          ) : (
+            <>
+              {stage === 'onboarding' && <OnboardingScreen onDone={finishOnboarding} />}
+              {stage === 'welcome' && <WelcomeScreen onLogin={() => setStage('login')} onSignUp={() => setStage('signup')} onOffline={enterAsGuest} />}
+              {stage === 'login' && <LoginScreen onBack={() => setStage('welcome')} onSignUp={() => setStage('signup')} />}
+              {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
+              {stage === 'app' && session && (staffAccount && !showCommuterView ? (
+                <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
+              ) : (
+                <>
+                  {staffAccount && <Button label="Return to your workspace" variant="secondary" onPress={() => setShowCommuterView(false)} />}
+                  <MainShell session={session} mode={mode} onChangeMode={chooseMode} appearance={appearance} onChangeAppearance={chooseAppearance} onReset={() => void resetApp()} onLogout={() => void leaveSession()} onAuthRequest={requestAuth} />
+                </>
+              ))}
+            </>
           )}
         </View>
       </View>
@@ -156,6 +161,9 @@ export default function App() {
 function createAppStyles(colors: typeof lightColors) {
   return {
     page: { flex: 1, backgroundColor: colors.canvas },
+    authStatus: { flex: 1, justifyContent: 'center' as const, padding: 24, gap: 16 },
+    authStatusTitle: { color: colors.ink, fontSize: 22, fontWeight: '800' as const },
+    authStatusCopy: { color: colors.muted, fontSize: 14, lineHeight: 21 },
     desktopPage: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const, paddingHorizontal: '7%' as const, gap: 48, backgroundColor: colors.canvas },
     introPanel: { flex: 1, maxWidth: 520 },
     introBrandRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10, marginBottom: 64 },
@@ -168,6 +176,6 @@ function createAppStyles(colors: typeof lightColors) {
     introTags: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, marginTop: 28 },
     introTag: { color: colors.greenDark, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 18, overflow: 'hidden' as const, paddingVertical: 9, paddingHorizontal: 13, fontSize: 11, fontWeight: '700' as const },
     appFrameFill: { flex: 1, width: '100%' as const },
-    appFrame: { width: 420, flex: 0, height: '94%' as const, maxHeight: 940, borderRadius: 28, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' as const, backgroundColor: colors.canvas, shadowColor: '#173322', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.13, shadowRadius: 30, elevation: 8 },
+    appFrame: { width: 420, flexGrow: 0, flexShrink: 0, height: '94%' as const, maxHeight: 940, borderRadius: 28, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' as const, backgroundColor: colors.canvas, shadowColor: '#173322', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.13, shadowRadius: 30, elevation: 8 },
   };
 }

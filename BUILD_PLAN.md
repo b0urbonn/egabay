@@ -43,6 +43,8 @@ Build a commuter-first guide for finding public transport options around Marindu
 - View system-wide reports: groups, terminals, registered vehicles, drivers
 - Override edit or remove on any terminal or vehicle record
 
+Current delivery target: super admin in a desktop web panel; chairperson, driver, and commuter in a responsive web interface tested in Android browsers. Google sign-in uses the browser OAuth flow. Native builds and device-specific Google sign-in are a later delivery step.
+
 ## Roles and access control
 
 Hierarchy: **Super Admin → Groups (TODA / Jeepney) → Chairperson → Terminals → Vehicles → Drivers**. Commuters sit outside the hierarchy as public users.
@@ -140,22 +142,22 @@ Enforcement notes:
 
 All role surfaces live in the same Expo app behind role-gated navigation after Supabase sign-in; the web build covers the wider admin tables.
 
-## Changes needed before implementing RBAC
+## RBAC implementation and deployment
 
-Backend — new migration `YYYYMMDDHHMMSS_rbac_groups.sql` (or amend the initial migration, since no Supabase project is connected yet):
+Backend — `supabase/migrations/20261026000000_auth_and_group_access.sql` now implements the foundation below. It follows the original migration, passes isolated database policy checks, and is prepared for the confirmed empty project. Applying it to the live project and provisioning the first owner remain pending.
 
 - `profiles.role`: replace `operator`/`admin` with `chairperson`/`super_admin`.
 - New tables: `groups`, `terminals`, `drivers`, `feedback`, `audit_log`.
 - `vehicles`: add `terminal_id`, `plate_number`, `body_number`, `vehicle_type`, `assigned_driver_id`; fold `public_label` into `body_number`.
 - `service_alerts`: add nullable `group_id` for group-scoped announcements.
 - Rewrite RLS: role/scope helper functions, per-table policies for all four roles, column-restricted public vehicle view, updated grants.
-- Supabase Storage bucket for driver photos, readable by the driver, their chairperson, and super admin.
+- Pending later: private Supabase Storage for uploaded driver photos. Google profile photos are currently loaded from provider metadata; upload/signed-URL handling is not implemented.
 - Audit triggers (or mutation RPCs) on tables writable by super admin and chairperson.
 
 App:
 
-- Replace mock auth in `src/lib/session.ts` with Supabase Auth; resolve profile and role at sign-in.
-- Add role-gated navigation in `App.tsx`/`MainShell.tsx` — commuter experience by default; driver, chairperson, and admin sections appear by role.
+- Implemented locally: Supabase Google/email browser auth, session recovery, and protected profile/role resolution; old mock accounts are ignored.
+- Implemented locally: role-gated initial workspaces in `App.tsx`, with a full-width desktop admin panel and responsive staff entry pages. Full operational consoles remain upcoming.
 - Wire `TerminalsScreen` to the `terminals` table; add the vehicle board, feedback form, and the new role screens listed above.
 - Keep demo arrays until verified group and terminal seed data exists.
 

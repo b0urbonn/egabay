@@ -13,3 +13,6 @@ web-build/
 # Build output of `npm run build:map` — regenerated automatically on start.
 # Run `npm run build:map` before `npx expo export`/EAS builds.
 assets/generated/
+
+# Generated one-time database setup SQL; edit migrations instead.
+supabase/generated/
