@@ -5,6 +5,7 @@ import { MaterialIcon } from '../components/MaterialIcon';
 import { MarinduqueMap } from '../components/MarinduqueMap';
 import { demoOngoingTrips, demoRoutes, type CommuteRoute } from '../data/demo';
 import { useColors, useThemeStyles } from '../lib/theme';
+import { useWideLayout } from '../lib/useWideLayout';
 import type { ThemeColors } from '../theme';
 
 type Municipality = 'Santa Cruz' | 'Boac' | 'Mogpog' | 'Buenavista' | 'Torrijos' | 'Gasan';
@@ -70,6 +71,7 @@ const terminals: Terminal[] = [
 export function TerminalsScreen({ onBack }: { onBack: () => void }) {
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
+  const isWide = useWideLayout();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<LocalityFilter>('All');
   const [selectedTerminal, setSelectedTerminal] = useState<Terminal | null>(null);
@@ -158,14 +160,14 @@ export function TerminalsScreen({ onBack }: { onBack: () => void }) {
       </View>
 
       {visibleTerminals.length ? (
-        <View style={styles.terminalList}>
+        <View style={[styles.terminalList, isWide && styles.terminalListWide]}>
           {visibleTerminals.map((terminal) => (
             <Pressable
               key={terminal.id}
               accessibilityRole="button"
               accessibilityLabel={`View details for ${terminal.name}`}
               onPress={() => setSelectedTerminal(terminal)}
-              style={({ pressed }) => [styles.terminalCard, pressed && styles.cardPressed]}
+              style={({ pressed }) => [styles.terminalCard, isWide && styles.terminalCardWide, pressed && styles.cardPressed]}
             >
               <View style={styles.terminalIcon}>
               <MaterialIcon name="terminals" size={21} color={colors.greenDark} />
@@ -197,9 +199,74 @@ export function TerminalsScreen({ onBack }: { onBack: () => void }) {
 function TerminalDetails({ terminal, onBack }: { terminal: Terminal; onBack: () => void }) {
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
+  const isWide = useWideLayout();
   const [activeMode, setActiveMode] = useState<'Jeepney' | 'Tricycle'>('Jeepney');
   const jeepneyRouteNames = new Set(demoOngoingTrips.filter((trip) => trip.vehicleType === 'Jeepney').map((trip) => trip.route));
   const servedRoutes = demoRoutes.filter((route) => terminal.routeIds.includes(route.id) && jeepneyRouteNames.has(route.name));
+
+  const mapCard = (
+    <View style={styles.mapCard}>
+      <Text style={styles.sectionTitle}>Map</Text>
+      <View style={styles.mapWrap}>
+        <MarinduqueMap height={isWide ? 300 : 190} />
+      </View>
+    </View>
+  );
+
+  const contactSection = (
+    <View style={[styles.detailSection, isWide && styles.detailSectionFlat]}>
+      <Text style={styles.sectionTitle}>Contact information</Text>
+      <View style={styles.infoCard}>
+        <View style={styles.infoIcon}><MaterialIcon name="phone" size={19} color={colors.greenDark} /></View>
+        <View style={styles.infoCopy}>
+          <Text style={styles.infoLabel}>Phone</Text>
+          <Text style={styles.infoValue}>No public contact listed</Text>
+        </View>
+      </View>
+      <Text style={styles.helperText}>Contact information has not been confirmed yet.</Text>
+    </View>
+  );
+
+  const routesSection = (
+    <View style={styles.detailSection}>
+      <Text style={styles.sectionTitle}>Routes served</Text>
+      <View style={styles.modeSwitch}>
+        {(['Jeepney', 'Tricycle'] as const).map((mode) => {
+          const selected = activeMode === mode;
+          return (
+            <Pressable
+              key={mode}
+              accessibilityRole="button"
+              accessibilityLabel={`Show ${mode} routes`}
+              accessibilityState={{ selected }}
+              onPress={() => setActiveMode(mode)}
+              style={[styles.modeButton, selected && styles.modeButtonSelected]}
+            >
+              <Text style={[styles.modeText, selected && styles.modeTextSelected]}>{mode}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {activeMode === 'Jeepney' && servedRoutes.length > 0 ? (
+        <View style={styles.servedRoutes}>
+          {servedRoutes.map((route, index) => (
+            <View key={route.id}>
+              {index > 0 && <View style={styles.routeSeparator} />}
+              <RouteRow route={route} styles={styles} />
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.routeEmptyCard}>
+          <View style={styles.infoIcon}><MaterialIcon name="route" size={19} color={colors.greenDark} /></View>
+          <View style={styles.infoCopy}>
+            <Text style={styles.infoValue}>{activeMode === 'Tricycle' ? 'Tricycle routes are not mapped yet' : 'No sample routes listed'}</Text>
+            <Text style={styles.routeEmptyCopy}>Route paths and schedules need confirmation from local operators.</Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
@@ -226,63 +293,14 @@ function TerminalDetails({ terminal, onBack }: { terminal: Terminal; onBack: () 
         </View>
       </View>
 
-      <View style={styles.mapCard}>
-        <Text style={styles.sectionTitle}>Map</Text>
-        <View style={styles.mapWrap}>
-          <MarinduqueMap height={190} />
+      {isWide ? (
+        <View style={styles.detailColumns}>
+          <View style={styles.detailCol}>{mapCard}</View>
+          <View style={styles.detailCol}>{contactSection}{routesSection}</View>
         </View>
-      </View>
-
-      <View style={styles.detailSection}>
-        <Text style={styles.sectionTitle}>Contact information</Text>
-        <View style={styles.infoCard}>
-          <View style={styles.infoIcon}><MaterialIcon name="phone" size={19} color={colors.greenDark} /></View>
-          <View style={styles.infoCopy}>
-            <Text style={styles.infoLabel}>Phone</Text>
-            <Text style={styles.infoValue}>No public contact listed</Text>
-          </View>
-        </View>
-        <Text style={styles.helperText}>Contact information has not been confirmed yet.</Text>
-      </View>
-
-      <View style={styles.detailSection}>
-        <Text style={styles.sectionTitle}>Routes served</Text>
-        <View style={styles.modeSwitch}>
-          {(['Jeepney', 'Tricycle'] as const).map((mode) => {
-            const selected = activeMode === mode;
-            return (
-              <Pressable
-                key={mode}
-                accessibilityRole="button"
-                accessibilityLabel={`Show ${mode} routes`}
-                accessibilityState={{ selected }}
-                onPress={() => setActiveMode(mode)}
-                style={[styles.modeButton, selected && styles.modeButtonSelected]}
-              >
-                <Text style={[styles.modeText, selected && styles.modeTextSelected]}>{mode}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        {activeMode === 'Jeepney' && servedRoutes.length > 0 ? (
-          <View style={styles.servedRoutes}>
-            {servedRoutes.map((route, index) => (
-              <View key={route.id}>
-                {index > 0 && <View style={styles.routeSeparator} />}
-                <RouteRow route={route} styles={styles} />
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.routeEmptyCard}>
-            <View style={styles.infoIcon}><MaterialIcon name="route" size={19} color={colors.greenDark} /></View>
-            <View style={styles.infoCopy}>
-              <Text style={styles.infoValue}>{activeMode === 'Tricycle' ? 'Tricycle routes are not mapped yet' : 'No sample routes listed'}</Text>
-              <Text style={styles.routeEmptyCopy}>Route paths and schedules need confirmation from local operators.</Text>
-            </View>
-          </View>
-        )}
-      </View>
+      ) : (
+        <>{mapCard}{contactSection}{routesSection}</>
+      )}
       <Text style={styles.dataNote}>Sample route data. Confirm pickup points, routes, and schedules locally before traveling.</Text>
     </ScrollView>
   );
@@ -323,6 +341,8 @@ function createStyles(colors: ThemeColors) {
     sectionTitle: { color: colors.ink, fontSize: 18, lineHeight: 23, fontWeight: '800', letterSpacing: -0.25 },
     countText: { color: colors.muted, fontSize: 11, lineHeight: 15, fontWeight: '600' },
     terminalList: { gap: 10 },
+    terminalListWide: { flexDirection: 'row', flexWrap: 'wrap' },
+    terminalCardWide: { width: '48.7%' },
     terminalCard: { minHeight: 113, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, flexDirection: 'row', alignItems: 'flex-start' },
     terminalIcon: { width: 43, height: 43, borderRadius: 14, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
     terminalCopy: { flex: 1, minHeight: 83 },
@@ -343,6 +363,9 @@ function createStyles(colors: ThemeColors) {
     mapCard: { padding: 14, borderRadius: 19, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
     mapWrap: { marginTop: 11, borderRadius: 14, overflow: 'hidden' },
     detailSection: { marginTop: 21 },
+    detailColumns: { flexDirection: 'row', gap: 18, alignItems: 'flex-start' },
+    detailCol: { flex: 1 },
+    detailSectionFlat: { marginTop: 0 },
     infoCard: { minHeight: 68, flexDirection: 'row', alignItems: 'center', marginTop: 10, padding: 13, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
     modeSwitch: { flexDirection: 'row', gap: 8, marginTop: 11, marginBottom: 10 },
     modeButton: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, justifyContent: 'center' },

@@ -79,7 +79,9 @@ export default function App() {
   const themeColors = isDark ? darkColors : lightColors;
   const isWideWeb = Platform.OS === 'web' && width >= 1024 && stage !== 'chairperson' && stage !== 'driver';
   const staffAccount = session?.kind === 'account' && session.role !== 'commuter' ? session : null;
-  const isAdminWorkspace = stage === 'admin-preview' || (stage === 'app' && staffAccount?.role === 'super_admin' && !showCommuterView);
+  // Wide web: landing chrome (intro panel + phone frame) only pre-sign-in;
+  // once in the app it renders full-width like a real web app.
+  const showLandingChrome = isWideWeb && stage !== 'app' && stage !== 'admin-preview';
   const styles = createAppStyles(themeColors);
 
   const chooseMode = (next: AppMode) => { setStoredMode(next); setMode(next); };
@@ -110,8 +112,8 @@ export default function App() {
 
   return (
     <ColorsContext.Provider value={themeColors}>
-      <View style={[styles.page, isWideWeb && !isAdminWorkspace && styles.desktopPage]}>
-        {isWideWeb && !isAdminWorkspace && (
+      <View style={[styles.page, showLandingChrome && styles.desktopPage]}>
+        {showLandingChrome && (
           <View style={styles.introPanel}>
             <View style={styles.introBrandRow}>
               <View style={styles.brandMark}><Text style={styles.brandMarkText}>e</Text></View>
@@ -127,7 +129,7 @@ export default function App() {
             </View>
           </View>
         )}
-        <View style={isWideWeb && !isAdminWorkspace ? styles.appFrame : styles.appFrameFill}>
+        <View style={showLandingChrome ? styles.appFrame : styles.appFrameFill}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           {actionError && <ErrorBanner message={actionError} />}
           {stage === 'admin-preview' ? (
@@ -155,7 +157,7 @@ export default function App() {
                 onAdminPreview={() => setStage('admin-preview')}
               />}
               {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
-              {stage === 'driver' && <DriverWorkspaceScreen onBack={() => setStage('login')} />}
+              {stage === 'driver' && <DriverWorkspaceScreen appearance={appearance} onChangeAppearance={chooseAppearance} onBack={() => setStage('login')} />}
               {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
               {stage === 'app' && session && (staffAccount && !showCommuterView ? (
                 staffAccount.role === 'super_admin' ? (

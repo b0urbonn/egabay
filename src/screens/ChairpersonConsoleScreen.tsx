@@ -274,16 +274,10 @@ export function ChairpersonConsoleScreen({ onBack }: { onBack: () => void }) {
         <Pressable onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel={terminalForm ? "Back to terminals" : vehicleForm ? "Back to vehicle roster" : tab === "Assignments" ? "Back to vehicle roster" : "Back to login"}>
           <MaterialIcon name="arrowBack" size={21} color={colors.ink} />
         </Pressable>
-        <View style={styles.headerCopy}>
-          <Text style={styles.headerEyebrow}>eGABAY · CHAIRPERSON CONSOLE</Text>
-          <Text style={styles.headerTitle}>Boac Central TODA</Text>
-        </View>
-        <View style={styles.previewBadge}><Text style={styles.previewBadgeText}>PREVIEW</Text></View>
       </View>
 
       <View style={[styles.workspace, wide && styles.workspaceWide]}>
       {wide && <View style={[styles.navigation, styles.navigationWide]}>
-        {wide && <View style={styles.scopeBlock}><Text style={styles.scopeLabel}>YOUR GROUP</Text><Text style={styles.scopeName}>Boac Central TODA</Text><Text style={styles.scopeDetail}>Boac, Marinduque · Sample group</Text></View>}
         <View style={[styles.tabRail, wide && styles.tabRailWide]}>
         {(['Overview', 'Terminals', 'Vehicles', 'Drivers', 'Assignments', 'Updates'] as ConsoleTab[]).map((item) => {
           const selected = tab === item;
@@ -300,14 +294,6 @@ export function ChairpersonConsoleScreen({ onBack }: { onBack: () => void }) {
       </View>}
 
       <ScrollView ref={scrollRef} style={styles.content} contentContainerStyle={[styles.contentInner, wide && styles.contentInnerWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Card style={styles.previewNote}>
-          <View style={styles.noteIcon}><MaterialIcon name="assistant" size={17} color={colors.green} /></View>
-          <View style={styles.noteCopy}>
-            <Text style={styles.noteTitle}>Demo workspace</Text>
-            <Text style={styles.noteText}>Sample records · Changes reset when you leave.</Text>
-          </View>
-        </Card>
-
         {notice ? <View style={styles.notice} accessibilityRole="alert"><Text style={styles.noticeText}>{notice}</Text><Pressable onPress={() => setNotice('')} accessibilityRole="button" accessibilityLabel="Dismiss message" style={styles.dismissButton}><Text style={styles.formCancel}>Dismiss</Text></Pressable></View> : null}
 
         {tab === 'Overview' && (
@@ -429,7 +415,6 @@ export function ChairpersonConsoleScreen({ onBack }: { onBack: () => void }) {
           />
         )}
 
-        <Text style={styles.footerNote}>Boac Central TODA · Sample group workspace</Text>
       </ScrollView>
       </View>
       {!wide && !keyboardVisible && <View style={styles.bottomNavigation} accessibilityLabel="Chairperson navigation">
@@ -542,14 +527,6 @@ function OverviewTab({
   const pending = drivers.filter((driver) => driver.status === 'Pending').slice(0, 2);
   return (
     <>
-      <View style={styles.groupHeading}>
-        <View style={styles.groupIcon}><Text style={styles.groupIconText}>B</Text></View>
-        <View style={styles.groupCopy}>
-          <Text style={styles.groupName}>Boac Central TODA</Text>
-          <Text style={styles.groupMeta}>TODA · Boac, Marinduque</Text>
-        </View>
-        <View style={styles.groupStatus}><View style={styles.statusDot} /><Text style={styles.groupStatusText}>ACTIVE</Text></View>
-      </View>
       <Text style={styles.pageTitle}>Group overview</Text>
       <Text style={styles.pageSubtitle}>Keep your terminals, roster, and driver applications up to date.</Text>
 
@@ -588,10 +565,6 @@ function OverviewTab({
         <OperationRow icon="notifications" title="Group updates" detail={`${announcements.length} recent announcement${announcements.length === 1 ? '' : 's'}`} onPress={() => onGo('Updates')} />
       </Card>
 
-      <View style={styles.snapshotRow}>
-        <View style={styles.snapshotDot}><MaterialIcon name="assistant" size={15} color={colors.green} /></View>
-        <Text style={styles.snapshotText}>Your group data is scoped to Boac Central TODA.</Text>
-      </View>
     </>
   );
 }
@@ -952,10 +925,6 @@ function createStyles(colors: ThemeColors) {
     navigationWide: { width: 240, borderRightWidth: 1, borderBottomWidth: 0, paddingVertical: 24 },
     tabRailWide: { flexDirection: 'column', flexWrap: 'nowrap', gap: 8, paddingHorizontal: 16 },
     tabButtonWide: { width: '100%', flexGrow: 0, justifyContent: 'flex-start', paddingHorizontal: 16, minHeight: 48 },
-    scopeBlock: { paddingHorizontal: 24, paddingBottom: 28, gap: 8 },
-    scopeLabel: { color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.3 },
-    scopeName: { color: colors.ink, fontSize: 18, fontWeight: '800' },
-    scopeDetail: { color: colors.muted, fontSize: 12, lineHeight: 18 },
     scopeFooter: { color: colors.muted, fontSize: 12, lineHeight: 19, margin: 24 },
     contentInnerWide: { paddingHorizontal: 36, paddingTop: 28 },
     metricCardWide: { width: '22%' },
@@ -966,13 +935,8 @@ function createStyles(colors: ThemeColors) {
     formErrorText: { color: colors.red, fontSize: 14, lineHeight: 21 },
     dismissButton: { minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' },
     screen: { flex: 1, backgroundColor: colors.canvas },
-    header: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 17, paddingTop: 10, paddingBottom: 12, gap: 11, borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.card },
+    header: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 17, paddingTop: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.card },
     backButton: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.canvas },
-    headerCopy: { flex: 1 },
-    headerEyebrow: { color: colors.greenDark, fontSize: 11, fontWeight: '900', letterSpacing: 1.25, marginBottom: 3 },
-    headerTitle: { color: colors.ink, fontSize: 18, lineHeight: 23, fontWeight: '800', letterSpacing: -0.25 },
-    previewBadge: { backgroundColor: colors.orangeLight, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 6 },
-    previewBadgeText: { color: colors.orangeDark, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
     tabRail: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, padding: 10 },
     tabButton: { width: '31%', flexGrow: 1, minHeight: 44, paddingHorizontal: 6, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: colors.canvas },
     tabButtonSelected: { backgroundColor: colors.greenLight },
@@ -980,22 +944,8 @@ function createStyles(colors: ThemeColors) {
     tabTextSelected: { color: colors.greenDark },
     content: { flex: 1, minWidth: 0 },
     contentInner: { paddingHorizontal: 18, paddingTop: 20, paddingBottom: 36, gap: 18, width: '100%', maxWidth: 1120, alignSelf: 'center' },
-    previewNote: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 11, backgroundColor: colors.tipBg, borderColor: colors.greenLight },
-    noteIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
-    noteCopy: { flex: 1, gap: 2 },
-    noteTitle: { color: colors.greenDark, fontSize: 14, fontWeight: '800' },
-    noteText: { color: colors.tipBody, fontSize: 13, lineHeight: 18 },
     notice: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.greenLight, borderRadius: radius.md, padding: 11, borderWidth: 1, borderColor: colors.line },
     noticeText: { flex: 1, color: colors.greenDark, fontSize: 14, lineHeight: 20, fontWeight: '700' },
-    groupHeading: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2, marginBottom: 2 },
-    groupIcon: { width: 39, height: 39, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.green },
-    groupIconText: { color: colors.lime, fontSize: 18, fontWeight: '900' },
-    groupCopy: { flex: 1, gap: 3 },
-    groupName: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-    groupMeta: { color: colors.muted, fontSize: 13, fontWeight: '600' },
-    groupStatus: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.greenLight },
-    statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.onTime },
-    groupStatusText: { color: colors.greenDark, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 },
     pageTitle: { color: colors.ink, fontSize: 30, lineHeight: 35, fontWeight: '800', letterSpacing: -0.8, marginTop: 4 },
     pageSubtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginTop: -10 },
     metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -1030,9 +980,6 @@ function createStyles(colors: ThemeColors) {
     operationTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' },
     operationDetail: { color: colors.muted, fontSize: 12, fontWeight: '600' },
     rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 41 },
-    snapshotRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 3, marginTop: 1 },
-    snapshotDot: { width: 24, height: 24, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight },
-    snapshotText: { flex: 1, color: colors.muted, fontSize: 13, lineHeight: 18, fontWeight: '600' },
     screenTitleBlock: { gap: 5, marginTop: 2, marginBottom: 1 },
     screenEyebrow: { color: colors.greenDark, fontSize: 12, fontWeight: '900', letterSpacing: 1.2 },
     screenHeading: { color: colors.ink, fontSize: 30, lineHeight: 34, letterSpacing: -0.7, fontWeight: '800' },
@@ -1161,7 +1108,6 @@ function createStyles(colors: ThemeColors) {
     emptyState: { padding: 17, alignItems: 'center', gap: 5 },
     emptyTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
     emptyBody: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: 'center' },
-    footerNote: { color: colors.muted, fontSize: 11, lineHeight: 18, textAlign: 'center', paddingHorizontal: 8, marginTop: 2 },
     pressed: { opacity: 0.78 },
   });
 }

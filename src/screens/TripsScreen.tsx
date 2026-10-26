@@ -9,6 +9,7 @@ import {
   type TripStatus,
 } from '../data/demo';
 import { useThemeStyles } from '../lib/theme';
+import { useWideLayout } from '../lib/useWideLayout';
 import { radius, spacing, type ThemeColors } from '../theme';
 
 type TripsView = 'Ongoing' | 'History';
@@ -51,9 +52,10 @@ function ProgressBadge({ status }: { status: TripProgressStatus }) {
 
 function OngoingTripCard({ trip }: { trip: ScheduledTrip }) {
   const styles = useThemeStyles(createStyles);
+  const isWide = useWideLayout();
 
   return (
-    <View style={styles.ongoingCard}>
+    <View style={[styles.ongoingCard, isWide && styles.cardWide]}>
       <View style={styles.cardTopRow}>
         <Text accessibilityRole="header" style={styles.routeTitle}>{trip.route}</Text>
         {trip.progressStatus && <ProgressBadge status={trip.progressStatus} />}
@@ -75,8 +77,9 @@ function OngoingTripCard({ trip }: { trip: ScheduledTrip }) {
 
 function HistoryTripCard({ trip }: { trip: ScheduledTrip }) {
   const styles = useThemeStyles(createStyles);
+  const isWide = useWideLayout();
   return (
-    <View style={styles.historyCard}>
+    <View style={[styles.historyCard, isWide && styles.cardWide]}>
       <View style={styles.cardTopRow}>
         <Text style={styles.tripDate}>{trip.date} · {trip.time}</Text>
         <StatusBadge status={trip.status} />
@@ -93,6 +96,7 @@ function HistoryTripCard({ trip }: { trip: ScheduledTrip }) {
 
 export function TripsScreen() {
   const styles = useThemeStyles(createStyles);
+  const isWide = useWideLayout();
   const [selectedView, setSelectedView] = useState<TripsView>('Ongoing');
   const trips = selectedView === 'Ongoing' ? demoOngoingTrips : demoTripHistory;
 
@@ -130,9 +134,11 @@ export function TripsScreen() {
         </View>
       )}
 
-      {selectedView === 'Ongoing'
-        ? trips.map((trip) => <OngoingTripCard key={trip.id} trip={trip} />)
-        : trips.map((trip) => <HistoryTripCard key={trip.id} trip={trip} />)}
+      <View style={isWide && styles.cardGrid}>
+        {selectedView === 'Ongoing'
+          ? trips.map((trip) => <OngoingTripCard key={trip.id} trip={trip} />)
+          : trips.map((trip) => <HistoryTripCard key={trip.id} trip={trip} />)}
+      </View>
     </ScrollView>
   );
 }
@@ -153,6 +159,8 @@ function createStyles(colors: ThemeColors) {
     tripCount: { color: colors.muted, fontSize: 13 },
     ongoingCard: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 15, marginBottom: 12 },
     historyCard: { backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 14, marginBottom: 10 },
+    cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+    cardWide: { width: '49%' },
     cardTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
     tripDate: { color: colors.muted, fontSize: 13, lineHeight: 18, fontWeight: '500' },
     statusBadge: { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6, marginTop: 1 },

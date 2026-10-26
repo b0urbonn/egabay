@@ -5,6 +5,7 @@ import { Button, Card } from '../components/ui';
 import type { AppMode } from '../lib/appMode';
 import type { Session } from '../lib/session';
 import { useColors, useThemeStyles } from '../lib/theme';
+import { useWideLayout } from '../lib/useWideLayout';
 import { radius, spacing, type ThemeColors } from '../theme';
 
 const profileMenu: { label: string; icon: MaterialIconName }[] = [
@@ -58,6 +59,7 @@ export function ProfileScreen({
   onAuthRequest: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const isWide = useWideLayout();
   const isAccount = session.kind === 'account';
   const name = isAccount ? session.name : 'Guest commuter';
   const email = isAccount ? session.email : 'Sign in to add your email';
@@ -82,79 +84,94 @@ export function ProfileScreen({
     Alert.alert(label, messages[label] ?? 'This section is coming soon.');
   };
 
+  const identityCard = (
+    <Card style={styles.identityCard}>
+      <View style={styles.avatarFrame}>
+        <Image
+          source={session.kind === 'account' && session.photoUrl ? { uri: session.photoUrl } : require('../../assets/profile-avatar.png')}
+          style={styles.avatar}
+          resizeMode="cover"
+          accessibilityLabel={`${name} profile photo`}
+        />
+      </View>
+      <View style={styles.identityCopy}>
+        <Text style={styles.name} numberOfLines={1}>{name}</Text>
+        <Text style={styles.identityDetail} numberOfLines={1}>{email}</Text>
+        {isAccount && <Text style={styles.accountLabel}>{session.role.replace('_', ' ')}</Text>}
+      </View>
+    </Card>
+  );
+
+  const menuSection = (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Menu</Text>
+      <Card style={styles.menuCard}>
+        {profileMenu.map((item, index) => (
+          <View key={item.label}>
+            <ProfileMenuRow label={item.label} icon={item.icon} onPress={() => handleMenuPress(item.label)} />
+            {index < profileMenu.length - 1 && <View style={styles.divider} />}
+          </View>
+        ))}
+      </Card>
+    </View>
+  );
+
+  const accountSection = isAccount ? (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Travel mode</Text>
+      <Text style={styles.sectionDetail}>Choose how eGABAY gets service updates.</Text>
+      <Card style={styles.modeCard}>
+        <View style={styles.modeOptions}>
+          {(['online', 'offline'] as AppMode[]).map((option) => {
+            const selected = mode === option;
+            const label = option === 'online' ? 'Online' : 'Offline';
+            return (
+              <Pressable
+                key={option}
+                accessibilityRole="button"
+                accessibilityLabel={`${label} travel mode`}
+                accessibilityState={{ selected }}
+                onPress={() => onChangeMode(option)}
+                style={[styles.modeOption, selected && styles.modeOptionSelected]}
+              >
+                <Text style={[styles.modeOptionText, selected && styles.modeOptionTextSelected]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={styles.modeFootnote}>
+          {mode === 'online' ? 'Live updates are available when connected.' : 'Saved routes and fares work without a signal.'}
+        </Text>
+      </Card>
+    </View>
+  ) : (
+    <Card style={styles.guestCard}>
+      <View style={styles.guestCopy}>
+        <Text style={styles.guestTitle}>Sync your travel details</Text>
+        <Text style={styles.guestDetail}>Create an account to save favorites and receive service updates.</Text>
+      </View>
+      <Button label="Sign in or create account" onPress={onAuthRequest} />
+    </Card>
+  );
+
+  const footerBits = (
+    <>
+      <Text style={styles.footerNote}>Route and fare details are sample information. Confirm locally before travel.</Text>
+      {isAccount && <Button label="Log out" variant="ghost" onPress={onLogout} />}
+    </>
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
       <Text accessibilityRole="header" style={styles.pageTitle}>Profile</Text>
-
-      <Card style={styles.identityCard}>
-        <View style={styles.avatarFrame}>
-          <Image
-            source={session.kind === 'account' && session.photoUrl ? { uri: session.photoUrl } : require('../../assets/profile-avatar.png')}
-            style={styles.avatar}
-            resizeMode="cover"
-            accessibilityLabel={`${name} profile photo`}
-          />
-        </View>
-        <View style={styles.identityCopy}>
-          <Text style={styles.name} numberOfLines={1}>{name}</Text>
-          <Text style={styles.identityDetail} numberOfLines={1}>{email}</Text>
-          {isAccount && <Text style={styles.accountLabel}>{session.role.replace('_', ' ')}</Text>}
-        </View>
-      </Card>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Menu</Text>
-        <Card style={styles.menuCard}>
-          {profileMenu.map((item, index) => (
-            <View key={item.label}>
-              <ProfileMenuRow label={item.label} icon={item.icon} onPress={() => handleMenuPress(item.label)} />
-              {index < profileMenu.length - 1 && <View style={styles.divider} />}
-            </View>
-          ))}
-        </Card>
-      </View>
-
-      {isAccount ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Travel mode</Text>
-          <Text style={styles.sectionDetail}>Choose how eGABAY gets service updates.</Text>
-          <Card style={styles.modeCard}>
-            <View style={styles.modeOptions}>
-              {(['online', 'offline'] as AppMode[]).map((option) => {
-                const selected = mode === option;
-                const label = option === 'online' ? 'Online' : 'Offline';
-                return (
-                  <Pressable
-                    key={option}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${label} travel mode`}
-                    accessibilityState={{ selected }}
-                    onPress={() => onChangeMode(option)}
-                    style={[styles.modeOption, selected && styles.modeOptionSelected]}
-                  >
-                    <Text style={[styles.modeOptionText, selected && styles.modeOptionTextSelected]}>{label}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Text style={styles.modeFootnote}>
-              {mode === 'online' ? 'Live updates are available when connected.' : 'Saved routes and fares work without a signal.'}
-            </Text>
-          </Card>
+      {isWide ? (
+        <View style={styles.columns}>
+          <View style={styles.column}>{identityCard}{accountSection}</View>
+          <View style={styles.column}>{menuSection}{footerBits}</View>
         </View>
       ) : (
-        <Card style={styles.guestCard}>
-          <View style={styles.guestCopy}>
-            <Text style={styles.guestTitle}>Sync your travel details</Text>
-            <Text style={styles.guestDetail}>Create an account to save favorites and receive service updates.</Text>
-          </View>
-          <Button label="Sign in or create account" onPress={onAuthRequest} />
-        </Card>
+        <>{identityCard}{menuSection}{accountSection}{footerBits}</>
       )}
-
-      <Text style={styles.footerNote}>Route and fare details are sample information. Confirm locally before travel.</Text>
-
-      {isAccount && <Button label="Log out" variant="ghost" onPress={onLogout} />}
     </ScrollView>
   );
 }
@@ -192,5 +209,7 @@ function createStyles(colors: ThemeColors) {
     guestTitle: { color: colors.ink, fontSize: 15, lineHeight: 20, fontWeight: '700' },
     guestDetail: { color: colors.muted, fontSize: 12, lineHeight: 17 },
     footerNote: { color: colors.muted, fontSize: 11, lineHeight: 16, paddingHorizontal: 2 },
+    columns: { flexDirection: 'row', gap: 20, alignItems: 'flex-start' },
+    column: { flex: 1, gap: 17 },
   });
 }

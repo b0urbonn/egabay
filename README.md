@@ -13,7 +13,7 @@ React Native starter for an AI-assisted public transportation navigation and mon
 - Supabase clients with browser session storage and a separate native SQLite adapter
 - Initial catalog plus a group-scoped role migration, protected role RPCs, public-safe vehicle view, and isolated database integration checks
 - Chairperson console preview opened from the Log in screen, with engineered mobile layouts, five bottom tabs, terminal and vehicle forms, driver approvals, assignments, and announcements; sample data and local preview actions
-- Driver workspace preview opened from the Log in screen (Apple HIG layout): grouped lists, segmented availability control, trip start/stop consent sheet, read-only group announcements, profile editor, and group application flow; sample data only, no GPS or backend
+- Driver workspace preview opened from the Log in screen (Apple HIG layout): grouped lists, segmented availability and System/Light/Dark appearance controls, trip start/stop consent sheet, read-only group announcements, profile editor, and group application flow; sample data only, no GPS or backend
 - [Driver mobile wireframes and interaction specification](docs/design/DRIVER_MOBILE_UI.md)
 - [Chairperson mobile wireframes and interaction specification](docs/design/CHAIRPERSON_MOBILE_UI.md)
 - [Super Admin web wireframes and layout specification](docs/design/SUPER_ADMIN_WEB_UI.md) — eleven editable layouts and a working sample-data preview at `http://localhost:8081/?preview=super-admin`
