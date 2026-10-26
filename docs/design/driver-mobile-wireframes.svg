@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1298" height="1850" viewBox="0 0 1298 1850" role="img" aria-labelledby="title desc">
   <title id="title">eGABAY driver mobile UI wireframes</title>
-  <desc id="desc">Six editable 390 by 844 mobile screen layouts for Home, trip consent, group updates, profile, profile editing, and driver group application.</desc>
+  <desc id="desc">Six editable 390 by 844 mobile screen layouts for Home, trip consent, group updates, profile appearance, profile editing, and driver group application.</desc>
   <rect width="1298" height="1850" fill="#eef1ed"/>
   <text x="24" y="43" font-family="system-ui,-apple-system,sans-serif" font-size="25" font-weight="700" fill="#18231e">eGABAY · Driver preview</text>
   <text x="24" y="69" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#66746b">Mobile wireframes · 390 × 844 pt · sample flows only</text>
@@ -67,17 +67,22 @@
     <rect width="390" height="844" rx="26" fill="#f4f6f2" stroke="#9eaaa1"/><path d="M1 60h388" stroke="#e0e6e0"/>
     <text x="18" y="39" font-size="25" fill="#176b4b">‹</text><text x="164" y="37" font-size="15" font-weight="600" fill="#18231e">Driver</text><text x="337" y="37" font-size="12" fill="#66746b">Preview</text>
     <text x="22" y="120" font-size="32" font-weight="700" fill="#18231e">Profile</text>
-    <circle cx="195" cy="211" r="38" fill="#e5f3ea"/><text x="195" y="219" text-anchor="middle" font-size="23" font-weight="700" fill="#10543a">AR</text>
-    <text x="195" y="275" text-anchor="middle" font-size="19" font-weight="700" fill="#18231e">Alex Reyes</text><text x="195" y="298" text-anchor="middle" font-size="14" fill="#66746b">Driver · Boac Central TODA</text>
-    <text x="24" y="354" font-size="13" font-weight="600" fill="#66746b">Details</text>
-    <rect x="20" y="368" width="350" height="157" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
-    <text x="36" y="404" font-size="14" fill="#18231e">Contact</text><text x="352" y="404" text-anchor="end" font-size="14" fill="#66746b">09XX-XXX-1427</text><path d="M32 420h326" stroke="#e5eae4"/>
-    <text x="36" y="456" font-size="14" fill="#18231e">License</text><text x="352" y="456" text-anchor="end" font-size="14" fill="#66746b">••••81</text><path d="M32 472h326" stroke="#e5eae4"/>
-    <text x="36" y="507" font-size="14" fill="#18231e">Membership</text><text x="352" y="507" text-anchor="end" font-size="14" fill="#66746b">Approved</text>
-    <text x="24" y="566" font-size="13" font-weight="600" fill="#66746b">Actions</text>
-    <rect x="20" y="580" width="350" height="112" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
-    <text x="36" y="616" font-size="14" fill="#176b4b">Edit profile</text><text x="352" y="616" text-anchor="end" font-size="21" fill="#66746b">›</text><path d="M32 632h326" stroke="#e5eae4"/>
-    <text x="36" y="668" font-size="14" fill="#176b4b">Preview application</text><text x="352" y="668" text-anchor="end" font-size="21" fill="#66746b">›</text>
+    <circle cx="195" cy="196" r="34" fill="#e5f3ea"/><text x="195" y="204" text-anchor="middle" font-size="23" font-weight="700" fill="#10543a">AR</text>
+    <text x="195" y="252" text-anchor="middle" font-size="19" font-weight="700" fill="#18231e">Alex Reyes</text><text x="195" y="275" text-anchor="middle" font-size="14" fill="#66746b">Driver · Boac Central TODA</text>
+    <text x="24" y="324" font-size="13" font-weight="600" fill="#66746b">Appearance</text>
+    <rect x="20" y="338" width="350" height="50" rx="13" fill="#e7ebe7"/>
+    <rect x="23" y="341" width="114" height="44" rx="10" fill="#ffffff" stroke="#dce4dc"/>
+    <text x="80" y="368" text-anchor="middle" font-size="12" font-weight="600" fill="#18231e">System ✓</text><text x="194" y="368" text-anchor="middle" font-size="12" fill="#66746b">Light</text><text x="310" y="368" text-anchor="middle" font-size="12" fill="#66746b">Dark</text>
+    <text x="24" y="412" font-size="12" fill="#66746b">System follows your device appearance.</text>
+    <text x="24" y="442" font-size="13" font-weight="600" fill="#66746b">Details</text>
+    <rect x="20" y="456" width="350" height="157" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="492" font-size="14" fill="#18231e">Contact</text><text x="352" y="492" text-anchor="end" font-size="14" fill="#66746b">09XX-XXX-1427</text><path d="M32 508h326" stroke="#e5eae4"/>
+    <text x="36" y="544" font-size="14" fill="#18231e">License</text><text x="352" y="544" text-anchor="end" font-size="14" fill="#66746b">••••81</text><path d="M32 560h326" stroke="#e5eae4"/>
+    <text x="36" y="595" font-size="14" fill="#18231e">Membership</text><text x="352" y="595" text-anchor="end" font-size="14" fill="#66746b">Approved</text>
+    <text x="24" y="650" font-size="13" font-weight="600" fill="#66746b">Actions</text>
+    <rect x="20" y="664" width="350" height="104" rx="14" fill="#ffffff" stroke="#e0e6e0"/>
+    <text x="36" y="700" font-size="14" fill="#176b4b">Edit profile</text><text x="352" y="700" text-anchor="end" font-size="21" fill="#66746b">›</text><path d="M32 716h326" stroke="#e5eae4"/>
+    <text x="36" y="751" font-size="14" fill="#176b4b">Preview application</text><text x="352" y="751" text-anchor="end" font-size="21" fill="#66746b">›</text>
     <path d="M1 770h388" stroke="#e0e6e0"/><text x="65" y="802" text-anchor="middle" font-size="11" fill="#66746b">⌂  Home</text><text x="195" y="802" text-anchor="middle" font-size="11" fill="#66746b">◉  Updates</text><text x="325" y="802" text-anchor="middle" font-size="11" font-weight="600" fill="#176b4b">○  Profile</text>
   </g>
 

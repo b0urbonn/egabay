@@ -133,12 +133,12 @@ Enforcement notes:
 
 ### Super Admin
 
-- Admin dashboard — system-wide group/terminal/vehicle/driver reports (new)
-- Groups manager — create, edit, deactivate TODA and jeepney groups (new)
-- Chairperson assignment — assign or replace per group (new)
-- User management — accounts, roles, approvals (new)
-- Global terminal/vehicle browser — override edit or remove (new)
-- Audit log viewer — who changed what, and when (new)
+- Admin dashboard — system-wide group/terminal/vehicle/driver reports (standby dashboard implemented with live Supabase counts)
+- Groups manager — create, edit, deactivate TODA and jeepney groups (list and filters implemented; mutations are the next step)
+- Chairperson assignment — assign or replace per group (assignment status shown; mutations are the next step)
+- User management — accounts, roles, approvals (latest 50 accounts and checked role updates implemented; approvals remain)
+- Global terminal/vehicle browser — search and filter records (views implemented; override edits remain)
+- Audit log viewer — who changed what, and when (implemented)
 
 All role surfaces live in the same Expo app behind role-gated navigation after Supabase sign-in; the web build covers the wider admin tables.
 
@@ -157,7 +157,7 @@ Backend — `supabase/migrations/20261026000000_auth_and_group_access.sql` now i
 App:
 
 - Implemented locally: Supabase Google/email browser auth, session recovery, and protected profile/role resolution; old mock accounts are ignored.
-- Implemented locally: role-gated initial workspaces in `App.tsx`, with a full-width desktop admin panel and responsive staff entry pages. Full operational consoles remain upcoming.
+- Implemented locally: role-gated workspaces in `App.tsx`, including a responsive Super Admin panel with overview, groups, terminals, vehicles, users/roles, reports, and audit log. It reads live Supabase records and uses the checked role-management RPC; group/terminal/vehicle mutation flows and the chairperson/driver consoles remain upcoming.
 - Wire `TerminalsScreen` to the `terminals` table; add the vehicle board, feedback form, and the new role screens listed above.
 - Keep demo arrays until verified group and terminal seed data exists.
 

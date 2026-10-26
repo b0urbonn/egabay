@@ -2,11 +2,11 @@
 
 **Status snapshot:** 2026-10-26
 
-**Latest committed app state:** merge `7b95273` — `origin/main` `0664c57` (driver + chairperson preview workspaces) onto local desktop layout work (`62a6f15`: wide-web layout, animated hidable rail, multi-column screens). Supabase auth integrated earlier via `f756072`. Plus uncommitted: map ↔ `public.terminals` data bridge and `supabase/seed.sql`.
+**Latest committed app state:** merge of `origin/main` `53d160a` (driver preview appearance selector, Super Admin standby console) onto local work — desktop layout (`62a6f15`), map ↔ `public.terminals` data bridge, and `supabase/seed.sql` (`2b96b57`). Supabase auth integrated earlier via `f756072`.
 
-**Current local phase:** browser Supabase authentication and group-scoped access foundation. Code and migrations are committed on `origin/main`; live database setup, owner promotion, and real sign-in verification are pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
+**Current local phase:** connecting Supabase data to the app — the map now reads live `terminals` rows when `EXPO_PUBLIC_SUPABASE_*` env vars are set. Live database setup, seed application, and operational mutation flows remain pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
-**Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public). Supabase auth, initial role workspaces, and chairperson/driver previews are committed; “Done” means code exists — it does not imply a deployed or field-tested service.
+**Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public). “Done” means code exists; it does not imply a deployed or field-tested service.
 
 ## Current state
 
@@ -26,7 +26,7 @@
 - [x] **Done in local workspace** — Build plan defines the four-role access model: Super Admin → Groups (TODA/Jeepney) → Chairperson → Terminals → Vehicles → Drivers, plus commuters as public users. Includes the permissions matrix, group-scoped Supabase tables/relations, per-role screens, and the backend/app changes needed before implementing.
 - [~] **Partial** — Supabase auth source and initial role workspaces are implemented. Live migration/bootstrap and full driver/chairperson/super-admin operational workflows remain pending.
 - [~] **UI preview only** — Chairperson console is reachable from the Login screen with five mobile bottom tabs, contextual forms, a dedicated assignment flow, application decisions/history, coordinate validation, and announcements. Eight mobile wireframes are documented in `docs/design/`. Its records and actions are local demo state; it is not role-gated or connected to Supabase.
-- [~] **UI preview only** — Driver workspace is reachable from the Login screen with three bottom tabs (Home, Updates, Profile) in an Apple-HIG-style layout: iOS segmented availability control, grouped-list assignment rows, trip start/stop consent sheet, read-only group announcements, a validated profile editor, and a group application flow with a pending-review state. Six mobile wireframes and interaction notes are documented in `docs/design/`. All records are sample/local state; no GPS access or Supabase calls.
+- [~] **UI preview only** — Driver workspace is reachable from the Login screen with three bottom tabs (Home, Updates, Profile) in an Apple-HIG-style layout: segmented availability and System/Light/Dark appearance controls, grouped-list assignment rows, trip start/stop consent sheet, read-only group announcements, a validated profile editor, and a group application flow with a pending-review state. Six mobile wireframes and interaction notes are documented in `docs/design/`. All records are sample/local state; no GPS access or Supabase calls.
 - [ ] **Not started** — Verified pilot route, group, and terminal data and named data/update owners.
 - [ ] **Not started** — Live vehicle sharing and group announcement publishing.
 - [ ] **Not started** — Field pilot, measures, and AI route ranking.
@@ -85,15 +85,17 @@
 - [ ] Add useful cached reads and clear loading, empty, and stale-data states.
 - [ ] Keep suggested routes explainable and available without an AI service.
 
-### 3. Deliver the role consoles, service updates, and live operations — Partial (chairperson and driver UI previews)
+### 3. Deliver the role consoles, service updates, and live operations — Partial
 
-- [x] Replace mock auth with Supabase Auth in local source; resolve profile and role at sign-in (live login still pending).
-- [x] Add initial role-gated browser workspaces (operational management screens remain below).
+- [x] Replace mock auth with Supabase Auth; resolve profile and role at sign-in (live project setup remains pending).
+- [x] Add role-gated browser workspaces for the four roles.
+- [x] Add the Super Admin standby console: overview, group/terminal/vehicle directories, user roles, reports, audit log, search, filters, and responsive navigation.
+- [x] Load Super Admin counts and records from Supabase; role changes use the checked RPC.
 - [~] **UI preview implemented** — Driver flow: group application with pending state, profile editor, segmented availability control on Home, read-only announcements, and trip start/stop consent sheet. Six Apple-HIG mobile wireframes cover the primary screens. Sample data only; no GPS, role gating, or Supabase writes.
 - [~] **UI preview implemented** — Chairperson group dashboard, searchable terminal/vehicle lists, validated coordinate and roster forms, assignments, driver approval/rejection with confirmation/history, and announcement composer. Mobile bottom navigation, keyboard handling, desktop adaptation, and eight wireframes are implemented. All records/actions are sample/local state.
 - [ ] Connect driver application, profile, availability, and announcements to group-scoped Supabase reads/writes.
 - [ ] Connect chairperson screens to group-scoped Supabase reads and writes, including audit-log-backed mutations and the terminal map-pin picker.
-- [ ] Build the super admin console: groups manager, chairperson assignment, user management, reports, override edits, audit log viewer.
+- [ ] Connect Super Admin group creation/edit/deactivation, chairperson assignment, terminal/vehicle override forms, and approval actions.
 - [ ] Send location only during an active trip and show its last-updated time.
 - [ ] Subscribe to Supabase Realtime for authorized live positions and current alerts.
 - [ ] Set and document location access, retention, battery, and connectivity behavior.
@@ -113,9 +115,8 @@
 ## Next work in dependency order
 
 1. Confirm pilot route data, pilot TODA/jeepney groups and their chairpersons, and trusted data owners (Milestone 0).
-2. Review the committed RBAC migration against `BUILD_PLAN.md` → "Changes needed before implementing RBAC" (Milestone 1).
-3. Configure Supabase, apply the migrations, provision the first super admin/chairperson accounts, and add verified seed records (Milestone 1).
-4. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
-5. Verify live sign-in and role-gated navigation, connect the driver/chairperson previews to authorized group data, and build the super admin surface (Milestone 3).
-6. Commit and push the local chairperson/driver previews and design documentation when ready.
+2. Apply the migrations in Supabase, provision the first super admin, verify policies, and add only confirmed seed records (Milestone 1).
+3. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
+4. Complete Super Admin mutations and connect the driver/chairperson previews to authorized group data (Milestone 3).
+5. Add authorized live positions and service alerts after registry data and location consent are verified.
 
