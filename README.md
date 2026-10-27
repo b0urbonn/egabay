@@ -71,14 +71,23 @@ Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. T
     │   │   ├── ChairpersonConsoleScreen.tsx  Preview of the planned group-scoped chairperson console
     │   │   ├── DriverWorkspaceScreen.tsx     Preview of the planned driver workspace
     │   │   ├── ProfileScreen.tsx            Account/guest profile, mode switch, log out
-    │   │   └── SettingsScreen.tsx           Appearance picker and reset
+    │   │   ├── SettingsScreen.tsx           Appearance picker and reset
+    │   │   ├── chairperson/                 Chairperson console modules: types, data, styles,
+    │   │   │                                ui primitives, six tabs, terminal/vehicle forms
+    │   │   ├── driver/                      Driver workspace modules: types, data, styles,
+    │   │   │                                ui primitives, three tabs, profile/application
+    │   │   │                                pages, trip consent modal
+    │   │   └── admin/                       Super Admin console modules: types, data, api,
+    │   │                                    styles, shared ui, seven section panels
     │   ├── components/
     │   │   ├── ui.tsx                       Shared UI kit (Button, TextField, Card, Chip, Badge)
     │   │   ├── MarinduqueMap.tsx            MapLibre map embed (WebView on native)
     │   │   ├── MarinduqueMap.web.tsx        MapLibre map embed (iframe on web)
     │   │   ├── MaterialIcon.tsx             Material-style icons drawn with react-native-svg
     │   │   ├── MapTabIcon.tsx               Folded-map-with-pin tab icon
-    │   │   └── RouteCard.tsx                Route summary card
+    │   │   ├── RouteCard.tsx                Route summary card
+    │   │   └── admin/AdminPanels.tsx        Super Admin modals: record inspector, role and
+    │   │                                    chairperson approvals, group/terminal editors
     │   ├── lib/
     │   │   ├── session.ts                   Account role types, guest preference, and onboarding state
     │   │   ├── auth.ts                      Supabase auth operations and protected profile reads
@@ -88,8 +97,12 @@ Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. T
     │   │   ├── appMode.ts                   Online/offline mode persistence
     │   │   ├── appearance.ts                Appearance setting persistence
     │   │   ├── theme.ts                     Theme context and hooks (useColors, useThemeStyles)
+    │   │   ├── terminals.ts                 Live terminals read + realtime feed for the map
+    │   │   ├── geocoding.ts                 OpenStreetMap terminal address geocoding
     │   │   ├── supabase.ts                  Supabase client and session persistence
     │   │   └── supabase.web.ts              Browser Supabase client using localStorage
+    │   ├── types/
+    │   │   └── admin.ts                     Super Admin panel record and payload types
     │   └── data/
     │       └── demo.ts                      Explicitly non-live sample routes and notices
     │
@@ -105,11 +118,21 @@ Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. T
     │                                        `npm run build:map` regenerates it (auto on start)
     │
     ├── scripts/
-    │   └── build-map.mjs                    Inlines assets/map/* into the bundled map page
+    │   ├── build-map.mjs                    Inlines assets/map/* into the bundled map page
+    │   ├── build-admin-wireframes.mjs       Renders the super admin wireframe board
+    │   ├── build-database-setup.mjs         Emits generated Supabase setup SQL
+    │   ├── route-aco-demo.mjs               Seeded ant-colony stop-ordering prototype
+    │   └── test-database.mjs                Isolated PGlite database policy checks
     ├── supabase/
     │   ├── migrations/                      Catalog and group-scoped authentication policies
     │   ├── admin/                           First-owner bootstrap SQL template
+    │   ├── seed.sql                         Sample groups + terminals (OSM-derived + flagged)
+    │   ├── config.toml                      Local Supabase project config
     │   └── generated/                       Ignored SQL Editor setup and local bootstrap output
+    ├── docs/
+    │   ├── SUPABASE_AUTH_SETUP.md           Hosted Supabase setup walkthrough
+    │   └── design/                          Editable SVG wireframes + specs (driver,
+    │                                        chairperson, super-admin/)
     │
     ├── BUILD_PLAN.md                        Product and implementation milestones (incl. RBAC roles)
     ├── CHECKLIST.md                         Current status against the build plan
