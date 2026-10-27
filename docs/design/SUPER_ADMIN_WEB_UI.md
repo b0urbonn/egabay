@@ -4,9 +4,8 @@ Open the [wireframe board](super-admin-web-wireframes.svg) for all eleven layout
 Each [individual screen](super-admin/) is an editable SVG at its full reference size.
 Regenerate the artwork with `npm run build:admin-wireframes`.
 
-To try the working interface, start the web app and open
-`http://localhost:8081/?preview=super-admin`, or choose **Log in → Open super admin preview**.
-The preview uses fictional records. Its banner stays visible, and its changes reset when you leave or use Reset preview records.
+The live console opens automatically after sign-in for accounts with the
+super admin role. Its records come from the configured Supabase registry.
 
 ## Layout rules
 

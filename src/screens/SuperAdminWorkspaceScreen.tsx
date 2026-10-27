@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
-import { AdminGroupEditor, AdminRecordInspector, AdminRoleConfirmation } from '../components/admin/AdminPanels';
-import { Button, Card, Chip, ErrorBanner } from '../components/ui';
-import { createAdminPreviewData } from '../data/adminPreview';
+import { AdminChairpersonApproval, AdminRecordInspector, AdminRoleConfirmation } from '../components/admin/AdminPanels';
+import { Button, Card, Chip, ErrorBanner, TextField } from '../components/ui';
 import { accountRoles, type AccountRole, type AccountSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { useColors, useThemeStyles } from '../lib/theme';
@@ -11,7 +10,7 @@ import type { ThemeColors } from '../theme';
 import type { AdminGroup as Group, AdminTerminal as Terminal, AdminVehicle as Vehicle, AdminUser as DirectoryUser, AdminAuditEvent as AuditEvent, AdminPanelData as PanelData } from '../types/admin';
 
 type Section = 'overview' | 'groups' | 'terminals' | 'vehicles' | 'users' | 'reports' | 'audit';
-type Inspector = { title: string; subtitle: string; rows: { label: string; value: string }[]; detail?: string; group?: Group };
+type Inspector = { title: string; subtitle: string; rows: { label: string; value: string }[]; detail?: string };
 
 const roles: Record<AccountRole, string> = { commuter: 'Commuter', driver: 'Driver', chairperson: 'Chairperson', super_admin: 'Super admin' };
 const sections: { id: Section; label: string; icon: MaterialIconName }[] = [
@@ -24,6 +23,7 @@ const sections: { id: Section; label: string; icon: MaterialIconName }[] = [
   { id: 'audit', label: 'Audit log', icon: 'history' },
 ];
 const municipalities = ['Boac', 'Mogpog', 'Gasan', 'Buenavista', 'Torrijos', 'Santa Cruz'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const initialData: PanelData = {
   groups: [], terminals: [], vehicles: [], drivers: [], users: [], audit: [],
   counts: { groups: 0, activeGroups: 0, terminals: 0, vehicles: 0, onTrip: 0, drivers: 0, pending: 0, approved: 0, routes: 0 },
@@ -72,8 +72,8 @@ function initials(value: string): string {
   return value.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'A';
 }
 
-export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, onRefreshSession, preview = false }: {
-  account: AccountSession; onLogout: () => void; onOpenCommuter: () => void; onRefreshSession: () => void; preview?: boolean;
+export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, onRefreshSession }: {
+  account: AccountSession; onLogout: () => void; onOpenCommuter: () => void; onRefreshSession: () => void;
 }) {
   const { width } = useWindowDimensions();
   const wide = width >= 1024;
@@ -81,27 +81,26 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
   const styles = useThemeStyles((colors) => createStyles(colors, wide));
   const colors = useColors();
   const [section, setSection] = useState<Section>('overview');
-  const [data, setData] = useState<PanelData>(() => preview ? createAdminPreviewData() : initialData);
-  const [loading, setLoading] = useState(!preview);
-  const [loaded, setLoaded] = useState(preview);
-  const [updatedAt, setUpdatedAt] = useState<string | null>(preview ? new Date().toISOString() : null);
+  const [data, setData] = useState<PanelData>(initialData);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [inspector, setInspector] = useState<Inspector | null>(null);
-  const [editingGroup, setEditingGroup] = useState<Group | null | undefined>(undefined);
   const [confirmUser, setConfirmUser] = useState<DirectoryUser | null>(null);
   const [revision, setRevision] = useState(0);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [choices, setChoices] = useState<Record<string, AccountRole>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [chairEmail, setChairEmail] = useState('');
+  const [chairEmailError, setChairEmailError] = useState<string | null>(null);
+  const [confirmChair, setConfirmChair] = useState<string | null>(null);
+  const [approvingChair, setApprovingChair] = useState(false);
 
   useEffect(() => {
-    if (preview) {
-      setData(createAdminPreviewData()); setLoaded(true); setLoading(false); setUpdatedAt(new Date().toISOString());
-      return;
-    }
     let active = true;
     setLoading(true);
     setError(null);
@@ -109,7 +108,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
       .catch((cause: unknown) => { if (active) setError(errorMessage(cause)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [account.id, preview, revision]);
+  }, [account.id, revision]);
 
   const selectedSection = sections.find((item) => item.id === section) ?? sections[0];
   const matching = (text: string) => text.toLowerCase().includes(search.trim().toLowerCase());
@@ -140,41 +139,44 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
   const audit = data.audit.filter((event) => matching(`${event.action} ${event.table_name} ${event.record_id ?? ''} ${event.actor_id ? userById.get(event.actor_id)?.display_name ?? '' : 'System'}`));
   const searchable = ['groups', 'terminals', 'vehicles', 'users', 'audit'].includes(section);
 
-  const changeSection = (next: Section) => { setSection(next); setSearch(''); setFilter('All'); };
+  const changeSection = (next: Section) => { setSection(next); setSearch(''); setFilter('All'); setChairEmail(''); setChairEmailError(null); };
   const saveRole = async (user: DirectoryUser) => {
     const nextRole = choices[user.id];
-    if (!nextRole || (!preview && !supabase)) return;
+    if (!nextRole || !supabase) return;
     setSaving(user.id); setActionError(null);
     try {
-      if (preview) {
-        if (user.role === 'super_admin' && nextRole !== 'super_admin' && data.users.filter((entry) => entry.role === 'super_admin').length <= 1) throw new Error('Keep at least one super admin account.');
-        if (nextRole !== 'chairperson' && data.groups.some((group) => group.chairperson_id === user.id)) throw new Error('Reassign the chaired group before changing this role.');
-        if (nextRole !== 'driver' && data.drivers.some((driver) => driver.profile_id === user.id)) throw new Error('Remove the driver membership before changing this role.');
-        setData((current) => ({ ...current, users: current.users.map((entry) => entry.id === user.id ? { ...entry, role: nextRole } : entry), audit: [{ id: Date.now(), actor_id: account.id, action: 'UPDATE', table_name: 'profiles', record_id: user.id, detail: { previous_role: user.role, role: nextRole }, created_at: new Date().toISOString() }, ...current.audit] }));
-      } else {
-        const result = await supabase!.rpc('set_user_role', { target_user: user.id, next_role: nextRole });
-        if (result.error) throw result.error;
-        setRevision((value) => value + 1);
-        if (user.id === account.id) onRefreshSession();
-      }
+      const result = await supabase.rpc('set_user_role', { target_user: user.id, next_role: nextRole });
+      if (result.error) throw result.error;
+      setRevision((value) => value + 1);
+      if (user.id === account.id) onRefreshSession();
       setChoices((current) => { const next = { ...current }; delete next[user.id]; return next; });
-      setConfirmUser(null); setNotice(preview ? 'Preview role updated. No account access was changed.' : 'Account role updated.');
+      setConfirmUser(null); setNotice('Account role updated.');
     } catch (cause) {
       setActionError(errorMessage(cause));
     } finally { setSaving(null); }
   };
 
-  const savePreviewGroup = (group: Group) => {
-    if (!preview) return;
-    setData((current) => {
-      const exists = current.groups.some((entry) => entry.id === group.id);
-      const groups = exists ? current.groups.map((entry) => entry.id === group.id ? group : entry) : [...current.groups, group];
-      return { ...current, groups, counts: { ...current.counts, groups: groups.length, activeGroups: groups.filter((entry) => entry.is_active).length }, audit: [{ id: Date.now(), actor_id: account.id, action: exists ? 'UPDATE' : 'INSERT', table_name: 'groups', record_id: group.id, detail: { name: group.name, active: group.is_active, chairperson_id: group.chairperson_id }, created_at: new Date().toISOString() }, ...current.audit] };
-    });
-    setEditingGroup(undefined); setNotice('Preview group saved. Your real registry is unchanged.');
+  const submitChairApproval = () => {
+    const email = chairEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) { setChairEmailError('Enter a valid email address.'); return; }
+    setChairEmailError(null); setActionError(null); setConfirmChair(email);
   };
 
-  const openGroup = (group: Group) => setInspector({ title: group.name, subtitle: `${group.kind === 'toda' ? 'TODA / Tricycle' : 'Jeepney'} · ${group.municipality}`, group, rows: [
+  const approveChair = async (email: string) => {
+    if (!supabase) return;
+    setApprovingChair(true); setActionError(null);
+    try {
+      const result = await supabase.rpc('approve_chairperson', { target_email: email });
+      if (result.error) throw result.error;
+      setRevision((value) => value + 1);
+      setConfirmChair(null); setChairEmail('');
+      setNotice('Chairperson access approved.');
+    } catch (cause) {
+      setActionError(errorMessage(cause));
+    } finally { setApprovingChair(false); }
+  };
+
+  const openGroup = (group: Group) => setInspector({ title: group.name, subtitle: `${group.kind === 'toda' ? 'TODA / Tricycle' : 'Jeepney'} · ${group.municipality}`, rows: [
     { label: 'Status', value: group.is_active ? 'Active' : 'Inactive' },
     { label: 'Chairperson', value: group.chairperson_id ? userById.get(group.chairperson_id)?.display_name || 'Assigned account' : 'Not assigned' },
     { label: 'Terminals in this group', value: String(data.terminals.filter((terminal) => terminal.group_id === group.id).length) },
@@ -186,7 +188,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
     groups: 'Browse TODA and jeepney groups and see their municipality and chairperson assignment.',
     terminals: 'Review registered transport terminals and the groups responsible for them.',
     vehicles: 'View the island wide vehicle roster, assignment, and current service status.',
-    users: 'Review accounts and manage the roles supported by the access model.',
+    users: 'Review accounts, approve chairperson access by email, and manage the other supported roles.',
     reports: 'Compare verified registry coverage across municipalities and transport types.',
     audit: 'Review privileged changes recorded by the database with actor and timestamp.',
   };
@@ -201,14 +203,14 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
           <View style={styles.navList}>{sections.map((item) => <NavigationItem key={item.id} item={item} selected={section === item.id} onPress={() => changeSection(item.id)} styles={styles} colors={colors} />)}</View>
           <View style={styles.sidebarBottom}>
             <View style={styles.sidebarAccount}><View style={styles.avatar}><Text style={styles.avatarText}>{initials(account.name)}</Text></View><View style={styles.accountCopy}><Text style={styles.accountName} numberOfLines={1}>{account.name}</Text><Text style={styles.accountRole}>Super administrator</Text></View></View>
-            <Button label={preview ? 'Back to sign in' : 'Commuter view'} variant="secondary" onPress={onOpenCommuter} />
-            <Pressable accessibilityRole="button" onPress={onLogout} style={styles.signOut}><MaterialIcon name="logout" size={17} color={colors.muted} /><Text style={styles.signOutText}>{preview ? 'Exit design preview' : 'Sign out'}</Text></Pressable>
+            <Button label="Commuter view" variant="secondary" onPress={onOpenCommuter} />
+            <Pressable accessibilityRole="button" onPress={onLogout} style={styles.signOut}><MaterialIcon name="logout" size={17} color={colors.muted} /><Text style={styles.signOutText}>Sign out</Text></Pressable>
           </View>
         </View>
       ) : (
         <View style={styles.mobileHeader}>
           <View style={styles.mobileBrand}><View style={styles.brandMark}><Text style={styles.brandMarkText}>e</Text></View><View><Text style={styles.brand}>eGABAY Admin</Text><Text style={styles.sidebarEyebrow}>SUPER ADMIN</Text></View></View>
-          <Pressable accessibilityRole="button" accessibilityLabel={preview ? 'Exit design preview' : 'Sign out'} onPress={onLogout} style={styles.iconButton}><MaterialIcon name="logout" size={19} color={colors.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={onLogout} style={styles.iconButton}><MaterialIcon name="logout" size={19} color={colors.ink} /></Pressable>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mobileNav}>{sections.map((item) => <NavigationItem key={item.id} item={item} selected={section === item.id} onPress={() => changeSection(item.id)} styles={styles} colors={colors} compact />)}</ScrollView>
         </View>
       )}
@@ -218,36 +220,35 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
           <View style={styles.breadcrumb}>{compact ? <Text style={styles.breadcrumbCurrent}>{selectedSection.label}</Text> : <><Text style={styles.breadcrumbMuted}>eGABAY</Text><Text style={styles.breadcrumbSlash}>/</Text><Text style={styles.breadcrumbCurrent}>{selectedSection.label}</Text></>}</View>
           <View style={styles.topbarActions}>
             {searchable && <View style={[styles.searchBox, compact && styles.searchBoxCompact]}><MaterialIcon name="search" size={18} color={colors.muted} /><TextInput accessibilityLabel={`Search ${selectedSection.label.toLowerCase()}`} value={search} onChangeText={setSearch} placeholder={compact ? 'Search' : `Search ${selectedSection.label.toLowerCase()}`} placeholderTextColor={colors.muted} style={styles.searchInput} /></View>}
-            <Pressable accessibilityRole="button" accessibilityLabel={preview ? 'Reset preview records' : 'Refresh dashboard'} accessibilityState={{ disabled: loading }} disabled={loading} onPress={() => { setRevision((value) => value + 1); setNotice(null); }} style={styles.refreshButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Refresh dashboard" accessibilityState={{ disabled: loading }} disabled={loading} onPress={() => { setRevision((value) => value + 1); setNotice(null); }} style={styles.refreshButton}>
               {loading ? <ActivityIndicator size="small" color={colors.green} /> : <MaterialIcon name="refresh" size={19} color={colors.ink} />}
             </Pressable>
             {!compact && <View style={styles.topAvatar}><Text style={styles.avatarText}>{initials(account.name)}</Text></View>}
           </View>
         </View>
 
-        {preview && <View style={styles.previewBanner}><MaterialIcon name="info" size={18} color={colors.orangeDark} /><Text style={styles.previewBannerText}>Design preview · fictional sample records · changes reset when you leave</Text></View>}
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <View style={styles.pageHeader}>
-            <View style={styles.pageHeading}><Text style={styles.eyebrow}>MARINDUQUE TRANSPORT REGISTRY</Text><Text style={styles.pageTitle}>{section === 'overview' ? 'Network overview' : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text>{updatedAt && <Text style={styles.updatedAt}>{preview ? 'Sample data' : `Updated ${shortDate(updatedAt)}`}</Text>}</View>
-            {section === 'groups' && <Button label={preview ? 'Create group' : 'Create group · coming soon'} variant={preview ? 'primary' : 'secondary'} disabled={!preview} onPress={() => setEditingGroup(null)} />}
+            <View style={styles.pageHeading}><Text style={styles.eyebrow}>MARINDUQUE TRANSPORT REGISTRY</Text><Text style={styles.pageTitle}>{section === 'overview' ? 'Network overview' : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text>{updatedAt && <Text style={styles.updatedAt}>{`Updated ${shortDate(updatedAt)}`}</Text>}</View>
+            {section === 'groups' && <Button label="Create group · coming soon" variant="secondary" disabled />}
           </View>
           {error && <ErrorBanner message={error} />}
           {notice && <View accessibilityRole="alert" style={styles.successNotice}><Text style={styles.successText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={styles.dismissNotice}><Text style={styles.panelAction}>Dismiss</Text></Pressable></View>}
           {error && !loaded ? <Card><EmptyState title="Registry data is unavailable" body="We could not load the records. Check your connection and try again." styles={styles} /><Button label="Try again" onPress={() => setRevision((value) => value + 1)} loading={loading} /></Card> : <>
           {section === 'overview' && <OverviewPanel data={data} users={userById} loading={loading} styles={styles} onNavigate={changeSection} />}
-          {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.users} preview={preview} onOpen={openGroup} />}
+          {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.users} onOpen={openGroup} />}
           {section === 'terminals' && <TerminalsPanel terminals={terminals} groups={groupById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(terminal) => setInspector({ title: terminal.name, subtitle: 'Terminal record', rows: [{ label: 'Group', value: groupById.get(terminal.group_id)?.name ?? 'Unavailable' }, { label: 'Location', value: `${terminal.barangay}, ${terminal.municipality}` }, { label: 'Status', value: terminal.is_active ? 'Active' : 'Inactive' }, { label: 'Registered vehicles', value: String(data.vehicles.filter((vehicle) => vehicle.terminal_id === terminal.id).length) }] })} />}
           {section === 'vehicles' && <VehiclesPanel vehicles={vehicles} terminals={terminalById} groups={groupById} users={userById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(vehicle) => setInspector({ title: vehicle.body_number, subtitle: 'Vehicle record', rows: [{ label: 'Plate number', value: vehicle.plate_number ?? 'Not recorded' }, { label: 'Transport type', value: vehicle.vehicle_type }, { label: 'Terminal', value: terminalById.get(vehicle.terminal_id)?.name ?? 'Unavailable' }, { label: 'Assigned driver', value: vehicle.assigned_driver_id ? userById.get(vehicle.assigned_driver_id)?.display_name ?? 'Assigned account' : 'Not assigned' }, { label: 'Status', value: vehicle.status.replaceAll('_', ' ') }] })} />}
-          {section === 'users' && <UsersPanel users={users} loading={loading} filter={filter} setFilter={setFilter} choices={choices} setChoices={setChoices} saving={saving} saveRole={async (user) => { setActionError(null); setConfirmUser(user); }} styles={styles} />}
+          {section === 'users' && <UsersPanel users={users} loading={loading} filter={filter} setFilter={setFilter} choices={choices} setChoices={setChoices} saving={saving} saveRole={async (user) => { setActionError(null); setConfirmUser(user); }} chairEmail={chairEmail} chairEmailError={chairEmailError} onChairEmail={(value) => { setChairEmail(value); setChairEmailError(null); }} onApproveChair={submitChairApproval} approvingChair={approvingChair} styles={styles} />}
           {section === 'reports' && <ReportsPanel data={data} loading={loading} styles={styles} />}
           {section === 'audit' && <AuditPanel events={audit} users={userById} loading={loading} styles={styles} onOpen={(event) => setInspector({ title: `${event.action} · ${event.table_name}`, subtitle: 'Recorded activity', rows: [{ label: 'Actor', value: event.actor_id ? userById.get(event.actor_id)?.display_name ?? 'Account' : 'System' }, { label: 'Recorded at', value: shortDate(event.created_at) }, { label: 'Record ID', value: event.record_id ?? 'Not recorded' }], detail: JSON.stringify(event.detail, null, 2) })} />}
           </>}
-          <Text style={styles.footerNote}>{preview ? 'Try creating a group, assigning a chairperson, inspecting a record, or reviewing a role change.' : 'Transport registry · Marinduque, Philippines'}</Text>
+          <Text style={styles.footerNote}>Transport registry · Marinduque, Philippines</Text>
         </ScrollView>
       </View>
-      {inspector && <AdminRecordInspector {...inspector} onClose={() => setInspector(null)} onEdit={preview && inspector.group ? () => { setEditingGroup(inspector.group); setInspector(null); } : undefined} />}
-      {preview && editingGroup !== undefined && <AdminGroupEditor key={editingGroup?.id ?? 'new'} group={editingGroup} groups={data.groups} users={data.users} onClose={() => setEditingGroup(undefined)} onSave={savePreviewGroup} />}
-      {confirmUser && choices[confirmUser.id] && <AdminRoleConfirmation user={confirmUser} nextRole={choices[confirmUser.id]} preview={preview} saving={saving !== null} error={actionError} onClose={() => setConfirmUser(null)} onConfirm={() => void saveRole(confirmUser)} />}
+      {inspector && <AdminRecordInspector {...inspector} onClose={() => setInspector(null)} />}
+      {confirmUser && choices[confirmUser.id] && <AdminRoleConfirmation user={confirmUser} nextRole={choices[confirmUser.id]} saving={saving !== null} error={actionError} onClose={() => setConfirmUser(null)} onConfirm={() => void saveRole(confirmUser)} />}
+      {confirmChair && <AdminChairpersonApproval email={confirmChair} saving={approvingChair} error={actionError} onClose={() => setConfirmChair(null)} onConfirm={() => void approveChair(confirmChair)} />}
     </View>
   );
 }
@@ -313,10 +314,10 @@ function RecordAction({ onPress, label, styles }: { onPress: () => void; label: 
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.recordAction}><Text style={styles.panelAction}>View</Text><MaterialIcon name="chevronRight" size={17} color={styles.colors.greenDark} /></Pressable>;
 }
 
-function GroupsPanel({ groups, loading, filter, setFilter, styles, users, preview, onOpen }: { groups: Group[]; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; users: DirectoryUser[]; preview: boolean; onOpen: (group: Group) => void }) {
+function GroupsPanel({ groups, loading, filter, setFilter, styles, users, onOpen }: { groups: Group[]; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; users: DirectoryUser[]; onOpen: (group: Group) => void }) {
   return <Card style={styles.listCard}>
     <ListToolbar title="Group registry" count={groups.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
-    {!preview && <StandbyNotice styles={styles} text="You can review group records here. Creation and editing will be available in a later release." />}
+    <StandbyNotice styles={styles} text="You can review group records here. Creation and editing will be available in a later release." />
     {loading ? <LoadingRows styles={styles} /> : groups.length ? <View style={styles.listRows}>
       <RegistryHeader labels={['Group / municipality', 'Chairperson']} styles={styles} />
       {groups.map((group) => {
@@ -369,16 +370,29 @@ function VehiclesPanel({ vehicles, terminals, groups, users, loading, filter, se
   </Card>;
 }
 
-function UsersPanel({ users, loading, filter, setFilter, choices, setChoices, saving, saveRole, styles }: {
-  users: DirectoryUser[]; loading: boolean; filter: string; setFilter: (value: string) => void; choices: Record<string, AccountRole>; setChoices: (update: (current: Record<string, AccountRole>) => Record<string, AccountRole>) => void; saving: string | null; saveRole: (user: DirectoryUser) => Promise<void>; styles: ReturnType<typeof createStyles>;
+function UsersPanel({ users, loading, filter, setFilter, choices, setChoices, saving, saveRole, chairEmail, chairEmailError, onChairEmail, onApproveChair, approvingChair, styles }: {
+  users: DirectoryUser[]; loading: boolean; filter: string; setFilter: (value: string) => void; choices: Record<string, AccountRole>; setChoices: (update: (current: Record<string, AccountRole>) => Record<string, AccountRole>) => void; saving: string | null; saveRole: (user: DirectoryUser) => Promise<void>;
+  chairEmail: string; chairEmailError: string | null; onChairEmail: (value: string) => void; onApproveChair: () => void; approvingChair: boolean; styles: ReturnType<typeof createStyles>;
 }) {
-  return <Card style={styles.listCard}><ListToolbar title="User access" count={users.length} filter={filter} setFilter={setFilter} options={['All', ...accountRoles.map((role) => roles[role])]} styles={styles} />
-    <Text style={styles.panelSubtitle}>Showing the latest 50 accounts. New sign-ins begin with commuter access. Driver and chairperson roles still need a group assignment.</Text>
-    {loading ? <LoadingRows styles={styles} /> : users.length ? <View style={styles.listRows}>{users.map((user) => <View key={user.id} style={styles.userRow}><View style={styles.rowLeading}><View style={styles.userAvatar}><Text style={styles.userAvatarText}>{initials(user.display_name || user.email)}</Text></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{user.display_name || 'Unnamed account'}</Text><Text style={styles.rowSub}>{user.email}</Text></View></View><View style={styles.userRoleOptions}>{accountRoles.map((role) => {
-      const selected = (choices[user.id] ?? user.role) === role;
-      return <Pressable key={role} accessibilityRole="button" accessibilityLabel={`${roles[role]} role for ${user.email}`} accessibilityState={{ selected }} disabled={saving !== null} onPress={() => setChoices((current) => ({ ...current, [user.id]: role }))} style={[styles.roleOption, selected && styles.roleSelected]}><Text style={[styles.roleOptionText, selected && styles.roleOptionTextSelected]}>{roles[role]}</Text></Pressable>;
-    })}</View>{choices[user.id] && choices[user.id] !== user.role && <Button label="Review change" onPress={() => void saveRole(user)} loading={saving === user.id} disabled={saving !== null && saving !== user.id} style={styles.saveRoleButton} />}</View>)}</View> : <EmptyState title="No accounts found" body="Try a different search or role filter." styles={styles} />}
-  </Card>;
+  return <>
+    <Card style={styles.listCard}>
+      <Text style={styles.panelTitle}>Approve a chairperson</Text>
+      <Text style={styles.panelSubtitle}>Enter the email of an existing account to grant chairperson access. A group is assigned separately in the group registry.</Text>
+      <View style={styles.chairForm}>
+        <View style={styles.chairField}><TextField comfortable label="Chairperson email" value={chairEmail} onChangeText={onChairEmail} placeholder="name@example.com" error={chairEmailError} autoCapitalize="none" keyboardType="email-address" /></View>
+        <Button label="Approve chairperson" onPress={onApproveChair} loading={approvingChair} disabled={approvingChair || saving !== null} />
+      </View>
+    </Card>
+    <Card style={styles.listCard}><ListToolbar title="User access" count={users.length} filter={filter} setFilter={setFilter} options={['All', ...accountRoles.map((role) => roles[role])]} styles={styles} />
+      <Text style={styles.panelSubtitle}>Showing the latest 50 accounts. New sign-ins begin with commuter access. Chairperson access is approved by email above; demote an existing chairperson from their row. Driver and chairperson roles still need a group assignment.</Text>
+      {loading ? <LoadingRows styles={styles} /> : users.length ? <View style={styles.listRows}>{users.map((user) => <View key={user.id} style={styles.userRow}><View style={styles.rowLeading}><View style={styles.userAvatar}><Text style={styles.userAvatarText}>{initials(user.display_name || user.email)}</Text></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{user.display_name || 'Unnamed account'}</Text><Text style={styles.rowSub}>{user.email}</Text></View></View><View style={styles.userRoleOptions}>{accountRoles.map((role) => {
+        if (role === 'chairperson' && user.role !== 'chairperson') return null;
+        const locked = role === 'chairperson';
+        const selected = (choices[user.id] ?? user.role) === role;
+        return <Pressable key={role} accessibilityRole="button" accessibilityLabel={locked ? `${roles[role]} role for ${user.email}, granted by email approval` : `${roles[role]} role for ${user.email}`} accessibilityState={{ selected, disabled: locked || saving !== null }} disabled={locked || saving !== null} onPress={() => setChoices((current) => ({ ...current, [user.id]: role }))} style={[styles.roleOption, selected && styles.roleSelected, locked && styles.roleLocked]}><Text style={[styles.roleOptionText, selected && styles.roleOptionTextSelected]}>{roles[role]}</Text></Pressable>;
+      })}</View>{choices[user.id] && choices[user.id] !== user.role && <Button label="Review change" onPress={() => void saveRole(user)} loading={saving === user.id} disabled={saving !== null && saving !== user.id} style={styles.saveRoleButton} />}</View>)}</View> : <EmptyState title="No accounts found" body="Try a different search or role filter." styles={styles} />}
+    </Card>
+  </>;
 }
 
 function ReportsPanel({ data, loading, styles }: { data: PanelData; loading: boolean; styles: ReturnType<typeof createStyles> }) {
@@ -461,11 +475,10 @@ function createStyles(colors: ThemeColors, wide: boolean) {
     listCard: { padding: wide ? 20 : 14 }, listToolbar: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, marginBottom: 16 }, filterRow: { flexDirection: 'row', alignItems: 'center', gap: 7 }, standbyNotice: { padding: 11, borderRadius: 11, backgroundColor: colors.blueLight, flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 12 }, standbyText: { flex: 1, color: colors.muted, fontSize: 12, lineHeight: 16 },
     listRows: { borderTopWidth: 1, borderTopColor: colors.line }, dataRow: { minHeight: 76, flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', gap: 12, justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }, rowLeading: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: wide ? 1.25 : undefined, minWidth: 0 }, rowIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, greenIcon: { backgroundColor: colors.greenLight }, orangeIcon: { backgroundColor: colors.orangeLight }, rowMain: { flex: 1 }, rowTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' }, rowSub: { color: colors.muted, fontSize: 12, marginTop: 4 }, rowSecondary: { flex: wide ? 1 : undefined, minWidth: 0 }, rowMetaLabel: { color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 0.8 }, rowMeta: { color: colors.ink, fontSize: 14, fontWeight: '600', marginTop: 5 },
     statusPill: { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, statusGreen: { backgroundColor: colors.greenLight }, statusOrange: { backgroundColor: colors.orangeLight }, statusNeutral: { backgroundColor: colors.chipBg }, statusText: { fontSize: 12, fontWeight: '800', textTransform: 'capitalize' }, statusTextGreen: { color: colors.greenDark }, statusTextOrange: { color: colors.orangeDark }, statusTextNeutral: { color: colors.muted },
-    userRow: { minHeight: 104, flexWrap: 'wrap', flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.line }, userAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, userAvatarText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' }, userRoleOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, flex: wide ? 1.5 : undefined, minWidth: wide ? 250 : 0 }, roleOption: { minHeight: 44, justifyContent: 'center', borderRadius: 9, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 8, paddingVertical: 7 }, roleSelected: { borderColor: colors.green, backgroundColor: colors.greenLight }, roleOptionText: { color: colors.muted, fontSize: 13, fontWeight: '700' }, roleOptionTextSelected: { color: colors.greenDark }, saveRoleButton: { minHeight: 44, minWidth: 120, paddingVertical: 9, paddingHorizontal: 12 },
+    userRow: { minHeight: 104, flexWrap: 'wrap', flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.line }, userAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, userAvatarText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' }, userRoleOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, flex: wide ? 1.5 : undefined, minWidth: wide ? 250 : 0 }, roleOption: { minHeight: 44, justifyContent: 'center', borderRadius: 9, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 8, paddingVertical: 7 }, roleSelected: { borderColor: colors.green, backgroundColor: colors.greenLight }, roleLocked: { opacity: 0.55 }, roleOptionText: { color: colors.muted, fontSize: 13, fontWeight: '700' }, roleOptionTextSelected: { color: colors.greenDark }, saveRoleButton: { minHeight: 44, minWidth: 120, paddingVertical: 9, paddingHorizontal: 12 },
+    chairForm: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'flex-end' : 'stretch', gap: 12, marginTop: 16 }, chairField: { flex: 1 },
     emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 42, paddingHorizontal: 22 }, emptyIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }, emptyTitle: { color: colors.ink, fontSize: 14, fontWeight: '800', textAlign: 'center' }, emptyBody: { color: colors.muted, fontSize: 12, lineHeight: 17, textAlign: 'center', maxWidth: 350, marginTop: 6 }, loadingRows: { minHeight: 120, alignItems: 'center', justifyContent: 'center', gap: 9 },
     reportGrid: { flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', alignItems: 'stretch', gap: 20 }, reportCard: { flex: wide ? 1 : undefined, minWidth: wide ? 260 : 0, padding: 24 }, reportBarRow: { marginTop: 17 }, reportBarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }, reportDivider: { height: 1, backgroundColor: colors.line, marginVertical: 15 }, reportFact: { color: colors.muted, fontSize: 12, marginTop: 7 }, reportFactNumber: { color: colors.ink, fontWeight: '800' }, summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line }, summaryLabel: { color: colors.muted, fontSize: 12 }, summaryValue: { color: colors.ink, fontSize: 12, fontWeight: '800' }, auditHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
-    previewBanner: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingHorizontal: wide ? 34 : 18, paddingVertical: 12, backgroundColor: colors.orangeLight, borderBottomWidth: 1, borderBottomColor: colors.line },
-    previewBannerText: { flex: 1, color: colors.orangeDark, fontSize: 13, lineHeight: 20 },
     updatedAt: { color: colors.muted, fontSize: 12, marginTop: 10 },
     successNotice: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.greenLight },
     successText: { flex: 1, color: colors.greenDark, fontSize: 14, lineHeight: 21 }, dismissNotice: { minHeight: 44, justifyContent: 'center' },

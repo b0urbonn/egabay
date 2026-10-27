@@ -134,9 +134,9 @@ Enforcement notes:
 ### Super Admin
 
 - Admin dashboard — system-wide group/terminal/vehicle/driver reports (standby dashboard implemented with live Supabase counts)
-- Groups manager — create, edit, deactivate TODA and jeepney groups (list and filters implemented; group editing and chairperson selection have local preview forms; live mutations are the next step)
+- Groups manager — create, edit, deactivate TODA and jeepney groups (list and filters implemented; live mutations are the next step)
 - Chairperson assignment — assign or replace per group (assignment status shown; mutations are the next step)
-- User management — accounts, roles, approvals (latest 50 accounts and checked role updates implemented; approvals remain)
+- User management — accounts, roles, approvals (latest 50 accounts, checked role updates, and chairperson approval by sign-in email implemented; driver approvals remain)
 - Global terminal/vehicle browser — search and filter records (views implemented; override edits remain)
 - Audit log viewer — who changed what, and when (implemented)
 

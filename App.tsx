@@ -4,7 +4,6 @@ import { ActivityIndicator, Platform, Text, useColorScheme, useWindowDimensions,
 import { Button, ErrorBanner } from './src/components/ui';
 import { signOut } from './src/lib/auth';
 import { useAuthSession } from './src/lib/useAuthSession';
-import { adminPreviewAccount } from './src/data/adminPreview';
 
 import {
   clearStoredAppearance,
@@ -35,10 +34,9 @@ import { SignUpScreen } from './src/screens/SignUpScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { darkColors, lightColors } from './src/theme';
 
-type Stage = 'onboarding' | 'welcome' | 'login' | 'signup' | 'chairperson' | 'driver' | 'admin-preview' | 'app';
+type Stage = 'onboarding' | 'welcome' | 'login' | 'signup' | 'chairperson' | 'driver' | 'app';
 
 function initialStage(): Stage {
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'super-admin') return 'admin-preview';
   if (!isOnboardingDone()) return 'onboarding';
   return getStoredSession() ? 'app' : 'welcome';
 }
@@ -56,7 +54,7 @@ export default function App() {
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
-    if (!auth.account || stage === 'admin-preview') return;
+    if (!auth.account) return;
     setStoredSession(auth.account);
     setOnboardingDone();
     setSession(auth.account);
@@ -64,7 +62,7 @@ export default function App() {
   }, [auth.account, stage]);
 
   useEffect(() => {
-    if (stage !== 'admin-preview' && !auth.loading && !auth.userId && session?.kind === 'account') {
+    if (!auth.loading && !auth.userId && session?.kind === 'account') {
       clearStoredSession();
       setSession(null);
       setStage('welcome');
@@ -81,7 +79,7 @@ export default function App() {
   const staffAccount = session?.kind === 'account' && session.role !== 'commuter' ? session : null;
   // Wide web: landing chrome (intro panel + phone frame) only pre-sign-in;
   // once in the app it renders full-width like a real web app.
-  const showLandingChrome = isWideWeb && stage !== 'app' && stage !== 'admin-preview';
+  const showLandingChrome = isWideWeb && stage !== 'app';
   const styles = createAppStyles(themeColors);
 
   const chooseMode = (next: AppMode) => { setStoredMode(next); setMode(next); };
@@ -132,9 +130,7 @@ export default function App() {
         <View style={showLandingChrome ? styles.appFrame : styles.appFrameFill}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           {actionError && <ErrorBanner message={actionError} />}
-          {stage === 'admin-preview' ? (
-            <SuperAdminWorkspaceScreen preview account={adminPreviewAccount} onLogout={() => setStage('login')} onOpenCommuter={() => setStage('login')} onRefreshSession={() => {}} />
-          ) : auth.loading ? (
+          {auth.loading ? (
             <View style={styles.authStatus}><ActivityIndicator color={themeColors.greenDark} /><Text style={styles.authStatusCopy}>Connecting your account…</Text></View>
           ) : auth.error ? (
             <View style={styles.authStatus}>
@@ -154,7 +150,6 @@ export default function App() {
                 onSignUp={() => setStage('signup')}
                 onChairpersonPreview={() => setStage('chairperson')}
                 onDriverPreview={() => setStage('driver')}
-                onAdminPreview={() => setStage('admin-preview')}
               />}
               {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
               {stage === 'driver' && <DriverWorkspaceScreen appearance={appearance} onChangeAppearance={chooseAppearance} onBack={() => setStage('login')} />}

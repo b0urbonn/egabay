@@ -2,6 +2,12 @@
 
 This file records repository changes visible in local Git history and `origin/main`. The [checklist](CHECKLIST.md) tracks implementation and the branch differences.
 
+## 2026-10-27
+
+- **Super Admin sample-data preview removed (uncommitted)** — Dropped the "Open super admin preview" login entry, the `?preview=super-admin` URL stage, the fictional `adminPreview` fixtures, and every preview branch inside the console, since super admin accounts reach the live panel automatically on sign-in. The preview-only group editor, inspector edit action, and preview copy went with it; driver and chairperson login previews are unchanged.
+
+- **Chairperson approval by email in Users & roles (uncommitted)** — The super admin now grants chairperson access by entering and approving the account's sign-in email instead of locating it in the directory and using the role chips. The Chairperson chip is locked on accounts that already hold the role and hidden on other rows; demotion still happens from the row's remaining chips. A new `approve_chairperson(target_email)` RPC (migration `20261027000000`) resolves `auth.users` case-insensitively, rejects unknown emails, existing chairpersons, and super admin targets, then delegates to `set_user_role` so the advisory lock, driver-membership guard, and audit trigger still apply. One new PGlite check covers the grants and rejection paths.
+
 ## 2026-10-26
 
 - **Super Admin wireframes and web layouts** — Added eleven editable vector layouts and a layout/interaction specification. Refined text sizes, 44px controls, registry columns, compact cards, loading/error states, record inspectors, and role-change review. Added an isolated sample-data preview from Login and `?preview=super-admin`, with local group forms, chairperson selection, status changes, and audit examples. Live group/terminal/vehicle mutation flows remain pending.
