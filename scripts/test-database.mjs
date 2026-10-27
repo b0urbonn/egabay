@@ -86,6 +86,18 @@ try {
     assert.equal((await rows('select * from public.admin_user_directory()')).length, 8);
     assert.ok((await rows("select * from public.audit_log where actor_id=$1 and table_name='profiles'", [id(1)])).length > 0);
   }));
+  await check('chairperson access is approved by email and rejects unknown, active, and staff targets', async () => {
+    await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'chair-new@example.test',now())", [id(9)]);
+    await asUser('authenticated', id(2), () => denied(() => rows("select public.approve_chairperson('chair-new@example.test')")));
+    await asUser('authenticated', id(1), async () => {
+      await denied(() => rows("select public.approve_chairperson('missing@example.test')"));
+      await denied(() => rows("select public.approve_chairperson('owner@example.test')"));
+      await denied(() => rows("select public.approve_chairperson('fixture5@example.test')"));
+      await rows("select public.approve_chairperson(' Chair-New@EXAMPLE.test ')");
+      assert.equal((await rows('select role from public.profiles where id=$1', [id(9)]))[0].role, 'chairperson');
+      await denied(() => rows("select public.approve_chairperson('chair-new@example.test')"));
+    });
+  });
   await check('role and terminal changes cannot invalidate group assignments', async () => {
     await asUser('authenticated', id(1), async () => {
       await denied(() => rows("select public.set_user_role($1,'commuter')", [id(3)]));

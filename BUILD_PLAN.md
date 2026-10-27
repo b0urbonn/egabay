@@ -134,13 +134,15 @@ Enforcement notes:
 ### Super Admin
 
 - Admin dashboard — system-wide group/terminal/vehicle/driver reports (standby dashboard implemented with live Supabase counts)
-- Groups manager — create, edit, deactivate TODA and jeepney groups (list and filters implemented; mutations are the next step)
+- Groups manager — create, edit, deactivate TODA and jeepney groups (list and filters implemented; live mutations are the next step)
 - Chairperson assignment — assign or replace per group (assignment status shown; mutations are the next step)
-- User management — accounts, roles, approvals (latest 50 accounts and checked role updates implemented; approvals remain)
+- User management — accounts, roles, approvals (latest 50 accounts, checked role updates, and chairperson approval by sign-in email implemented; driver approvals remain)
 - Global terminal/vehicle browser — search and filter records (views implemented; override edits remain)
 - Audit log viewer — who changed what, and when (implemented)
 
 All role surfaces live in the same Expo app behind role-gated navigation after Supabase sign-in; the web build covers the wider admin tables.
+
+The [Super Admin web layout specification](docs/design/SUPER_ADMIN_WEB_UI.md) links eleven editable wireframes, desktop/compact layout rules, and a separate sample-data preview. The preview never grants account access or writes registry data.
 
 ## RBAC implementation and deployment
 

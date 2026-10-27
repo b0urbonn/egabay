@@ -1,23 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
-import { Button, Card, Chip, ErrorBanner } from '../components/ui';
+import { AdminChairpersonApproval, AdminRecordInspector, AdminRoleConfirmation } from '../components/admin/AdminPanels';
+import { Button, Card, Chip, ErrorBanner, TextField } from '../components/ui';
 import { accountRoles, type AccountRole, type AccountSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { useColors, useThemeStyles } from '../lib/theme';
 import type { ThemeColors } from '../theme';
+import type { AdminGroup as Group, AdminTerminal as Terminal, AdminVehicle as Vehicle, AdminUser as DirectoryUser, AdminAuditEvent as AuditEvent, AdminPanelData as PanelData } from '../types/admin';
 
 type Section = 'overview' | 'groups' | 'terminals' | 'vehicles' | 'users' | 'reports' | 'audit';
-type Group = { id: string; name: string; kind: 'toda' | 'jeepney'; municipality: string; is_active: boolean; chairperson_id: string | null };
-type Terminal = { id: string; group_id: string; name: string; municipality: string; barangay: string; is_active: boolean };
-type Vehicle = { id: string; terminal_id: string; body_number: string; plate_number: string | null; vehicle_type: 'jeepney' | 'tricycle'; status: string; assigned_driver_id: string | null };
-type Driver = { profile_id: string; group_id: string; membership_status: string; availability: string };
-type DirectoryUser = { id: string; display_name: string | null; email: string; role: AccountRole; created_at: string };
-type AuditEvent = { id: number; actor_id: string | null; action: string; table_name: string; record_id: string | null; detail: Record<string, unknown>; created_at: string };
-type PanelData = {
-  groups: Group[]; terminals: Terminal[]; vehicles: Vehicle[]; drivers: Driver[]; users: DirectoryUser[]; audit: AuditEvent[];
-  counts: { groups: number; activeGroups: number; terminals: number; vehicles: number; onTrip: number; drivers: number; pending: number; approved: number; routes: number };
-};
+type Inspector = { title: string; subtitle: string; rows: { label: string; value: string }[]; detail?: string };
 
 const roles: Record<AccountRole, string> = { commuter: 'Commuter', driver: 'Driver', chairperson: 'Chairperson', super_admin: 'Super admin' };
 const sections: { id: Section; label: string; icon: MaterialIconName }[] = [
@@ -30,6 +23,7 @@ const sections: { id: Section; label: string; icon: MaterialIconName }[] = [
   { id: 'audit', label: 'Audit log', icon: 'history' },
 ];
 const municipalities = ['Boac', 'Mogpog', 'Gasan', 'Buenavista', 'Torrijos', 'Santa Cruz'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const initialData: PanelData = {
   groups: [], terminals: [], vehicles: [], drivers: [], users: [], audit: [],
   counts: { groups: 0, activeGroups: 0, terminals: 0, vehicles: 0, onTrip: 0, drivers: 0, pending: 0, approved: 0, routes: 0 },
@@ -89,18 +83,28 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
   const [section, setSection] = useState<Section>('overview');
   const [data, setData] = useState<PanelData>(initialData);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [inspector, setInspector] = useState<Inspector | null>(null);
+  const [confirmUser, setConfirmUser] = useState<DirectoryUser | null>(null);
   const [revision, setRevision] = useState(0);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [choices, setChoices] = useState<Record<string, AccountRole>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [chairEmail, setChairEmail] = useState('');
+  const [chairEmailError, setChairEmailError] = useState<string | null>(null);
+  const [confirmChair, setConfirmChair] = useState<string | null>(null);
+  const [approvingChair, setApprovingChair] = useState(false);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(null);
-    void loadPanelData().then((next) => { if (active) setData(next); })
+    void loadPanelData().then((next) => { if (active) { setData(next); setLoaded(true); setUpdatedAt(new Date().toISOString()); } })
       .catch((cause: unknown) => { if (active) setError(errorMessage(cause)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -132,28 +136,59 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
     const role = filter === 'All' || roles[user.role] === filter;
     return role && matching(`${user.display_name ?? ''} ${user.email} ${roles[user.role]}`);
   });
+  const audit = data.audit.filter((event) => matching(`${event.action} ${event.table_name} ${event.record_id ?? ''} ${event.actor_id ? userById.get(event.actor_id)?.display_name ?? '' : 'System'}`));
+  const searchable = ['groups', 'terminals', 'vehicles', 'users', 'audit'].includes(section);
 
-  const changeSection = (next: Section) => { setSection(next); setSearch(''); setFilter('All'); };
+  const changeSection = (next: Section) => { setSection(next); setSearch(''); setFilter('All'); setChairEmail(''); setChairEmailError(null); };
   const saveRole = async (user: DirectoryUser) => {
-    if (!supabase || !choices[user.id]) return;
-    setSaving(user.id); setError(null);
+    const nextRole = choices[user.id];
+    if (!nextRole || !supabase) return;
+    setSaving(user.id); setActionError(null);
     try {
-      const result = await supabase.rpc('set_user_role', { target_user: user.id, next_role: choices[user.id] });
+      const result = await supabase.rpc('set_user_role', { target_user: user.id, next_role: nextRole });
       if (result.error) throw result.error;
-      setChoices((current) => { const next = { ...current }; delete next[user.id]; return next; });
       setRevision((value) => value + 1);
       if (user.id === account.id) onRefreshSession();
+      setChoices((current) => { const next = { ...current }; delete next[user.id]; return next; });
+      setConfirmUser(null); setNotice('Account role updated.');
     } catch (cause) {
-      setError(errorMessage(cause));
+      setActionError(errorMessage(cause));
     } finally { setSaving(null); }
   };
+
+  const submitChairApproval = () => {
+    const email = chairEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) { setChairEmailError('Enter a valid email address.'); return; }
+    setChairEmailError(null); setActionError(null); setConfirmChair(email);
+  };
+
+  const approveChair = async (email: string) => {
+    if (!supabase) return;
+    setApprovingChair(true); setActionError(null);
+    try {
+      const result = await supabase.rpc('approve_chairperson', { target_email: email });
+      if (result.error) throw result.error;
+      setRevision((value) => value + 1);
+      setConfirmChair(null); setChairEmail('');
+      setNotice('Chairperson access approved.');
+    } catch (cause) {
+      setActionError(errorMessage(cause));
+    } finally { setApprovingChair(false); }
+  };
+
+  const openGroup = (group: Group) => setInspector({ title: group.name, subtitle: `${group.kind === 'toda' ? 'TODA / Tricycle' : 'Jeepney'} · ${group.municipality}`, rows: [
+    { label: 'Status', value: group.is_active ? 'Active' : 'Inactive' },
+    { label: 'Chairperson', value: group.chairperson_id ? userById.get(group.chairperson_id)?.display_name || 'Assigned account' : 'Not assigned' },
+    { label: 'Terminals in this group', value: String(data.terminals.filter((terminal) => terminal.group_id === group.id).length) },
+    { label: 'Group ID', value: group.id },
+  ] });
 
   const sectionDescription: Record<Section, string> = {
     overview: 'A clear view of groups, terminals, vehicles, and operator accounts across Marinduque.',
     groups: 'Browse TODA and jeepney groups and see their municipality and chairperson assignment.',
     terminals: 'Review registered transport terminals and the groups responsible for them.',
     vehicles: 'View the island wide vehicle roster, assignment, and current service status.',
-    users: 'Review accounts and manage the roles supported by the access model.',
+    users: 'Review accounts, approve chairperson access by email, and manage the other supported roles.',
     reports: 'Compare verified registry coverage across municipalities and transport types.',
     audit: 'Review privileged changes recorded by the database with actor and timestamp.',
   };
@@ -175,7 +210,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
       ) : (
         <View style={styles.mobileHeader}>
           <View style={styles.mobileBrand}><View style={styles.brandMark}><Text style={styles.brandMarkText}>e</Text></View><View><Text style={styles.brand}>eGABAY Admin</Text><Text style={styles.sidebarEyebrow}>SUPER ADMIN</Text></View></View>
-          <Pressable accessibilityRole="button" onPress={onLogout} style={styles.iconButton}><MaterialIcon name="logout" size={19} color={colors.ink} /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={onLogout} style={styles.iconButton}><MaterialIcon name="logout" size={19} color={colors.ink} /></Pressable>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mobileNav}>{sections.map((item) => <NavigationItem key={item.id} item={item} selected={section === item.id} onPress={() => changeSection(item.id)} styles={styles} colors={colors} compact />)}</ScrollView>
         </View>
       )}
@@ -184,31 +219,36 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
         <View style={[styles.topbar, compact && styles.topbarCompact]}>
           <View style={styles.breadcrumb}>{compact ? <Text style={styles.breadcrumbCurrent}>{selectedSection.label}</Text> : <><Text style={styles.breadcrumbMuted}>eGABAY</Text><Text style={styles.breadcrumbSlash}>/</Text><Text style={styles.breadcrumbCurrent}>{selectedSection.label}</Text></>}</View>
           <View style={styles.topbarActions}>
-            <View style={[styles.searchBox, compact && styles.searchBoxCompact]}><MaterialIcon name="search" size={18} color={colors.muted} /><TextInput accessibilityLabel="Search current section" value={search} onChangeText={setSearch} placeholder="Search this section" placeholderTextColor={colors.muted} style={styles.searchInput} /></View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Refresh dashboard" onPress={() => setRevision((value) => value + 1)} style={styles.refreshButton}>
+            {searchable && <View style={[styles.searchBox, compact && styles.searchBoxCompact]}><MaterialIcon name="search" size={18} color={colors.muted} /><TextInput accessibilityLabel={`Search ${selectedSection.label.toLowerCase()}`} value={search} onChangeText={setSearch} placeholder={compact ? 'Search' : `Search ${selectedSection.label.toLowerCase()}`} placeholderTextColor={colors.muted} style={styles.searchInput} /></View>}
+            <Pressable accessibilityRole="button" accessibilityLabel="Refresh dashboard" accessibilityState={{ disabled: loading }} disabled={loading} onPress={() => { setRevision((value) => value + 1); setNotice(null); }} style={styles.refreshButton}>
               {loading ? <ActivityIndicator size="small" color={colors.green} /> : <MaterialIcon name="refresh" size={19} color={colors.ink} />}
             </Pressable>
             {!compact && <View style={styles.topAvatar}><Text style={styles.avatarText}>{initials(account.name)}</Text></View>}
           </View>
         </View>
 
-        {!wide && <View style={styles.mobileActions}><Button label="Commuter view" variant="secondary" onPress={onOpenCommuter} /></View>}
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <View style={styles.pageHeader}>
-            <View style={styles.pageHeading}><Text style={styles.eyebrow}>SUPER ADMIN CONSOLE</Text><Text style={styles.pageTitle}>{section === 'overview' ? `Welcome back, ${account.name.split(' ')[0]}` : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text></View>
-            {section === 'groups' && <Button label="New group · coming soon" variant="secondary" disabled />}
+            <View style={styles.pageHeading}><Text style={styles.eyebrow}>MARINDUQUE TRANSPORT REGISTRY</Text><Text style={styles.pageTitle}>{section === 'overview' ? 'Network overview' : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text>{updatedAt && <Text style={styles.updatedAt}>{`Updated ${shortDate(updatedAt)}`}</Text>}</View>
+            {section === 'groups' && <Button label="Create group · coming soon" variant="secondary" disabled />}
           </View>
           {error && <ErrorBanner message={error} />}
+          {notice && <View accessibilityRole="alert" style={styles.successNotice}><Text style={styles.successText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={styles.dismissNotice}><Text style={styles.panelAction}>Dismiss</Text></Pressable></View>}
+          {error && !loaded ? <Card><EmptyState title="Registry data is unavailable" body="We could not load the records. Check your connection and try again." styles={styles} /><Button label="Try again" onPress={() => setRevision((value) => value + 1)} loading={loading} /></Card> : <>
           {section === 'overview' && <OverviewPanel data={data} users={userById} loading={loading} styles={styles} onNavigate={changeSection} />}
-          {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.users} />}
-          {section === 'terminals' && <TerminalsPanel terminals={terminals} groups={groupById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} />}
-          {section === 'vehicles' && <VehiclesPanel vehicles={vehicles} terminals={terminalById} groups={groupById} users={userById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} />}
-          {section === 'users' && <UsersPanel users={users} loading={loading} filter={filter} setFilter={setFilter} choices={choices} setChoices={setChoices} saving={saving} saveRole={saveRole} styles={styles} />}
+          {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.users} onOpen={openGroup} />}
+          {section === 'terminals' && <TerminalsPanel terminals={terminals} groups={groupById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(terminal) => setInspector({ title: terminal.name, subtitle: 'Terminal record', rows: [{ label: 'Group', value: groupById.get(terminal.group_id)?.name ?? 'Unavailable' }, { label: 'Location', value: `${terminal.barangay}, ${terminal.municipality}` }, { label: 'Status', value: terminal.is_active ? 'Active' : 'Inactive' }, { label: 'Registered vehicles', value: String(data.vehicles.filter((vehicle) => vehicle.terminal_id === terminal.id).length) }] })} />}
+          {section === 'vehicles' && <VehiclesPanel vehicles={vehicles} terminals={terminalById} groups={groupById} users={userById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(vehicle) => setInspector({ title: vehicle.body_number, subtitle: 'Vehicle record', rows: [{ label: 'Plate number', value: vehicle.plate_number ?? 'Not recorded' }, { label: 'Transport type', value: vehicle.vehicle_type }, { label: 'Terminal', value: terminalById.get(vehicle.terminal_id)?.name ?? 'Unavailable' }, { label: 'Assigned driver', value: vehicle.assigned_driver_id ? userById.get(vehicle.assigned_driver_id)?.display_name ?? 'Assigned account' : 'Not assigned' }, { label: 'Status', value: vehicle.status.replaceAll('_', ' ') }] })} />}
+          {section === 'users' && <UsersPanel users={users} loading={loading} filter={filter} setFilter={setFilter} choices={choices} setChoices={setChoices} saving={saving} saveRole={async (user) => { setActionError(null); setConfirmUser(user); }} chairEmail={chairEmail} chairEmailError={chairEmailError} onChairEmail={(value) => { setChairEmail(value); setChairEmailError(null); }} onApproveChair={submitChairApproval} approvingChair={approvingChair} styles={styles} />}
           {section === 'reports' && <ReportsPanel data={data} loading={loading} styles={styles} />}
-          {section === 'audit' && <AuditPanel events={data.audit} users={userById} loading={loading} styles={styles} />}
-          <Text style={styles.footerNote}>Showing verified Supabase records. Group, terminal, and vehicle editing workflows are staged for the next build-plan step.</Text>
+          {section === 'audit' && <AuditPanel events={audit} users={userById} loading={loading} styles={styles} onOpen={(event) => setInspector({ title: `${event.action} · ${event.table_name}`, subtitle: 'Recorded activity', rows: [{ label: 'Actor', value: event.actor_id ? userById.get(event.actor_id)?.display_name ?? 'Account' : 'System' }, { label: 'Recorded at', value: shortDate(event.created_at) }, { label: 'Record ID', value: event.record_id ?? 'Not recorded' }], detail: JSON.stringify(event.detail, null, 2) })} />}
+          </>}
+          <Text style={styles.footerNote}>Transport registry · Marinduque, Philippines</Text>
         </ScrollView>
       </View>
+      {inspector && <AdminRecordInspector {...inspector} onClose={() => setInspector(null)} />}
+      {confirmUser && choices[confirmUser.id] && <AdminRoleConfirmation user={confirmUser} nextRole={choices[confirmUser.id]} saving={saving !== null} error={actionError} onClose={() => setConfirmUser(null)} onConfirm={() => void saveRole(confirmUser)} />}
+      {confirmChair && <AdminChairpersonApproval email={confirmChair} saving={approvingChair} error={actionError} onClose={() => setConfirmChair(null)} onConfirm={() => void approveChair(confirmChair)} />}
     </View>
   );
 }
@@ -229,7 +269,7 @@ function OverviewPanel({ data, users, loading, styles, onNavigate }: { data: Pan
     { label: 'Transport groups', value: data.counts.groups, icon: 'groups' as const, note: `${data.counts.activeGroups} active` },
     { label: 'Terminals', value: data.counts.terminals, icon: 'terminals' as const, note: 'Across all municipalities' },
     { label: 'Registered vehicles', value: data.counts.vehicles, icon: 'liveTrips' as const, note: `${data.counts.onTrip} currently on route` },
-    { label: 'Drivers', value: data.counts.drivers, icon: 'person' as const, note: `${data.counts.pending} applications pending` },
+    { label: 'Drivers', value: data.counts.drivers, icon: 'person' as const, note: `${data.counts.pending} application${data.counts.pending === 1 ? '' : 's'} pending` },
   ];
   const groupsInTown = (town: string) => data.groups.filter((group) => group.municipality === town).length;
   const maxGroups = Math.max(1, ...municipalities.map(groupsInTown));
@@ -239,12 +279,12 @@ function OverviewPanel({ data, users, loading, styles, onNavigate }: { data: Pan
       <View style={styles.heroIconWrap}><MaterialIcon name="map" size={64} color="rgba(255,255,255,0.88)" /></View>
     </View>
     <View style={[styles.metrics, !styles.wide && styles.metricsCompact]}>
-      {metrics.map((metric) => <Card key={metric.label} style={styles.metricCard}><View style={styles.metricTop}><View style={styles.metricIcon}><MaterialIcon name={metric.icon} size={18} color={styles.colors.green} /></View><Text style={styles.metricArrow}>↗</Text></View><Text style={styles.metricValue}>{loading ? '—' : metric.value.toLocaleString()}</Text><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricNote}>{metric.note}</Text></Card>)}
+      {metrics.map((metric) => <Card key={metric.label} style={styles.metricCard}><View style={styles.metricTop}><View style={styles.metricIcon}><MaterialIcon name={metric.icon} size={20} color={styles.colors.greenDark} /></View></View><Text style={styles.metricValue}>{loading ? '—' : metric.value.toLocaleString()}</Text><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricNote}>{loading ? 'Loading records…' : metric.note}</Text></Card>)}
     </View>
     <View style={[styles.dashboardColumns, !styles.wide && styles.dashboardColumnsCompact]}>
       <Card style={styles.coverageCard}>
         <View style={styles.panelHeading}><View><Text style={styles.panelTitle}>Network coverage</Text><Text style={styles.panelSubtitle}>Registered groups by municipality</Text></View><Pressable accessibilityRole="button" onPress={() => onNavigate('reports')}><Text style={styles.panelAction}>View report</Text></Pressable></View>
-        {municipalities.map((town) => <View key={town} style={styles.coverageRow}><View style={styles.coverageTown}><Text style={styles.coverageName}>{town}</Text><Text style={styles.coverageCount}>{groupsInTown(town)} groups</Text></View><View style={styles.barTrack}><View style={[styles.barFill, { width: `${(groupsInTown(town) / maxGroups) * 100}%` }]} /></View></View>)}
+        {municipalities.map((town) => <View key={town} style={styles.coverageRow}><View style={styles.coverageTown}><Text style={styles.coverageName}>{town}</Text><Text style={styles.coverageCount}>{groupsInTown(town)} group{groupsInTown(town) === 1 ? '' : 's'}</Text></View><View style={styles.barTrack}><View style={[styles.barFill, { width: `${(groupsInTown(town) / maxGroups) * 100}%` }]} /></View></View>)}
         {!loading && data.counts.groups === 0 && <Text style={styles.emptyCaption}>No verified groups have been added yet.</Text>}
       </Card>
       <View style={styles.overviewAside}>
@@ -265,47 +305,94 @@ function QuickLink({ label, detail, icon, onPress, styles }: { label: string; de
   return <Pressable accessibilityRole="button" onPress={onPress} style={styles.quickLink}><View style={styles.quickIcon}><MaterialIcon name={icon} size={17} color={styles.colors.green} /></View><View style={styles.quickCopy}><Text style={styles.quickTitle}>{label}</Text><Text style={styles.quickDetail}>{detail}</Text></View><MaterialIcon name="chevronRight" size={18} color={styles.colors.muted} /></Pressable>;
 }
 
-function GroupsPanel({ groups, loading, filter, setFilter, styles, users }: { groups: Group[]; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; users: DirectoryUser[] }) {
-  return <Card style={styles.listCard}><ListToolbar title="Transport groups" count={groups.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
-    <StandbyNotice styles={styles} text="Group creation, editing, and chairperson assignment will be enabled in the operational console milestone." />
-    {loading ? <LoadingRows styles={styles} /> : groups.length ? <View style={styles.listRows}>{groups.map((group) => {
-      const chair = users.find((user) => user.id === group.chairperson_id);
-      return <View key={group.id} style={styles.dataRow}><View style={styles.rowLeading}><View style={[styles.rowIcon, group.kind === 'toda' ? styles.orangeIcon : styles.greenIcon]}><MaterialIcon name={group.kind === 'toda' ? 'liveTrips' : 'groups'} size={18} color={group.kind === 'toda' ? styles.colors.orangeDark : styles.colors.green} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{group.name}</Text><Text style={styles.rowSub}>{group.kind === 'toda' ? 'TODA' : 'Jeepney group'} · {group.municipality}</Text></View></View><View style={styles.rowSecondary}><Text style={styles.rowMetaLabel}>CHAIRPERSON</Text><Text style={styles.rowMeta}>{chair?.display_name || chair?.email || (group.chairperson_id ? 'Assigned' : 'Unassigned')}</Text></View><StatusPill label={group.is_active ? 'Active' : 'Inactive'} tone={group.is_active ? 'green' : 'neutral'} styles={styles} /></View>;
-    })}</View> : <EmptyState title="No transport groups yet" body="Verified TODA and jeepney groups will appear here after they are registered." styles={styles} />}
+function RegistryHeader({ labels, styles }: { labels: string[]; styles: ReturnType<typeof createStyles> }) {
+  if (!styles.wide) return null;
+  return <View style={styles.registryHeader}><Text style={styles.registryPrimary}>{labels[0]}</Text><Text style={styles.registrySecondary}>{labels[1]}</Text><Text style={styles.registryStatus}>Status</Text><Text style={styles.registryAction}>Details</Text></View>;
+}
+
+function RecordAction({ onPress, label, styles }: { onPress: () => void; label: string; styles: ReturnType<typeof createStyles> }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.recordAction}><Text style={styles.panelAction}>View</Text><MaterialIcon name="chevronRight" size={17} color={styles.colors.greenDark} /></Pressable>;
+}
+
+function GroupsPanel({ groups, loading, filter, setFilter, styles, users, onOpen }: { groups: Group[]; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; users: DirectoryUser[]; onOpen: (group: Group) => void }) {
+  return <Card style={styles.listCard}>
+    <ListToolbar title="Group registry" count={groups.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
+    <StandbyNotice styles={styles} text="You can review group records here. Creation and editing will be available in a later release." />
+    {loading ? <LoadingRows styles={styles} /> : groups.length ? <View style={styles.listRows}>
+      <RegistryHeader labels={['Group / municipality', 'Chairperson']} styles={styles} />
+      {groups.map((group) => {
+        const chair = users.find((user) => user.id === group.chairperson_id);
+        return <View key={group.id} style={styles.dataRow}>
+          <View style={styles.rowLeading}><View style={[styles.rowIcon, group.kind === 'toda' ? styles.orangeIcon : styles.greenIcon]}><MaterialIcon name={group.kind === 'toda' ? 'liveTrips' : 'groups'} size={20} color={group.kind === 'toda' ? styles.colors.orangeDark : styles.colors.greenDark} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{group.name}</Text><Text style={styles.rowSub}>{group.kind === 'toda' ? 'TODA' : 'Jeepney'} · {group.municipality}</Text></View></View>
+          <View style={styles.rowSecondary}>{!styles.wide && <Text style={styles.rowMetaLabel}>Chairperson</Text>}<Text style={styles.rowMeta}>{chair?.display_name || chair?.email || (group.chairperson_id ? 'Assigned account' : 'Not assigned')}</Text></View>
+          <View style={styles.statusCell}><StatusPill label={group.is_active ? 'Active' : 'Inactive'} tone={group.is_active ? 'green' : 'neutral'} styles={styles} /></View>
+          <RecordAction label={`View ${group.name}`} onPress={() => onOpen(group)} styles={styles} />
+        </View>;
+      })}
+    </View> : <EmptyState title="No matching groups" body="Try a different search or status filter. New groups appear here after registration." styles={styles} />}
   </Card>;
 }
 
-function TerminalsPanel({ terminals, groups, loading, filter, setFilter, styles }: { terminals: Terminal[]; groups: Map<string, Group>; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles> }) {
-  return <Card style={styles.listCard}><ListToolbar title="Terminal directory" count={terminals.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
-    <StandbyNotice styles={styles} text="Terminal editing and map pin updates are planned after the group registry workflow." />
-    {loading ? <LoadingRows styles={styles} /> : terminals.length ? <View style={styles.listRows}>{terminals.map((terminal) => <View key={terminal.id} style={styles.dataRow}><View style={styles.rowLeading}><View style={styles.rowIcon}><MaterialIcon name="terminals" size={18} color={styles.colors.green} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{terminal.name}</Text><Text style={styles.rowSub}>{terminal.barangay}, {terminal.municipality}</Text></View></View><View style={styles.rowSecondary}><Text style={styles.rowMetaLabel}>RESPONSIBLE GROUP</Text><Text style={styles.rowMeta}>{groups.get(terminal.group_id)?.name ?? 'Group unavailable'}</Text></View><StatusPill label={terminal.is_active ? 'Active' : 'Inactive'} tone={terminal.is_active ? 'green' : 'neutral'} styles={styles} /></View>)}</View> : <EmptyState title="No terminals registered" body="Terminals will appear here once operator groups add their verified locations." styles={styles} />}
+function TerminalsPanel({ terminals, groups, loading, filter, setFilter, styles, onOpen }: { terminals: Terminal[]; groups: Map<string, Group>; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; onOpen: (terminal: Terminal) => void }) {
+  return <Card style={styles.listCard}>
+    <ListToolbar title="Terminal directory" count={terminals.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
+    {loading ? <LoadingRows styles={styles} /> : terminals.length ? <View style={styles.listRows}>
+      <RegistryHeader labels={['Terminal / location', 'Responsible group']} styles={styles} />
+      {terminals.map((terminal) => <View key={terminal.id} style={styles.dataRow}>
+        <View style={styles.rowLeading}><View style={styles.rowIcon}><MaterialIcon name="terminals" size={20} color={styles.colors.greenDark} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{terminal.name}</Text><Text style={styles.rowSub}>{terminal.barangay}, {terminal.municipality}</Text></View></View>
+        <View style={styles.rowSecondary}>{!styles.wide && <Text style={styles.rowMetaLabel}>Responsible group</Text>}<Text style={styles.rowMeta}>{groups.get(terminal.group_id)?.name ?? 'Group unavailable'}</Text></View>
+        <View style={styles.statusCell}><StatusPill label={terminal.is_active ? 'Active' : 'Inactive'} tone={terminal.is_active ? 'green' : 'neutral'} styles={styles} /></View>
+        <RecordAction label={`View ${terminal.name}`} onPress={() => onOpen(terminal)} styles={styles} />
+      </View>)}
+    </View> : <EmptyState title="No matching terminals" body="Try another search or filter. Registered terminals will appear here." styles={styles} />}
   </Card>;
 }
 
-function VehiclesPanel({ vehicles, terminals, groups, users, loading, filter, setFilter, styles }: {
-  vehicles: Vehicle[]; terminals: Map<string, Terminal>; groups: Map<string, Group>; users: Map<string, DirectoryUser>; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>;
+function VehiclesPanel({ vehicles, terminals, groups, users, loading, filter, setFilter, styles, onOpen }: {
+  vehicles: Vehicle[]; terminals: Map<string, Terminal>; groups: Map<string, Group>; users: Map<string, DirectoryUser>; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; onOpen: (vehicle: Vehicle) => void;
 }) {
-  return <Card style={styles.listCard}><ListToolbar title="Vehicle registry" count={vehicles.length} filter={filter} setFilter={setFilter} options={['All', 'Jeepney', 'Tricycle', 'On trip']} styles={styles} />
-    <StandbyNotice styles={styles} text="Roster edits, driver assignment, and terminal moves will be connected in the operational console milestone." />
-    {loading ? <LoadingRows styles={styles} /> : vehicles.length ? <View style={styles.listRows}>{vehicles.map((vehicle) => {
-      const terminal = terminals.get(vehicle.terminal_id);
-      const group = terminal ? groups.get(terminal.group_id) : undefined;
-      const driver = vehicle.assigned_driver_id ? users.get(vehicle.assigned_driver_id) : undefined;
-      return <View key={vehicle.id} style={styles.dataRow}><View style={styles.rowLeading}><View style={[styles.rowIcon, vehicle.vehicle_type === 'tricycle' && styles.orangeIcon]}><MaterialIcon name="liveTrips" size={18} color={vehicle.vehicle_type === 'tricycle' ? styles.colors.orangeDark : styles.colors.green} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{vehicle.body_number}</Text><Text style={styles.rowSub}>{vehicle.vehicle_type === 'tricycle' ? 'Tricycle' : 'Jeepney'}{vehicle.plate_number ? ` · ${vehicle.plate_number}` : ''}</Text></View></View><View style={styles.rowSecondary}><Text style={styles.rowMetaLabel}>TERMINAL · DRIVER</Text><Text style={styles.rowMeta}>{terminal?.name ?? 'Unassigned terminal'} · {driver?.display_name ?? 'No driver'}</Text><Text style={styles.rowSub}>{group?.name ?? 'No group assigned'}</Text></View><StatusPill label={vehicle.status.replaceAll('_', ' ')} tone={vehicle.status === 'on_route' ? 'green' : vehicle.status === 'maintenance' ? 'orange' : 'neutral'} styles={styles} /></View>;
-    })}</View> : <EmptyState title="No vehicles registered" body="Vehicle records will appear here after a group adds its roster." styles={styles} />}
+  return <Card style={styles.listCard}>
+    <ListToolbar title="Vehicle registry" count={vehicles.length} filter={filter} setFilter={setFilter} options={['All', 'Jeepney', 'Tricycle', 'On trip']} styles={styles} />
+    {loading ? <LoadingRows styles={styles} /> : vehicles.length ? <View style={styles.listRows}>
+      <RegistryHeader labels={['Vehicle / plate', 'Terminal / driver']} styles={styles} />
+      {vehicles.map((vehicle) => {
+        const terminal = terminals.get(vehicle.terminal_id);
+        const group = terminal ? groups.get(terminal.group_id) : undefined;
+        const driver = vehicle.assigned_driver_id ? users.get(vehicle.assigned_driver_id) : undefined;
+        return <View key={vehicle.id} style={styles.dataRow}>
+          <View style={styles.rowLeading}><View style={[styles.rowIcon, vehicle.vehicle_type === 'tricycle' && styles.orangeIcon]}><MaterialIcon name="liveTrips" size={20} color={vehicle.vehicle_type === 'tricycle' ? styles.colors.orangeDark : styles.colors.greenDark} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{vehicle.body_number}</Text><Text style={styles.rowSub}>{vehicle.vehicle_type === 'tricycle' ? 'Tricycle' : 'Jeepney'}{vehicle.plate_number ? ` · ${vehicle.plate_number}` : ''}</Text></View></View>
+          <View style={styles.rowSecondary}><Text style={styles.rowMeta}>{terminal?.name ?? 'Terminal unavailable'}</Text><Text style={styles.rowSub}>{driver?.display_name ?? (vehicle.assigned_driver_id ? 'Assigned driver' : 'Driver not assigned')} · {group?.name ?? 'Group unavailable'}</Text></View>
+          <View style={styles.statusCell}><StatusPill label={vehicle.status.replaceAll('_', ' ')} tone={vehicle.status === 'on_route' ? 'green' : vehicle.status === 'maintenance' ? 'orange' : 'neutral'} styles={styles} /></View>
+          <RecordAction label={`View vehicle ${vehicle.body_number}`} onPress={() => onOpen(vehicle)} styles={styles} />
+        </View>;
+      })}
+    </View> : <EmptyState title="No matching vehicles" body="Try a body number, plate, terminal, or driver name." styles={styles} />}
   </Card>;
 }
 
-function UsersPanel({ users, loading, filter, setFilter, choices, setChoices, saving, saveRole, styles }: {
-  users: DirectoryUser[]; loading: boolean; filter: string; setFilter: (value: string) => void; choices: Record<string, AccountRole>; setChoices: (update: (current: Record<string, AccountRole>) => Record<string, AccountRole>) => void; saving: string | null; saveRole: (user: DirectoryUser) => Promise<void>; styles: ReturnType<typeof createStyles>;
+function UsersPanel({ users, loading, filter, setFilter, choices, setChoices, saving, saveRole, chairEmail, chairEmailError, onChairEmail, onApproveChair, approvingChair, styles }: {
+  users: DirectoryUser[]; loading: boolean; filter: string; setFilter: (value: string) => void; choices: Record<string, AccountRole>; setChoices: (update: (current: Record<string, AccountRole>) => Record<string, AccountRole>) => void; saving: string | null; saveRole: (user: DirectoryUser) => Promise<void>;
+  chairEmail: string; chairEmailError: string | null; onChairEmail: (value: string) => void; onApproveChair: () => void; approvingChair: boolean; styles: ReturnType<typeof createStyles>;
 }) {
-  return <Card style={styles.listCard}><ListToolbar title="User access" count={users.length} filter={filter} setFilter={setFilter} options={['All', ...accountRoles.map((role) => roles[role])]} styles={styles} />
-    <Text style={styles.panelSubtitle}>Showing the latest 50 accounts. New sign-ins begin with commuter access. Driver and chairperson roles still need a group assignment.</Text>
-    {loading ? <LoadingRows styles={styles} /> : users.length ? <View style={styles.listRows}>{users.map((user) => <View key={user.id} style={styles.userRow}><View style={styles.rowLeading}><View style={styles.userAvatar}><Text style={styles.userAvatarText}>{initials(user.display_name || user.email)}</Text></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{user.display_name || 'Unnamed account'}</Text><Text style={styles.rowSub}>{user.email}</Text></View></View><View style={styles.userRoleOptions}>{accountRoles.map((role) => {
-      const selected = (choices[user.id] ?? user.role) === role;
-      return <Pressable key={role} accessibilityRole="button" accessibilityLabel={`${roles[role]} role for ${user.email}`} accessibilityState={{ selected }} disabled={saving !== null} onPress={() => setChoices((current) => ({ ...current, [user.id]: role }))} style={[styles.roleOption, selected && styles.roleSelected]}><Text style={[styles.roleOptionText, selected && styles.roleOptionTextSelected]}>{roles[role]}</Text></Pressable>;
-    })}</View>{choices[user.id] && choices[user.id] !== user.role && <Button label="Save" onPress={() => void saveRole(user)} loading={saving === user.id} disabled={saving !== null && saving !== user.id} style={styles.saveRoleButton} />}</View>)}</View> : <EmptyState title="No accounts found" body="Accounts appear here after someone signs in with Google or email." styles={styles} />}
-  </Card>;
+  return <>
+    <Card style={styles.listCard}>
+      <Text style={styles.panelTitle}>Approve a chairperson</Text>
+      <Text style={styles.panelSubtitle}>Enter the email of an existing account to grant chairperson access. A group is assigned separately in the group registry.</Text>
+      <View style={styles.chairForm}>
+        <View style={styles.chairField}><TextField comfortable label="Chairperson email" value={chairEmail} onChangeText={onChairEmail} placeholder="name@example.com" error={chairEmailError} autoCapitalize="none" keyboardType="email-address" /></View>
+        <Button label="Approve chairperson" onPress={onApproveChair} loading={approvingChair} disabled={approvingChair || saving !== null} />
+      </View>
+    </Card>
+    <Card style={styles.listCard}><ListToolbar title="User access" count={users.length} filter={filter} setFilter={setFilter} options={['All', ...accountRoles.map((role) => roles[role])]} styles={styles} />
+      <Text style={styles.panelSubtitle}>Showing the latest 50 accounts. New sign-ins begin with commuter access. Chairperson access is approved by email above; demote an existing chairperson from their row. Driver and chairperson roles still need a group assignment.</Text>
+      {loading ? <LoadingRows styles={styles} /> : users.length ? <View style={styles.listRows}>{users.map((user) => <View key={user.id} style={styles.userRow}><View style={styles.rowLeading}><View style={styles.userAvatar}><Text style={styles.userAvatarText}>{initials(user.display_name || user.email)}</Text></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{user.display_name || 'Unnamed account'}</Text><Text style={styles.rowSub}>{user.email}</Text></View></View><View style={styles.userRoleOptions}>{accountRoles.map((role) => {
+        if (role === 'chairperson' && user.role !== 'chairperson') return null;
+        const locked = role === 'chairperson';
+        const selected = (choices[user.id] ?? user.role) === role;
+        return <Pressable key={role} accessibilityRole="button" accessibilityLabel={locked ? `${roles[role]} role for ${user.email}, granted by email approval` : `${roles[role]} role for ${user.email}`} accessibilityState={{ selected, disabled: locked || saving !== null }} disabled={locked || saving !== null} onPress={() => setChoices((current) => ({ ...current, [user.id]: role }))} style={[styles.roleOption, selected && styles.roleSelected, locked && styles.roleLocked]}><Text style={[styles.roleOptionText, selected && styles.roleOptionTextSelected]}>{roles[role]}</Text></Pressable>;
+      })}</View>{choices[user.id] && choices[user.id] !== user.role && <Button label="Review change" onPress={() => void saveRole(user)} loading={saving === user.id} disabled={saving !== null && saving !== user.id} style={styles.saveRoleButton} />}</View>)}</View> : <EmptyState title="No accounts found" body="Try a different search or role filter." styles={styles} />}
+    </Card>
+  </>;
 }
 
 function ReportsPanel({ data, loading, styles }: { data: PanelData; loading: boolean; styles: ReturnType<typeof createStyles> }) {
@@ -317,7 +404,7 @@ function ReportsPanel({ data, loading, styles }: { data: PanelData; loading: boo
   return <View style={styles.reportGrid}>
     <Card style={styles.reportCard}><Text style={styles.panelTitle}>Group coverage</Text><Text style={styles.panelSubtitle}>Registered transport groups by municipality</Text>{municipalities.map((town) => <ReportBar key={town} label={town} value={groupsInTown(town)} max={maxGroups} loading={loading} styles={styles} />)}</Card>
     <Card style={styles.reportCard}><Text style={styles.panelTitle}>Transport mix</Text><Text style={styles.panelSubtitle}>Groups by operator type</Text><ReportBar label="Jeepney" value={jeepney} max={maxKind} loading={loading} styles={styles} tone="green" /><ReportBar label="TODA" value={toda} max={maxKind} loading={loading} styles={styles} tone="orange" /><View style={styles.reportDivider} /><Text style={styles.reportFact}><Text style={styles.reportFactNumber}>{loading ? '—' : data.counts.routes}</Text> active routes</Text><Text style={styles.reportFact}><Text style={styles.reportFactNumber}>{loading ? '—' : data.counts.approved}</Text> approved drivers</Text></Card>
-    <Card style={styles.reportCard}><Text style={styles.panelTitle}>Registry summary</Text><Text style={styles.panelSubtitle}>Live counts from Supabase</Text>{[
+    <Card style={styles.reportCard}><Text style={styles.panelTitle}>Registry summary</Text><Text style={styles.panelSubtitle}>Current records across all groups</Text>{[
       ['Groups', data.counts.groups], ['Terminals', data.counts.terminals], ['Vehicles', data.counts.vehicles], ['Drivers', data.counts.drivers], ['Pending applications', data.counts.pending],
     ].map(([label, value]) => <View key={label} style={styles.summaryRow}><Text style={styles.summaryLabel}>{label}</Text><Text style={styles.summaryValue}>{loading ? '—' : value}</Text></View>)}</Card>
   </View>;
@@ -327,9 +414,9 @@ function ReportBar({ label, value, max, loading, styles, tone = 'green' }: { lab
   return <View style={styles.reportBarRow}><View style={styles.reportBarHeader}><Text style={styles.coverageName}>{label}</Text><Text style={styles.coverageCount}>{loading ? '—' : value}</Text></View><View style={styles.barTrack}><View style={[styles.barFill, tone === 'orange' && styles.barFillOrange, { width: `${(value / max) * 100}%` }]} /></View></View>;
 }
 
-function AuditPanel({ events, users, loading, styles }: { events: AuditEvent[]; users: Map<string, DirectoryUser>; loading: boolean; styles: ReturnType<typeof createStyles> }) {
+function AuditPanel({ events, users, loading, styles, onOpen }: { events: AuditEvent[]; users: Map<string, DirectoryUser>; loading: boolean; styles: ReturnType<typeof createStyles>; onOpen: (event: AuditEvent) => void }) {
   return <Card style={styles.listCard}><View style={styles.auditHeading}><View><Text style={styles.panelTitle}>Privileged activity</Text><Text style={styles.panelSubtitle}>Append only records from super admin and chairperson changes</Text></View><StatusPill label="Protected log" tone="green" styles={styles} /></View>
-    {loading ? <LoadingRows styles={styles} /> : events.length ? <View style={styles.listRows}>{events.map((event) => <ActivityRow key={event.id} event={event} actor={event.actor_id ? users.get(event.actor_id)?.display_name || users.get(event.actor_id)?.email || 'Account' : 'System'} styles={styles} detailed />)}</View> : <EmptyState title="No activity recorded yet" body="Role changes and group operations will appear here with their actor and timestamp." styles={styles} />}
+    {loading ? <LoadingRows styles={styles} /> : events.length ? <View style={styles.listRows}>{events.map((event) => <Pressable key={event.id} accessibilityRole="button" accessibilityLabel={`View ${event.action} activity for ${event.table_name}`} onPress={() => onOpen(event)}><ActivityRow event={event} actor={event.actor_id ? users.get(event.actor_id)?.display_name || users.get(event.actor_id)?.email || 'Account' : 'System'} styles={styles} detailed /></Pressable>)}</View> : <EmptyState title="No matching activity" body="Try a different search. New role and registry changes will appear here." styles={styles} />}
   </Card>;
 }
 
@@ -338,7 +425,7 @@ function ActivityRow({ event, actor, styles, detailed = false }: { event: AuditE
 }
 
 function ListToolbar({ title, count, filter, setFilter, options, styles }: { title: string; count: number; filter: string; setFilter: (value: string) => void; options: string[]; styles: ReturnType<typeof createStyles> }) {
-  return <View style={styles.listToolbar}><View><Text style={styles.panelTitle}>{title}</Text><Text style={styles.panelSubtitle}>{count} record{count === 1 ? '' : 's'} shown</Text></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{options.map((option) => <Chip key={option} label={option} selected={filter === option} onPress={() => setFilter(option)} />)}</ScrollView></View>;
+  return <View style={styles.listToolbar}><View><Text style={styles.panelTitle}>{title}</Text><Text style={styles.panelSubtitle}>{count} record{count === 1 ? '' : 's'} shown</Text></View><ScrollView horizontal style={styles.filterScroll} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>{options.map((option) => <Chip comfortable key={option} label={option} selected={filter === option} onPress={() => setFilter(option)} />)}</ScrollView></View>;
 }
 
 function StandbyNotice({ text, styles }: { text: string; styles: ReturnType<typeof createStyles> }) {
@@ -360,37 +447,48 @@ function LoadingRows({ styles }: { styles: ReturnType<typeof createStyles> }) {
 function createStyles(colors: ThemeColors, wide: boolean) {
   return { colors, wide, ...StyleSheet.create({
     shell: { flex: 1, flexDirection: wide ? 'row' : 'column', backgroundColor: colors.canvas },
-    sidebar: { width: 264, paddingHorizontal: 18, paddingTop: 24, paddingBottom: 18, backgroundColor: colors.card, borderRightWidth: 1, borderColor: colors.line },
+    sidebar: { width: 248, paddingHorizontal: 18, paddingTop: 24, paddingBottom: 18, backgroundColor: colors.card, borderRightWidth: 1, borderColor: colors.line },
     brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8, marginBottom: 38 },
     brandMark: { width: 34, height: 34, borderRadius: 11, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' },
     brandMarkText: { color: colors.lime, fontSize: 25, lineHeight: 29, fontWeight: '900' }, brand: { color: colors.ink, fontSize: 17, fontWeight: '900', letterSpacing: 0.4 },
-    sidebarEyebrow: { color: colors.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1.35 }, sidebarCaption: { color: colors.ink, fontSize: 13, fontWeight: '700', marginTop: 7, marginBottom: 19, paddingHorizontal: 10 },
-    navList: { gap: 4 }, navItem: { minHeight: 44, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12 }, navSelected: { backgroundColor: colors.greenLight },
-    navLabel: { flex: 1, color: colors.muted, fontSize: 12, fontWeight: '600' }, navLabelSelected: { color: colors.greenDark, fontWeight: '800' }, navIndicator: { width: 5, height: 5, borderRadius: 4, backgroundColor: colors.green },
+    sidebarEyebrow: { color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 1.35 }, sidebarCaption: { color: colors.ink, fontSize: 14, fontWeight: '700', marginTop: 7, marginBottom: 19, paddingHorizontal: 10 },
+    navList: { gap: 4 }, navItem: { minHeight: 48, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12 }, navSelected: { backgroundColor: colors.greenLight },
+    navLabel: { flex: 1, color: colors.muted, fontSize: 14, fontWeight: '600' }, navLabelSelected: { color: colors.greenDark, fontWeight: '800' }, navIndicator: { width: 5, height: 5, borderRadius: 4, backgroundColor: colors.green },
     sidebarBottom: { marginTop: 'auto', gap: 12, paddingTop: 22 }, sidebarAccount: { flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 16, marginBottom: 4 },
-    avatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, avatarText: { color: colors.greenDark, fontWeight: '800', fontSize: 11 },
-    accountCopy: { flex: 1 }, accountName: { color: colors.ink, fontSize: 11, fontWeight: '700' }, accountRole: { color: colors.muted, fontSize: 10, marginTop: 3 },
-    signOut: { paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }, signOutText: { color: colors.muted, fontSize: 12, fontWeight: '600' },
+    avatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, avatarText: { color: colors.greenDark, fontWeight: '800', fontSize: 12 },
+    accountCopy: { flex: 1 }, accountName: { color: colors.ink, fontSize: 12, fontWeight: '700' }, accountRole: { color: colors.muted, fontSize: 12, marginTop: 3 },
+    signOut: { minHeight: 44, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }, signOutText: { color: colors.muted, fontSize: 14, fontWeight: '600' },
     main: { flex: 1, minWidth: 0 }, topbar: { minHeight: 72, paddingHorizontal: wide ? 34 : 18, borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }, topbarCompact: { minHeight: 60, paddingHorizontal: 12, gap: 8 },
-    breadcrumb: { flexDirection: 'row', alignItems: 'center', gap: 9 }, breadcrumbMuted: { color: colors.muted, fontSize: 12 }, breadcrumbSlash: { color: colors.disabled, fontSize: 12 }, breadcrumbCurrent: { color: colors.ink, fontWeight: '700', fontSize: 12 },
-    topbarActions: { flexDirection: 'row', alignItems: 'center', gap: 10 }, searchBox: { height: 38, minWidth: wide ? 240 : 150, maxWidth: 320, flex: wide ? 0 : 1, paddingHorizontal: 11, borderRadius: 11, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.canvas, flexDirection: 'row', alignItems: 'center', gap: 8 }, searchBoxCompact: { minWidth: 112, maxWidth: 180, flex: 1, paddingHorizontal: 8 },
-    searchInput: { flex: 1, padding: 0, color: colors.ink, fontSize: 12, outlineStyle: 'none' as never }, refreshButton: { width: 38, height: 38, borderRadius: 11, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
-    topAvatar: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, scroll: { flex: 1 }, content: { width: '100%', maxWidth: 1440, alignSelf: 'center', paddingHorizontal: wide ? 34 : 18, paddingTop: 28, paddingBottom: 40, gap: 18 },
-    pageHeader: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 2 }, pageHeading: { flex: 1 }, eyebrow: { color: colors.green, fontSize: 9, fontWeight: '800', letterSpacing: 1.35 },
-    pageTitle: { color: colors.ink, fontSize: wide ? 28 : 24, lineHeight: wide ? 36 : 31, fontWeight: '800', marginTop: 6 }, pageIntro: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 5, maxWidth: 720 },
-    hero: { minHeight: 178, overflow: 'hidden', borderRadius: 20, paddingHorizontal: wide ? 28 : 22, paddingVertical: 24, backgroundColor: '#155D42', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, heroContent: { flex: 1, maxWidth: 600 }, heroKicker: { flexDirection: 'row', alignItems: 'center', gap: 8 }, heroDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.lime }, heroKickerText: { color: '#D3E9D9', fontSize: 9, fontWeight: '800', letterSpacing: 1.2 },
-    heroTitle: { color: '#FFFFFF', fontSize: wide ? 23 : 20, fontWeight: '800', marginTop: 13 }, heroCopy: { color: '#D7E8DE', fontSize: 12, lineHeight: 19, marginTop: 7, maxWidth: 510 }, heroLink: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 15 }, heroLinkText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' }, heroIconWrap: { width: wide ? 126 : 72, height: wide ? 126 : 72, borderRadius: 64, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', marginLeft: 12 },
-    metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, metricsCompact: { gap: 9 }, metricCard: { flex: 1, minWidth: wide ? 175 : 145, padding: 16, gap: 2 }, metricTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }, metricIcon: { width: 34, height: 34, borderRadius: 11, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, metricArrow: { color: colors.muted, fontSize: 14 }, metricValue: { color: colors.ink, fontSize: 25, lineHeight: 31, fontWeight: '800' }, metricLabel: { color: colors.ink, fontSize: 11, fontWeight: '700', marginTop: 2 }, metricNote: { color: colors.muted, fontSize: 10, marginTop: 4 },
-    dashboardColumns: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' }, dashboardColumnsCompact: { flexDirection: 'column' }, coverageCard: { flex: 1.15, minWidth: 0, padding: 19 }, overviewAside: { flex: 0.85, minWidth: wide ? 300 : undefined, gap: 14 }, actionsCard: { padding: 18 }, activityCard: { padding: 18 }, panelHeading: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 15 }, panelTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' }, panelSubtitle: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 4 }, panelAction: { color: colors.greenDark, fontSize: 10, fontWeight: '800', paddingTop: 2 },
-    coverageRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 15 }, coverageTown: { width: 116 }, coverageName: { color: colors.ink, fontSize: 11, fontWeight: '700' }, coverageCount: { color: colors.muted, fontSize: 9, marginTop: 4 }, barTrack: { flex: 1, height: 7, borderRadius: 5, backgroundColor: colors.greenLight, overflow: 'hidden' }, barFill: { height: '100%', borderRadius: 5, backgroundColor: colors.green }, barFillOrange: { backgroundColor: colors.orange }, emptyCaption: { color: colors.muted, fontSize: 10, marginTop: 16, lineHeight: 16 },
-    quickLink: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.line, marginTop: 11, paddingTop: 10 }, quickIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, quickCopy: { flex: 1 }, quickTitle: { color: colors.ink, fontSize: 10, fontWeight: '700' }, quickDetail: { color: colors.muted, fontSize: 9, marginTop: 3 },
-    activityRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 11, borderTopWidth: 1, borderTopColor: colors.line }, activityMark: { width: 27, height: 27, borderRadius: 9, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, activityCopy: { flex: 1 }, activityTitle: { color: colors.ink, fontSize: 10, fontWeight: '700', textTransform: 'capitalize' }, activityTable: { color: colors.muted, fontWeight: '500' }, activityMeta: { color: colors.muted, fontSize: 9, marginTop: 4 },
-    listCard: { padding: wide ? 20 : 14 }, listToolbar: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, marginBottom: 16 }, filterRow: { flexDirection: 'row', alignItems: 'center', gap: 7 }, standbyNotice: { padding: 11, borderRadius: 11, backgroundColor: colors.blueLight, flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 12 }, standbyText: { flex: 1, color: colors.muted, fontSize: 10, lineHeight: 16 },
-    listRows: { borderTopWidth: 1, borderTopColor: colors.line }, dataRow: { minHeight: 76, flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', gap: 12, justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }, rowLeading: { flexDirection: 'row', alignItems: 'center', gap: 11, flex: 1, minWidth: 180 }, rowIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, greenIcon: { backgroundColor: colors.greenLight }, orangeIcon: { backgroundColor: colors.orangeLight }, rowMain: { flex: 1 }, rowTitle: { color: colors.ink, fontSize: 11, fontWeight: '800' }, rowSub: { color: colors.muted, fontSize: 9, marginTop: 4 }, rowSecondary: { flex: 1, minWidth: 150 }, rowMetaLabel: { color: colors.muted, fontSize: 8, fontWeight: '800', letterSpacing: 0.8 }, rowMeta: { color: colors.ink, fontSize: 10, fontWeight: '600', marginTop: 5 },
-    statusPill: { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, statusGreen: { backgroundColor: colors.greenLight }, statusOrange: { backgroundColor: colors.orangeLight }, statusNeutral: { backgroundColor: colors.chipBg }, statusText: { fontSize: 9, fontWeight: '800', textTransform: 'capitalize' }, statusTextGreen: { color: colors.greenDark }, statusTextOrange: { color: colors.orangeDark }, statusTextNeutral: { color: colors.muted },
-    userRow: { minHeight: 88, flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.line }, userAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, userAvatarText: { color: colors.greenDark, fontSize: 10, fontWeight: '800' }, userRoleOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, flex: wide ? 0 : 1 }, roleOption: { borderRadius: 9, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 8, paddingVertical: 7 }, roleSelected: { borderColor: colors.green, backgroundColor: colors.greenLight }, roleOptionText: { color: colors.muted, fontSize: 8, fontWeight: '700' }, roleOptionTextSelected: { color: colors.greenDark }, saveRoleButton: { minWidth: 70, paddingVertical: 9, paddingHorizontal: 12 },
-    emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 42, paddingHorizontal: 22 }, emptyIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }, emptyTitle: { color: colors.ink, fontSize: 13, fontWeight: '800', textAlign: 'center' }, emptyBody: { color: colors.muted, fontSize: 10, lineHeight: 17, textAlign: 'center', maxWidth: 350, marginTop: 6 }, loadingRows: { minHeight: 120, alignItems: 'center', justifyContent: 'center', gap: 9 },
-    reportGrid: { flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', alignItems: 'flex-start', gap: 14 }, reportCard: { flex: 1, minWidth: wide ? 260 : undefined, padding: 19 }, reportBarRow: { marginTop: 17 }, reportBarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }, reportDivider: { height: 1, backgroundColor: colors.line, marginVertical: 15 }, reportFact: { color: colors.muted, fontSize: 10, marginTop: 7 }, reportFactNumber: { color: colors.ink, fontWeight: '800' }, summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line }, summaryLabel: { color: colors.muted, fontSize: 10 }, summaryValue: { color: colors.ink, fontSize: 11, fontWeight: '800' }, auditHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
-    footerNote: { color: colors.muted, fontSize: 9, lineHeight: 15, textAlign: 'center', marginTop: 5 }, mobileHeader: { backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.line, paddingTop: 12 }, mobileBrand: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingBottom: 13 }, mobileNav: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingBottom: 10 }, mobileNavItem: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 10 }, mobileNavSelected: { backgroundColor: colors.greenLight }, mobileNavLabel: { color: colors.muted, fontSize: 10, fontWeight: '700' }, mobileActions: { paddingHorizontal: 18, paddingTop: 11, backgroundColor: colors.card }, iconButton: { position: 'absolute', right: 17, top: 14, zIndex: 2, width: 35, height: 35, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.canvas },
+    breadcrumb: { flexDirection: 'row', alignItems: 'center', gap: 9 }, breadcrumbMuted: { color: colors.muted, fontSize: 14 }, breadcrumbSlash: { color: colors.disabled, fontSize: 14 }, breadcrumbCurrent: { color: colors.ink, fontWeight: '700', fontSize: 14 },
+    topbarActions: { flexDirection: 'row', alignItems: 'center', gap: 10 }, searchBox: { height: 44, minWidth: wide ? 260 : 140, maxWidth: 320, flex: wide ? 0 : 1, paddingHorizontal: 11, borderRadius: 11, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.canvas, flexDirection: 'row', alignItems: 'center', gap: 8 }, searchBoxCompact: { minWidth: 96, maxWidth: 150, flex: 1, paddingHorizontal: 8 },
+    searchInput: { flex: 1, padding: 0, color: colors.ink, fontSize: 14 }, refreshButton: { width: 44, height: 44, borderRadius: 11, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
+    topAvatar: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, scroll: { flex: 1 }, content: { width: '100%', maxWidth: 1440, alignSelf: 'center', paddingHorizontal: wide ? 34 : 18, paddingTop: 28, paddingBottom: 40, gap: 24 },
+    pageHeader: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 2 }, pageHeading: { flex: 1 }, eyebrow: { color: colors.greenDark, fontSize: 12, fontWeight: '800', letterSpacing: 1.35 },
+    pageTitle: { color: colors.ink, fontSize: wide ? 32 : 26, lineHeight: wide ? 40 : 34, fontWeight: '800', marginTop: 6 }, pageIntro: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 8, maxWidth: 720 },
+    hero: { minHeight: 156, overflow: 'hidden', borderRadius: 20, paddingHorizontal: wide ? 28 : 22, paddingVertical: 24, backgroundColor: '#155D42', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, heroContent: { flex: 1, maxWidth: 600 }, heroKicker: { flexDirection: 'row', alignItems: 'center', gap: 8 }, heroDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.lime }, heroKickerText: { color: '#D3E9D9', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 },
+    heroTitle: { color: '#FFFFFF', fontSize: wide ? 23 : 20, fontWeight: '800', marginTop: 13 }, heroCopy: { color: '#D7E8DE', fontSize: 14, lineHeight: 19, marginTop: 7, maxWidth: 510 }, heroLink: { minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 15 }, heroLinkText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' }, heroIconWrap: { width: wide ? 126 : 72, height: wide ? 126 : 72, borderRadius: 64, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', marginLeft: 12 },
+    metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, metricsCompact: { gap: 9 }, metricCard: { flexGrow: 1, flexBasis: wide ? '22%' : '46%', minWidth: 0, padding: 20, gap: 4 }, metricTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }, metricIcon: { width: 34, height: 34, borderRadius: 11, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, metricArrow: { color: colors.muted, fontSize: 16 }, metricValue: { color: colors.ink, fontSize: 32, lineHeight: 40, fontWeight: '800' }, metricLabel: { color: colors.ink, fontSize: 12, fontWeight: '700', marginTop: 2 }, metricNote: { color: colors.muted, fontSize: 12, marginTop: 4 },
+    dashboardColumns: { flexDirection: 'row', gap: 14, alignItems: 'stretch' }, dashboardColumnsCompact: { flexDirection: 'column' }, coverageCard: { flex: wide ? 1.15 : undefined, minWidth: 0, padding: 24 }, overviewAside: { flex: wide ? 0.85 : undefined, minWidth: wide ? 280 : 0, gap: 14 }, actionsCard: { padding: 24 }, activityCard: { padding: 24 }, panelHeading: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 15 }, panelTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' }, panelSubtitle: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 6 }, panelAction: { color: colors.greenDark, fontSize: 12, fontWeight: '800', paddingTop: 2 },
+    coverageRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 15 }, coverageTown: { width: wide ? 116 : 105 }, coverageName: { color: colors.ink, fontSize: 12, fontWeight: '700' }, coverageCount: { color: colors.muted, fontSize: 12, marginTop: 4 }, barTrack: { flex: 1, height: 7, borderRadius: 5, backgroundColor: colors.greenLight, overflow: 'hidden' }, barFill: { height: '100%', borderRadius: 5, backgroundColor: colors.green }, barFillOrange: { backgroundColor: colors.orange }, emptyCaption: { color: colors.muted, fontSize: 12, marginTop: 16, lineHeight: 16 },
+    quickLink: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.line, marginTop: 11, paddingTop: 10 }, quickIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, quickCopy: { flex: 1 }, quickTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' }, quickDetail: { color: colors.muted, fontSize: 12, marginTop: 3 },
+    activityRow: { minHeight: 68, flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 11, borderTopWidth: 1, borderTopColor: colors.line }, activityMark: { width: 27, height: 27, borderRadius: 9, backgroundColor: colors.greenLight, alignItems: 'center', justifyContent: 'center' }, activityCopy: { flex: 1 }, activityTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', textTransform: 'capitalize' }, activityTable: { color: colors.muted, fontWeight: '500' }, activityMeta: { color: colors.muted, fontSize: 12, marginTop: 4 },
+    listCard: { padding: wide ? 20 : 14 }, listToolbar: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, marginBottom: 16 }, filterRow: { flexDirection: 'row', alignItems: 'center', gap: 7 }, standbyNotice: { padding: 11, borderRadius: 11, backgroundColor: colors.blueLight, flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 12 }, standbyText: { flex: 1, color: colors.muted, fontSize: 12, lineHeight: 16 },
+    listRows: { borderTopWidth: 1, borderTopColor: colors.line }, dataRow: { minHeight: 76, flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', gap: 12, justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }, rowLeading: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: wide ? 1.25 : undefined, minWidth: 0 }, rowIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, greenIcon: { backgroundColor: colors.greenLight }, orangeIcon: { backgroundColor: colors.orangeLight }, rowMain: { flex: 1 }, rowTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' }, rowSub: { color: colors.muted, fontSize: 12, marginTop: 4 }, rowSecondary: { flex: wide ? 1 : undefined, minWidth: 0 }, rowMetaLabel: { color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 0.8 }, rowMeta: { color: colors.ink, fontSize: 14, fontWeight: '600', marginTop: 5 },
+    statusPill: { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, statusGreen: { backgroundColor: colors.greenLight }, statusOrange: { backgroundColor: colors.orangeLight }, statusNeutral: { backgroundColor: colors.chipBg }, statusText: { fontSize: 12, fontWeight: '800', textTransform: 'capitalize' }, statusTextGreen: { color: colors.greenDark }, statusTextOrange: { color: colors.orangeDark }, statusTextNeutral: { color: colors.muted },
+    userRow: { minHeight: 104, flexWrap: 'wrap', flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', justifyContent: 'space-between', gap: 13, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.line }, userAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenLight }, userAvatarText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' }, userRoleOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, flex: wide ? 1.5 : undefined, minWidth: wide ? 250 : 0 }, roleOption: { minHeight: 44, justifyContent: 'center', borderRadius: 9, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 8, paddingVertical: 7 }, roleSelected: { borderColor: colors.green, backgroundColor: colors.greenLight }, roleLocked: { opacity: 0.55 }, roleOptionText: { color: colors.muted, fontSize: 13, fontWeight: '700' }, roleOptionTextSelected: { color: colors.greenDark }, saveRoleButton: { minHeight: 44, minWidth: 120, paddingVertical: 9, paddingHorizontal: 12 },
+    chairForm: { flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'flex-end' : 'stretch', gap: 12, marginTop: 16 }, chairField: { flex: 1 },
+    emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 42, paddingHorizontal: 22 }, emptyIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }, emptyTitle: { color: colors.ink, fontSize: 14, fontWeight: '800', textAlign: 'center' }, emptyBody: { color: colors.muted, fontSize: 12, lineHeight: 17, textAlign: 'center', maxWidth: 350, marginTop: 6 }, loadingRows: { minHeight: 120, alignItems: 'center', justifyContent: 'center', gap: 9 },
+    reportGrid: { flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', alignItems: 'stretch', gap: 20 }, reportCard: { flex: wide ? 1 : undefined, minWidth: wide ? 260 : 0, padding: 24 }, reportBarRow: { marginTop: 17 }, reportBarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }, reportDivider: { height: 1, backgroundColor: colors.line, marginVertical: 15 }, reportFact: { color: colors.muted, fontSize: 12, marginTop: 7 }, reportFactNumber: { color: colors.ink, fontWeight: '800' }, summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line }, summaryLabel: { color: colors.muted, fontSize: 12 }, summaryValue: { color: colors.ink, fontSize: 12, fontWeight: '800' }, auditHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
+    updatedAt: { color: colors.muted, fontSize: 12, marginTop: 10 },
+    successNotice: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.greenLight },
+    successText: { flex: 1, color: colors.greenDark, fontSize: 14, lineHeight: 21 }, dismissNotice: { minHeight: 44, justifyContent: 'center' },
+    registryHeader: { flexDirection: 'row', gap: 12, alignItems: 'center', minHeight: 44, backgroundColor: colors.canvas, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
+    registryPrimary: { flex: 1.25, color: colors.muted, fontSize: 12, fontWeight: '700' },
+    registrySecondary: { flex: 1, color: colors.muted, fontSize: 12, fontWeight: '700' },
+    registryStatus: { width: 100, color: colors.muted, fontSize: 12, fontWeight: '700' },
+    registryAction: { width: 64, color: colors.muted, fontSize: 12, fontWeight: '700' },
+    statusCell: { width: 100 }, recordAction: { width: 64, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
+    filterScroll: { flexGrow: 0, maxWidth: wide ? '70%' : '100%' },
+    footerNote: { color: colors.muted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 5 }, mobileHeader: { backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.line, paddingTop: 12 }, mobileBrand: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingBottom: 13 }, mobileNav: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingBottom: 10 }, mobileNavItem: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 10 }, mobileNavSelected: { backgroundColor: colors.greenLight }, mobileNavLabel: { color: colors.muted, fontSize: 12, fontWeight: '700' }, mobileActions: { paddingHorizontal: 18, paddingTop: 11, backgroundColor: colors.card }, iconButton: { position: 'absolute', right: 17, top: 14, zIndex: 2, width: 44, height: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.canvas },
   }) };
 }

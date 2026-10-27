@@ -59,7 +59,7 @@ export default function App() {
     setOnboardingDone();
     setSession(auth.account);
     setStage('app');
-  }, [auth.account]);
+  }, [auth.account, stage]);
 
   useEffect(() => {
     if (!auth.loading && !auth.userId && session?.kind === 'account') {
@@ -67,7 +67,7 @@ export default function App() {
       setSession(null);
       setStage('welcome');
     }
-  }, [auth.loading, auth.userId, session]);
+  }, [auth.loading, auth.userId, session, stage]);
 
   const accountId = session?.kind === 'account' ? session.id : null;
   const accountRole = session?.kind === 'account' ? session.role : null;

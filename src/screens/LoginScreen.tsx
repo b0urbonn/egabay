@@ -94,7 +94,7 @@ export function LoginScreen({
             intro="Sign in to access your profile and transport services."
           />
           <Card style={styles.previewCard}>
-            <Text style={styles.previewTitle}>Driver & chairperson demos</Text>
+            <Text style={styles.previewTitle}>Workspace previews</Text>
             <Text style={styles.hintBody}>No account needed. Sample changes reset when you leave.</Text>
             <Button label="Open driver preview" variant="secondary" onPress={onDriverPreview} />
             <Button label="Open chairperson preview" variant="secondary" onPress={onChairpersonPreview} />

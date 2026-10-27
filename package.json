@@ -9,6 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build:map": "node scripts/build-map.mjs",
+    "build:admin-wireframes": "node scripts/build-admin-wireframes.mjs",
     "prestart": "node scripts/build-map.mjs",
     "preandroid": "node scripts/build-map.mjs",
     "preios": "node scripts/build-map.mjs",
