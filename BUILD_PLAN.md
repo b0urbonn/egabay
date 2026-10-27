@@ -28,7 +28,7 @@ Build a commuter-first guide for finding public transport options around Marindu
 
 ### Chairperson console (one per TODA or jeepney group)
 
-- Add, edit, and remove the group's terminals (name, municipality, barangay, map pin/coordinates)
+- Add, edit, and remove the group's terminals (name, municipality, barangay, address geocoded to map coordinates on create or location change)
 - Maintain each terminal's vehicle roster (plate number, body/franchise number, vehicle type, assigned driver, status)
 - Approve or reject driver applications to the group
 - Assign drivers to vehicles and vehicles to terminals
@@ -134,15 +134,15 @@ Enforcement notes:
 ### Super Admin
 
 - Admin dashboard — system-wide group/terminal/vehicle/driver reports (standby dashboard implemented with live Supabase counts)
-- Groups manager — create, edit, deactivate TODA and jeepney groups (list and filters implemented; live mutations are the next step)
-- Chairperson assignment — assign or replace per group (assignment status shown; mutations are the next step)
+- Groups manager — create, edit, deactivate TODA and jeepney groups (live Supabase mutations with audit logging implemented)
+- Chairperson assignment — assign or replace one eligible chairperson per group (live mutation implemented)
 - User management — accounts, roles, approvals (latest 50 accounts, checked role updates, and chairperson approval by sign-in email implemented; driver approvals remain)
-- Global terminal/vehicle browser — search and filter records (views implemented; override edits remain)
+- Global terminal/vehicle browser — search and filter records (terminal creation and editing use Supabase; address geocoding captures coordinates on create or location change; vehicle override edits remain)
 - Audit log viewer — who changed what, and when (implemented)
 
 All role surfaces live in the same Expo app behind role-gated navigation after Supabase sign-in; the web build covers the wider admin tables.
 
-The [Super Admin web layout specification](docs/design/SUPER_ADMIN_WEB_UI.md) links eleven editable wireframes, desktop/compact layout rules, and a separate sample-data preview. The preview never grants account access or writes registry data.
+The [Super Admin web layout specification](docs/design/SUPER_ADMIN_WEB_UI.md) links eleven editable wireframes and desktop/compact layout rules. Super admin accounts open the live console after sign-in.
 
 ## RBAC implementation and deployment
 
@@ -159,7 +159,7 @@ Backend — `supabase/migrations/20261026000000_auth_and_group_access.sql` now i
 App:
 
 - Implemented locally: Supabase Google/email browser auth, session recovery, and protected profile/role resolution; old mock accounts are ignored.
-- Implemented locally: role-gated workspaces in `App.tsx`, including a responsive Super Admin panel with overview, groups, terminals, vehicles, users/roles, reports, and audit log. It reads live Supabase records and uses the checked role-management RPC; group/terminal/vehicle mutation flows and the chairperson/driver consoles remain upcoming.
+- Implemented locally: role-gated workspaces in `App.tsx`, including a responsive Super Admin panel with overview, groups, terminals, vehicles, users/roles, reports, and audit log. It reads live Supabase records, uses the checked role-management RPC, and supports audited group and terminal create/edit flows; terminal addresses are geocoded on create or location change and coordinates are stored; vehicle override edits and the chairperson/driver consoles remain upcoming.
 - Wire `TerminalsScreen` to the `terminals` table; add the vehicle board, feedback form, and the new role screens listed above.
 - Keep demo arrays until verified group and terminal seed data exists.
 

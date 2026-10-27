@@ -2,9 +2,9 @@
 
 **Status snapshot:** 2026-10-27
 
-**Latest committed app state:** merge `ed050ba` of `origin/main` `8bc9a93` (Super Admin sample preview removed, chairperson approval by email via `approve_chairperson`, admin wireframes/layouts) onto local `d60407c` — non-admin desktop layout removed (commuter shell is single-column + bottom tabs on all widths; the Super Admin workspace keeps the full-width treatment), map attribution starts collapsed, and `npm audit fix` applied (13 of 18 advisories resolved; the remaining 5 highs are confined to the dev-only `@expo/cli` toolchain with no patched upstream releases). Earlier: merge of `origin/main` `53d160a` (driver preview appearance selector, Super Admin standby console) onto local work — desktop layout (`62a6f15`), map ↔ `public.terminals` data bridge, and `supabase/seed.sql` (`2b96b57`). Supabase auth integrated earlier via `f756072`.
+**Latest committed app state:** merge `ed050ba` of `origin/main` `8bc9a93` (Super Admin sample preview removed, chairperson approval by email via `approve_chairperson`, admin wireframes/layouts) onto local `d60407c` — non-admin desktop layout removed (commuter shell is single-column + bottom tabs on all widths; the Super Admin workspace keeps the full-width treatment), map attribution starts collapsed, and `npm audit fix` applied (13 of 18 advisories resolved; the remaining 5 highs are confined to the dev-only `@expo/cli` toolchain with no patched upstream releases). Earlier: merge of `origin/main` `53d160a` (driver preview appearance selector, Super Admin standby console) onto local work — desktop layout (`62a6f15`), map ↔ `public.terminals` data bridge, and `supabase/seed.sql` (`2b96b57`). Supabase auth integrated earlier via `f756072`. The local workspace adds audited Super Admin group and terminal mutations.
 
-**Current local phase:** connecting Supabase data to the app — the map now reads live `terminals` rows when `EXPO_PUBLIC_SUPABASE_*` env vars are set. Live database setup, seed application, and operational mutation flows remain pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
+**Current local phase:** implementing Super Admin registry mutations — group create/edit/deactivate, chairperson assignment, and terminal create/edit are wired to Supabase. Live project setup, verified seed data, vehicle overrides, and chairperson/driver operational workflows remain pending. See [Supabase setup](docs/SUPABASE_AUTH_SETUP.md).
 
 **Repository:** [b0urbonn/egabay](https://github.com/b0urbonn/egabay) (public). “Done” means code exists; it does not imply a deployed or field-tested service.
 
@@ -92,11 +92,13 @@
 - [x] Add the Super Admin standby console: overview, group/terminal/vehicle directories, user roles, reports, audit log, search, filters, and responsive navigation.
 - [x] Engineer Super Admin desktop/compact layouts, eleven editable wireframes, accessible record panels, and role-change confirmation. (The earlier sample-data preview was removed once the console went live for super admin sign-ins.)
 - [x] Load Super Admin counts and records from Supabase; role changes use the checked RPC, and chairperson access is granted by approving the account's sign-in email via `approve_chairperson`.
+- [x] **Done in current local workspace** — Super Admin can create, edit, and deactivate TODA/jeepney groups, assign or replace an eligible chairperson, and leave a group unassigned. Group writes use the existing audit trigger; chairperson selection is limited to accounts with the Chairperson role and the database enforces one group per chairperson.
+- [x] **Done in current local workspace** — Super Admin can add and edit terminals in Supabase with a responsible group, group-derived municipality, barangay, address, contact phone, automatically geocoded map coordinates, and active status. Address and locality changes trigger one OpenStreetMap lookup; unrelated edits reuse stored coordinates. Terminal writes use the audited table triggers; the directory search and inspector include location and contact details.
 - [~] **UI preview implemented** — Driver flow: group application with pending state, profile editor, segmented availability control on Home, read-only announcements, and trip start/stop consent sheet. Six Apple-HIG mobile wireframes cover the primary screens. Sample data only; no GPS, role gating, or Supabase writes.
 - [~] **UI preview implemented** — Chairperson group dashboard, searchable terminal/vehicle lists, validated coordinate and roster forms, assignments, driver approval/rejection with confirmation/history, and announcement composer. Mobile bottom navigation, keyboard handling, desktop adaptation, and eight wireframes are implemented. All records/actions are sample/local state.
 - [ ] Connect driver application, profile, availability, and announcements to group-scoped Supabase reads/writes.
 - [ ] Connect chairperson screens to group-scoped Supabase reads and writes, including audit-log-backed mutations and the terminal map-pin picker.
-- [ ] Connect Super Admin group creation/edit/deactivation, chairperson assignment, terminal/vehicle override forms, and approval actions.
+- [ ] Connect Super Admin vehicle override forms and driver approval actions.
 - [ ] Send location only during an active trip and show its last-updated time.
 - [ ] Subscribe to Supabase Realtime for authorized live positions and current alerts.
 - [ ] Set and document location access, retention, battery, and connectivity behavior.
@@ -118,6 +120,6 @@
 1. Confirm pilot route data, pilot TODA/jeepney groups and their chairpersons, and trusted data owners (Milestone 0).
 2. Apply the migrations in Supabase, provision the first super admin, verify policies, and add only confirmed seed records (Milestone 1).
 3. Replace demo content with typed Supabase reads; wire the Terminals screens to real records and add the feedback form (Milestone 2).
-4. Complete Super Admin mutations and connect the driver/chairperson previews to authorized group data (Milestone 3).
+4. Finish Super Admin vehicle overrides and connect the driver/chairperson previews to authorized group data (Milestone 3).
 5. Add authorized live positions and service alerts after registry data and location consent are verified.
 

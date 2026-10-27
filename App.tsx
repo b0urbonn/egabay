@@ -154,7 +154,7 @@ export default function App() {
               {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
               {stage === 'app' && session && (staffAccount && !showCommuterView ? (
                 staffAccount.role === 'super_admin' ? (
-                  <SuperAdminWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
+                  <SuperAdminWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onRefreshSession={auth.retry} />
                 ) : (
                   <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
                 )

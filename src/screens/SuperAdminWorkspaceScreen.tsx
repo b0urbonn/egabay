@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
-import { AdminChairpersonApproval, AdminRecordInspector, AdminRoleConfirmation } from '../components/admin/AdminPanels';
+import { AdminChairpersonApproval, AdminGroupEditor, AdminRecordInspector, AdminRoleConfirmation, AdminTerminalEditor, type AdminGroupInput, type AdminTerminalInput } from '../components/admin/AdminPanels';
 import { Button, Card, Chip, ErrorBanner, TextField } from '../components/ui';
+import { geocodeTerminalAddress } from '../lib/geocoding';
 import { accountRoles, type AccountRole, type AccountSession } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { useColors, useThemeStyles } from '../lib/theme';
@@ -10,7 +11,7 @@ import type { ThemeColors } from '../theme';
 import type { AdminGroup as Group, AdminTerminal as Terminal, AdminVehicle as Vehicle, AdminUser as DirectoryUser, AdminAuditEvent as AuditEvent, AdminPanelData as PanelData } from '../types/admin';
 
 type Section = 'overview' | 'groups' | 'terminals' | 'vehicles' | 'users' | 'reports' | 'audit';
-type Inspector = { title: string; subtitle: string; rows: { label: string; value: string }[]; detail?: string };
+type Inspector = { title: string; subtitle: string; rows: { label: string; value: string }[]; detail?: string; onEdit?: () => void; editLabel?: string };
 
 const roles: Record<AccountRole, string> = { commuter: 'Commuter', driver: 'Driver', chairperson: 'Chairperson', super_admin: 'Super admin' };
 const sections: { id: Section; label: string; icon: MaterialIconName }[] = [
@@ -25,7 +26,7 @@ const sections: { id: Section; label: string; icon: MaterialIconName }[] = [
 const municipalities = ['Boac', 'Mogpog', 'Gasan', 'Buenavista', 'Torrijos', 'Santa Cruz'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const initialData: PanelData = {
-  groups: [], terminals: [], vehicles: [], drivers: [], users: [], audit: [],
+  groups: [], terminals: [], vehicles: [], drivers: [], users: [], chairpersons: [], audit: [],
   counts: { groups: 0, activeGroups: 0, terminals: 0, vehicles: 0, onTrip: 0, drivers: 0, pending: 0, approved: 0, routes: 0 },
 };
 
@@ -36,25 +37,26 @@ function errorMessage(cause: unknown): string {
 
 async function loadPanelData(): Promise<PanelData> {
   if (!supabase) throw new Error('Supabase is not configured.');
-  const [groups, activeGroups, terminals, vehicles, onTripVehicles, drivers, pendingDrivers, approvedDrivers, users, routes, audit] = await Promise.all([
+  const [groups, activeGroups, terminals, vehicles, onTripVehicles, drivers, pendingDrivers, approvedDrivers, users, chairpersons, routes, audit] = await Promise.all([
     supabase.from('groups').select('id,name,kind,municipality,is_active,chairperson_id', { count: 'exact' }).order('name').limit(250),
     supabase.from('groups').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('terminals').select('id,group_id,name,municipality,barangay,is_active', { count: 'exact' }).order('name').limit(250),
+    supabase.from('terminals').select('id,group_id,name,municipality,barangay,address,contact_phone,latitude,longitude,is_active', { count: 'exact' }).order('name').limit(250),
     supabase.from('vehicles').select('id,terminal_id,body_number,plate_number,vehicle_type,status,assigned_driver_id', { count: 'exact' }).order('body_number').limit(250),
     supabase.from('vehicles').select('id', { count: 'exact', head: true }).eq('status', 'on_route'),
     supabase.from('drivers').select('profile_id,group_id,membership_status,availability', { count: 'exact' }).limit(250),
     supabase.from('drivers').select('profile_id', { count: 'exact', head: true }).eq('membership_status', 'pending'),
     supabase.from('drivers').select('profile_id', { count: 'exact', head: true }).eq('membership_status', 'approved'),
     supabase.rpc('admin_user_directory').limit(50),
+    supabase.rpc('admin_user_directory').eq('role', 'chairperson').limit(1000),
     supabase.from('routes').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('audit_log').select('id,actor_id,action,table_name,record_id,detail,created_at').order('created_at', { ascending: false }).limit(10),
   ]);
-  for (const result of [groups, activeGroups, terminals, vehicles, onTripVehicles, drivers, pendingDrivers, approvedDrivers, users, routes, audit]) {
+  for (const result of [groups, activeGroups, terminals, vehicles, onTripVehicles, drivers, pendingDrivers, approvedDrivers, users, chairpersons, routes, audit]) {
     if (result.error) throw result.error;
   }
   return {
     groups: groups.data ?? [], terminals: terminals.data ?? [], vehicles: vehicles.data ?? [], drivers: drivers.data ?? [],
-    users: users.data ?? [], audit: (audit.data ?? []) as AuditEvent[],
+    users: users.data ?? [], chairpersons: chairpersons.data ?? [], audit: (audit.data ?? []) as AuditEvent[],
     counts: {
       groups: groups.count ?? 0, activeGroups: activeGroups.count ?? 0, terminals: terminals.count ?? 0,
       vehicles: vehicles.count ?? 0, onTrip: onTripVehicles.count ?? 0, drivers: drivers.count ?? 0,
@@ -72,8 +74,8 @@ function initials(value: string): string {
   return value.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'A';
 }
 
-export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, onRefreshSession }: {
-  account: AccountSession; onLogout: () => void; onOpenCommuter: () => void; onRefreshSession: () => void;
+export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession }: {
+  account: AccountSession; onLogout: () => void; onRefreshSession: () => void;
 }) {
   const { width } = useWindowDimensions();
   const wide = width >= 1024;
@@ -99,6 +101,10 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
   const [chairEmailError, setChairEmailError] = useState<string | null>(null);
   const [confirmChair, setConfirmChair] = useState<string | null>(null);
   const [approvingChair, setApprovingChair] = useState(false);
+  const [terminalEditor, setTerminalEditor] = useState<Terminal | null | undefined>(undefined);
+  const [savingTerminal, setSavingTerminal] = useState(false);
+  const [groupEditor, setGroupEditor] = useState<Group | null | undefined>(undefined);
+  const [savingGroup, setSavingGroup] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -114,16 +120,17 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
   const matching = (text: string) => text.toLowerCase().includes(search.trim().toLowerCase());
   const groupById = useMemo(() => new Map(data.groups.map((group) => [group.id, group])), [data.groups]);
   const terminalById = useMemo(() => new Map(data.terminals.map((terminal) => [terminal.id, terminal])), [data.terminals]);
-  const userById = useMemo(() => new Map(data.users.map((user) => [user.id, user])), [data.users]);
+  const userById = useMemo(() => new Map([...data.users, ...data.chairpersons].map((user) => [user.id, user])), [data.users, data.chairpersons]);
 
   const groups = data.groups.filter((group) => {
     const status = filter === 'Active' ? group.is_active : filter === 'Inactive' ? !group.is_active : true;
-    return status && matching(`${group.name} ${group.kind} ${group.municipality}`);
+    const chairperson = group.chairperson_id ? userById.get(group.chairperson_id) : undefined;
+    return status && matching(`${group.name} ${group.kind} ${group.municipality} ${chairperson?.display_name ?? ''} ${chairperson?.email ?? ''}`);
   });
   const terminals = data.terminals.filter((terminal) => {
     const group = groupById.get(terminal.group_id);
     const status = filter === 'Active' ? terminal.is_active : filter === 'Inactive' ? !terminal.is_active : true;
-    return status && matching(`${terminal.name} ${terminal.barangay} ${terminal.municipality} ${group?.name ?? ''}`);
+    return status && matching(`${terminal.name} ${terminal.barangay} ${terminal.municipality} ${terminal.address ?? ''} ${terminal.contact_phone ?? ''} ${group?.name ?? ''}`);
   });
   const vehicles = data.vehicles.filter((vehicle) => {
     const terminal = terminalById.get(vehicle.terminal_id);
@@ -176,17 +183,90 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
     } finally { setApprovingChair(false); }
   };
 
-  const openGroup = (group: Group) => setInspector({ title: group.name, subtitle: `${group.kind === 'toda' ? 'TODA / Tricycle' : 'Jeepney'} · ${group.municipality}`, rows: [
-    { label: 'Status', value: group.is_active ? 'Active' : 'Inactive' },
-    { label: 'Chairperson', value: group.chairperson_id ? userById.get(group.chairperson_id)?.display_name || 'Assigned account' : 'Not assigned' },
-    { label: 'Terminals in this group', value: String(data.terminals.filter((terminal) => terminal.group_id === group.id).length) },
-    { label: 'Group ID', value: group.id },
-  ] });
+  const saveTerminal = async (input: AdminTerminalInput) => {
+    if (!supabase) { setActionError('Supabase is not configured.'); return; }
+    const isEditing = Boolean(terminalEditor);
+    setSavingTerminal(true); setActionError(null);
+    try {
+      const address = input.address.trim().replace(/\s+/g, ' ');
+      const normalize = (value: string | null | undefined) => (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+      const locationChanged = !terminalEditor
+        || normalize(address) !== normalize(terminalEditor.address)
+        || normalize(input.barangay) !== normalize(terminalEditor.barangay)
+        || input.municipality !== terminalEditor.municipality
+        || terminalEditor.latitude === null
+        || terminalEditor.longitude === null;
+      const geocoded = locationChanged
+        ? await geocodeTerminalAddress({ name: input.name, address, barangay: input.barangay, municipality: input.municipality })
+        : null;
+      const latitude = geocoded?.latitude ?? terminalEditor?.latitude;
+      const longitude = geocoded?.longitude ?? terminalEditor?.longitude;
+      if (latitude == null || longitude == null) throw new Error('The terminal address needs a successful location lookup before it can be saved.');
+      const values = {
+        ...input,
+        name: input.name.trim(),
+        barangay: input.barangay.trim(),
+        address,
+        contact_phone: input.contact_phone?.trim() || null,
+        latitude,
+        longitude,
+      };
+      if (terminalEditor) {
+        const result = await supabase.from('terminals').update(values).eq('id', terminalEditor.id).select('id').maybeSingle();
+        if (result.error) throw result.error;
+        if (!result.data) throw new Error('Terminal not found or you no longer have permission to update it.');
+      } else {
+        const result = await supabase.from('terminals').insert(values).select('id').single();
+        if (result.error) throw result.error;
+      }
+      setTerminalEditor(undefined);
+      setNotice(`${isEditing ? 'Terminal details updated.' : 'Terminal added to the registry.'}${geocoded ? ` Address geocoded with OpenStreetMap: ${geocoded.displayName}.` : ''}`);
+      setRevision((value) => value + 1);
+    } catch (cause) {
+      setActionError(errorMessage(cause));
+    } finally { setSavingTerminal(false); }
+  };
+
+  const saveGroup = async (input: AdminGroupInput) => {
+    if (!supabase) { setActionError('Supabase is not configured.'); return; }
+    const isEditing = Boolean(groupEditor);
+    setSavingGroup(true); setActionError(null);
+    try {
+      if (groupEditor) {
+        const result = await supabase.from('groups').update(input).eq('id', groupEditor.id).select('id').maybeSingle();
+        if (result.error) throw result.error;
+        if (!result.data) throw new Error('Group not found or you no longer have permission to update it.');
+      } else {
+        const result = await supabase.from('groups').insert(input).select('id').single();
+        if (result.error) throw result.error;
+      }
+      setGroupEditor(undefined);
+      setNotice(isEditing ? 'Transport group updated.' : 'Transport group created.');
+      setRevision((value) => value + 1);
+    } catch (cause) {
+      setActionError(errorMessage(cause));
+    } finally { setSavingGroup(false); }
+  };
+
+  const openGroup = (group: Group) => setInspector({
+    title: group.name,
+    subtitle: `${group.kind === 'toda' ? 'TODA / Tricycle' : 'Jeepney'} · ${group.municipality}`,
+    rows: [
+      { label: 'Status', value: group.is_active ? 'Active' : 'Inactive' },
+      { label: 'Chairperson', value: group.chairperson_id ? userById.get(group.chairperson_id)?.display_name || userById.get(group.chairperson_id)?.email || 'Assigned account' : 'Not assigned' },
+      { label: 'Terminals', value: String(data.terminals.filter((terminal) => terminal.group_id === group.id).length) },
+      { label: 'Vehicles', value: String(data.vehicles.filter((vehicle) => data.terminals.some((terminal) => terminal.id === vehicle.terminal_id && terminal.group_id === group.id)).length) },
+      { label: 'Drivers', value: String(data.drivers.filter((driver) => driver.group_id === group.id).length) },
+      { label: 'Group ID', value: group.id },
+    ],
+    editLabel: 'Edit group',
+    onEdit: () => { setInspector(null); setActionError(null); setGroupEditor(group); },
+  });
 
   const sectionDescription: Record<Section, string> = {
     overview: 'A clear view of groups, terminals, vehicles, and operator accounts across Marinduque.',
-    groups: 'Browse TODA and jeepney groups and see their municipality and chairperson assignment.',
-    terminals: 'Review registered transport terminals and the groups responsible for them.',
+    groups: 'Create, edit, and deactivate operator groups, then assign or replace one chairperson per group.',
+    terminals: 'Register and maintain confirmed terminals, their responsible group, address, contact details, map pin, and status.',
     vehicles: 'View the island wide vehicle roster, assignment, and current service status.',
     users: 'Review accounts, approve chairperson access by email, and manage the other supported roles.',
     reports: 'Compare verified registry coverage across municipalities and transport types.',
@@ -203,7 +283,6 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
           <View style={styles.navList}>{sections.map((item) => <NavigationItem key={item.id} item={item} selected={section === item.id} onPress={() => changeSection(item.id)} styles={styles} colors={colors} />)}</View>
           <View style={styles.sidebarBottom}>
             <View style={styles.sidebarAccount}><View style={styles.avatar}><Text style={styles.avatarText}>{initials(account.name)}</Text></View><View style={styles.accountCopy}><Text style={styles.accountName} numberOfLines={1}>{account.name}</Text><Text style={styles.accountRole}>Super administrator</Text></View></View>
-            <Button label="Commuter view" variant="secondary" onPress={onOpenCommuter} />
             <Pressable accessibilityRole="button" onPress={onLogout} style={styles.signOut}><MaterialIcon name="logout" size={17} color={colors.muted} /><Text style={styles.signOutText}>Sign out</Text></Pressable>
           </View>
         </View>
@@ -230,14 +309,30 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <View style={styles.pageHeader}>
             <View style={styles.pageHeading}><Text style={styles.eyebrow}>MARINDUQUE TRANSPORT REGISTRY</Text><Text style={styles.pageTitle}>{section === 'overview' ? 'Network overview' : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text>{updatedAt && <Text style={styles.updatedAt}>{`Updated ${shortDate(updatedAt)}`}</Text>}</View>
-            {section === 'groups' && <Button label="Create group · coming soon" variant="secondary" disabled />}
+            {section === 'groups' && <Button label="Add transport group" onPress={() => { setActionError(null); setGroupEditor(null); }} disabled={loading} />}
+            {section === 'terminals' && <Button label="Add terminal" onPress={() => { setActionError(null); setTerminalEditor(null); }} disabled={loading || !data.groups.some((group) => group.is_active)} />}
           </View>
           {error && <ErrorBanner message={error} />}
           {notice && <View accessibilityRole="alert" style={styles.successNotice}><Text style={styles.successText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={styles.dismissNotice}><Text style={styles.panelAction}>Dismiss</Text></Pressable></View>}
           {error && !loaded ? <Card><EmptyState title="Registry data is unavailable" body="We could not load the records. Check your connection and try again." styles={styles} /><Button label="Try again" onPress={() => setRevision((value) => value + 1)} loading={loading} /></Card> : <>
           {section === 'overview' && <OverviewPanel data={data} users={userById} loading={loading} styles={styles} onNavigate={changeSection} />}
-          {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.users} onOpen={openGroup} />}
-          {section === 'terminals' && <TerminalsPanel terminals={terminals} groups={groupById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(terminal) => setInspector({ title: terminal.name, subtitle: 'Terminal record', rows: [{ label: 'Group', value: groupById.get(terminal.group_id)?.name ?? 'Unavailable' }, { label: 'Location', value: `${terminal.barangay}, ${terminal.municipality}` }, { label: 'Status', value: terminal.is_active ? 'Active' : 'Inactive' }, { label: 'Registered vehicles', value: String(data.vehicles.filter((vehicle) => vehicle.terminal_id === terminal.id).length) }] })} />}
+          {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.chairpersons} onOpen={openGroup} />}
+          {section === 'terminals' && <TerminalsPanel terminals={terminals} groups={groupById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} canAdd={data.groups.some((group) => group.is_active)} onOpen={(terminal) => setInspector({
+            title: terminal.name,
+            subtitle: 'Terminal record',
+            rows: [
+              { label: 'Responsible group', value: groupById.get(terminal.group_id)?.name ?? 'Unavailable' },
+              { label: 'Municipality', value: terminal.municipality },
+              { label: 'Barangay', value: terminal.barangay },
+              { label: 'Street address or landmark', value: terminal.address || 'Not recorded' },
+              { label: 'Contact phone', value: terminal.contact_phone || 'Not recorded' },
+              { label: 'Map coordinates', value: terminal.latitude !== null && terminal.longitude !== null ? `${terminal.latitude}, ${terminal.longitude}` : 'Not recorded · map pin unavailable' },
+              { label: 'Status', value: terminal.is_active ? 'Active' : 'Inactive' },
+              { label: 'Registered vehicles', value: String(data.vehicles.filter((vehicle) => vehicle.terminal_id === terminal.id).length) },
+            ],
+            editLabel: 'Edit terminal',
+            onEdit: () => { setInspector(null); setActionError(null); setTerminalEditor(terminal); },
+          })} />}
           {section === 'vehicles' && <VehiclesPanel vehicles={vehicles} terminals={terminalById} groups={groupById} users={userById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(vehicle) => setInspector({ title: vehicle.body_number, subtitle: 'Vehicle record', rows: [{ label: 'Plate number', value: vehicle.plate_number ?? 'Not recorded' }, { label: 'Transport type', value: vehicle.vehicle_type }, { label: 'Terminal', value: terminalById.get(vehicle.terminal_id)?.name ?? 'Unavailable' }, { label: 'Assigned driver', value: vehicle.assigned_driver_id ? userById.get(vehicle.assigned_driver_id)?.display_name ?? 'Assigned account' : 'Not assigned' }, { label: 'Status', value: vehicle.status.replaceAll('_', ' ') }] })} />}
           {section === 'users' && <UsersPanel users={users} loading={loading} filter={filter} setFilter={setFilter} choices={choices} setChoices={setChoices} saving={saving} saveRole={async (user) => { setActionError(null); setConfirmUser(user); }} chairEmail={chairEmail} chairEmailError={chairEmailError} onChairEmail={(value) => { setChairEmail(value); setChairEmailError(null); }} onApproveChair={submitChairApproval} approvingChair={approvingChair} styles={styles} />}
           {section === 'reports' && <ReportsPanel data={data} loading={loading} styles={styles} />}
@@ -247,6 +342,8 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onOpenCommuter, o
         </ScrollView>
       </View>
       {inspector && <AdminRecordInspector {...inspector} onClose={() => setInspector(null)} />}
+      {groupEditor !== undefined && <AdminGroupEditor key={groupEditor?.id ?? 'new-group'} group={groupEditor} groups={data.groups} chairpersons={data.chairpersons} saving={savingGroup} error={actionError} onClose={() => { if (!savingGroup) { setGroupEditor(undefined); setActionError(null); } }} onSave={(input) => void saveGroup(input)} />}
+      {terminalEditor !== undefined && <AdminTerminalEditor key={terminalEditor?.id ?? 'new-terminal'} groups={data.groups} terminal={terminalEditor} saving={savingTerminal} error={actionError} onClose={() => { if (!savingTerminal) { setTerminalEditor(undefined); setActionError(null); } }} onSave={(input) => void saveTerminal(input)} />}
       {confirmUser && choices[confirmUser.id] && <AdminRoleConfirmation user={confirmUser} nextRole={choices[confirmUser.id]} saving={saving !== null} error={actionError} onClose={() => setConfirmUser(null)} onConfirm={() => void saveRole(confirmUser)} />}
       {confirmChair && <AdminChairpersonApproval email={confirmChair} saving={approvingChair} error={actionError} onClose={() => setConfirmChair(null)} onConfirm={() => void approveChair(confirmChair)} />}
     </View>
@@ -317,7 +414,6 @@ function RecordAction({ onPress, label, styles }: { onPress: () => void; label: 
 function GroupsPanel({ groups, loading, filter, setFilter, styles, users, onOpen }: { groups: Group[]; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; users: DirectoryUser[]; onOpen: (group: Group) => void }) {
   return <Card style={styles.listCard}>
     <ListToolbar title="Group registry" count={groups.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
-    <StandbyNotice styles={styles} text="You can review group records here. Creation and editing will be available in a later release." />
     {loading ? <LoadingRows styles={styles} /> : groups.length ? <View style={styles.listRows}>
       <RegistryHeader labels={['Group / municipality', 'Chairperson']} styles={styles} />
       {groups.map((group) => {
@@ -333,13 +429,14 @@ function GroupsPanel({ groups, loading, filter, setFilter, styles, users, onOpen
   </Card>;
 }
 
-function TerminalsPanel({ terminals, groups, loading, filter, setFilter, styles, onOpen }: { terminals: Terminal[]; groups: Map<string, Group>; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; onOpen: (terminal: Terminal) => void }) {
+function TerminalsPanel({ terminals, groups, loading, filter, setFilter, styles, canAdd, onOpen }: { terminals: Terminal[]; groups: Map<string, Group>; loading: boolean; filter: string; setFilter: (value: string) => void; styles: ReturnType<typeof createStyles>; canAdd: boolean; onOpen: (terminal: Terminal) => void }) {
   return <Card style={styles.listCard}>
     <ListToolbar title="Terminal directory" count={terminals.length} filter={filter} setFilter={setFilter} options={['All', 'Active', 'Inactive']} styles={styles} />
+    {!canAdd && <StandbyNotice styles={styles} text="An active transport group must exist before you can register a terminal." />}
     {loading ? <LoadingRows styles={styles} /> : terminals.length ? <View style={styles.listRows}>
       <RegistryHeader labels={['Terminal / location', 'Responsible group']} styles={styles} />
       {terminals.map((terminal) => <View key={terminal.id} style={styles.dataRow}>
-        <View style={styles.rowLeading}><View style={styles.rowIcon}><MaterialIcon name="terminals" size={20} color={styles.colors.greenDark} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{terminal.name}</Text><Text style={styles.rowSub}>{terminal.barangay}, {terminal.municipality}</Text></View></View>
+        <View style={styles.rowLeading}><View style={styles.rowIcon}><MaterialIcon name="terminals" size={20} color={styles.colors.greenDark} /></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{terminal.name}</Text><Text style={styles.rowSub}>{terminal.barangay}, {terminal.municipality}{terminal.address ? ` · ${terminal.address}` : ''}</Text></View></View>
         <View style={styles.rowSecondary}>{!styles.wide && <Text style={styles.rowMetaLabel}>Responsible group</Text>}<Text style={styles.rowMeta}>{groups.get(terminal.group_id)?.name ?? 'Group unavailable'}</Text></View>
         <View style={styles.statusCell}><StatusPill label={terminal.is_active ? 'Active' : 'Inactive'} tone={terminal.is_active ? 'green' : 'neutral'} styles={styles} /></View>
         <RecordAction label={`View ${terminal.name}`} onPress={() => onOpen(terminal)} styles={styles} />

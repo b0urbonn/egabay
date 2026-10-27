@@ -41,7 +41,7 @@ Follow [the project-specific Supabase setup guide](docs/SUPABASE_AUTH_SETUP.md).
 4. Sign in as the verified first owner, then apply `supabase/generated/bootstrap_super_admin.sql` in the SQL Editor and reload the app.
 5. Run `npm run web -- --port 8081` for desktop and responsive browser development.
 
-The source migrations and bootstrap template are committed; generated SQL and `.env.local` are ignored. The publishable key belongs in the browser app; secret/service-role keys stay off the frontend. The role workspaces are the first authentication slice; operational group/terminal/vehicle consoles and verified catalog reads are still being built.
+The source migrations and bootstrap template are committed; generated SQL and `.env.local` are ignored. The publishable key belongs in the browser app; secret/service-role keys stay off the frontend. The authenticated Super Admin console can create, update, and deactivate groups, assign chairpersons, and create or edit terminals. Vehicle override actions, chairperson/driver database workflows, and verified catalog reads remain in progress.
 
 Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. The database checks use an isolated in-memory PostgreSQL engine and never modify your live Supabase project.
 
@@ -63,7 +63,7 @@ Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. T
     │   │   ├── SignUpScreen.tsx             Supabase signup with email-confirmation handling
     │   │   ├── PasswordRecoveryScreen.tsx  Verified recovery session password form
     │   │   ├── RoleWorkspaceScreen.tsx     Desktop admin / responsive staff entry
-    │   │   ├── SuperAdminWorkspaceScreen.tsx Registry dashboard and isolated design preview
+    │   │   ├── SuperAdminWorkspaceScreen.tsx Registry dashboard and live group/terminal management
     │   │   ├── MainShell.tsx                Bottom tabs (Home, Trips, Map, Profile) + Settings/Terminals sub-screens
     │   │   ├── HomeScreen.tsx               Travel dashboard with sample routes and notices
     │   │   ├── TripsScreen.tsx              Trips tab with compact trip cards
