@@ -119,6 +119,7 @@ export function Button({
   onPress,
   variant = 'primary',
   loading = false,
+  loadingLabel = label,
   disabled = false,
   glyph,
   style,
@@ -127,6 +128,7 @@ export function Button({
   onPress?: () => void;
   variant?: 'primary' | 'secondary' | 'ghost';
   loading?: boolean;
+  loadingLabel?: string;
   disabled?: boolean;
   glyph?: string;
   style?: StyleProp<ViewStyle>;
@@ -137,7 +139,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={loading ? loadingLabel : label}
       onPress={onPress}
       disabled={inactive}
       accessibilityState={{ disabled: inactive }}
@@ -151,7 +153,10 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#FFFFFF' : colors.green} size="small" />
+        <>
+          <ActivityIndicator color={variant === 'primary' ? '#FFFFFF' : colors.green} size="small" />
+          <Text style={[styles.buttonText, variant === 'secondary' && styles.buttonTextSecondary, variant === 'ghost' && styles.buttonTextGhost]}>{loadingLabel}</Text>
+        </>
       ) : (
         <>
           {glyph && (
@@ -233,7 +238,7 @@ export function TextField({
 export function ErrorBanner({ message }: { message: string }) {
   const styles = useThemeStyles(createStyles);
   return (
-    <View style={styles.errorBanner}>
+    <View accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.errorBanner}>
       <Text style={styles.errorBannerGlyph}>!</Text>
       <Text style={styles.errorBannerText}>{message}</Text>
     </View>

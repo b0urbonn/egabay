@@ -11,9 +11,9 @@ This file records repository changes visible in local Git history and `origin/ma
 
 - **Chairperson approval by email in Users & roles** — The super admin now grants chairperson access by entering and approving the account's sign-in email instead of locating it in the directory and using the role chips. The Chairperson chip is locked on accounts that already hold the role and hidden on other rows; demotion still happens from the row's remaining chips. A new `approve_chairperson(target_email)` RPC (migration `20261027000000`) resolves `auth.users` case-insensitively, rejects unknown emails, existing chairpersons, and super admin targets, then delegates to `set_user_role` so the advisory lock, driver-membership guard, and audit trigger still apply. One new PGlite check covers the grants and rejection paths.
 
-- **Super Admin terminal registry** — Added live terminal creation and editing, with municipality derived from the selected group, plus barangay, address, contact phone, active status, and full record details. OpenStreetMap geocodes terminal addresses on create or location change and stores the resulting coordinates; unrelated edits reuse saved coordinates. Terminal changes use the existing audit trigger.
+- **Super Admin terminal registry** — Added live terminal creation and editing, with municipality derived from the selected group, plus barangay, address, contact phone, and full record details. New terminals default active; edits preserve status. OpenStreetMap geocodes terminal addresses on create or location change and stores the resulting coordinates; unrelated edits reuse saved coordinates. Terminal changes use the existing audit trigger.
 
-- **Super Admin transport group management** — Added live group create/edit/deactivate, TODA/jeepney and municipality selection, and chairperson assignment/replacement. Candidate accounts must already have the chairperson role, cannot be assigned to another group, and writes use the existing audit trigger.
+- **Super Admin transport group management** — Added live group create/edit, TODA/jeepney and municipality selection, and chairperson assignment/replacement. Group forms default new groups to active and preserve status on edits. Candidate accounts must already have the chairperson role, cannot be assigned to another group, and writes use the existing audit trigger.
 
 ## 2026-10-26
 

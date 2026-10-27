@@ -41,7 +41,7 @@ Follow [the project-specific Supabase setup guide](docs/SUPABASE_AUTH_SETUP.md).
 4. Sign in as the verified first owner, then apply `supabase/generated/bootstrap_super_admin.sql` in the SQL Editor and reload the app.
 5. Run `npm run web -- --port 8081` for desktop and responsive browser development.
 
-The source migrations and bootstrap template are committed; generated SQL and `.env.local` are ignored. The publishable key belongs in the browser app; secret/service-role keys stay off the frontend. The authenticated Super Admin console can create, update, and deactivate groups, assign chairpersons, and create or edit terminals. Vehicle override actions, chairperson/driver database workflows, and verified catalog reads remain in progress.
+The source migrations and bootstrap template are committed; generated SQL and `.env.local` are ignored. The publishable key belongs in the browser app; secret/service-role keys stay off the frontend. The authenticated Super Admin console can create and update groups, assign chairpersons, and create or edit terminals. Group and terminal status is preserved on edits; new records default active. Vehicle override actions, chairperson/driver database workflows, and verified catalog reads remain in progress.
 
 Checks: `npm run typecheck`, `npm run test:database`, and `npm run build:map`. The database checks use an isolated in-memory PostgreSQL engine and never modify your live Supabase project.
 

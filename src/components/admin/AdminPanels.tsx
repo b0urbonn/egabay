@@ -52,7 +52,6 @@ export function AdminGroupEditor({ group, groups, chairpersons, saving, error, o
   const [municipality, setMunicipality] = useState(group?.municipality ?? 'Boac');
   const [chairpersonId, setChairpersonId] = useState(group?.chairperson_id ?? '');
   const [chairpersonSearch, setChairpersonSearch] = useState('');
-  const [active, setActive] = useState(group?.is_active ?? true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const availableChairs = chairpersons.filter((user) => user.role === 'chairperson' && !groups.some((entry) => entry.id !== group?.id && entry.chairperson_id === user.id));
   const visibleChairs = availableChairs.filter((user) => `${user.display_name ?? ''} ${user.email}`.toLowerCase().includes(chairpersonSearch.trim().toLowerCase()));
@@ -66,12 +65,14 @@ export function AdminGroupEditor({ group, groups, chairpersons, saving, error, o
       setValidationError('Choose an available chairperson or leave this group unassigned.'); return;
     }
     setValidationError(null);
-    onSave({ name: name.trim(), kind, municipality, chairperson_id: chairpersonId || null, is_active: active });
+    onSave({ name: name.trim(), kind, municipality, chairperson_id: chairpersonId || null, is_active: group?.is_active ?? true });
   };
 
-  const saveLabel = !group ? (active ? 'Create group' : 'Create inactive group') : group.is_active && !active ? 'Deactivate group' : 'Save group';
-  return <Panel title={group ? 'Edit transport group' : 'Add transport group'} subtitle="Groups organize terminals, vehicles, and one assigned chairperson." onClose={() => { if (!saving) onClose(); }} footer={<><Button label="Cancel" variant="secondary" disabled={saving} onPress={onClose} /><Button label={saveLabel} loading={saving} onPress={save} /></>}>
+  const saveLabel = group ? 'Save group' : 'Create group';
+  return <Panel title={group ? 'Edit transport group' : 'Add transport group'} subtitle="Groups organize terminals, vehicles, and one assigned chairperson." onClose={() => { if (!saving) onClose(); }} footer={<><Button label="Cancel" variant="secondary" disabled={saving} onPress={onClose} /><Button label={saveLabel} loadingLabel="Saving group…" loading={saving} onPress={save} /></>}>
     <View style={styles.stack}>
+      {validationError && <ErrorBanner message={validationError} />}
+      {error && <ErrorBanner message={error} />}
       <TextField comfortable label="Group name" value={name} onChangeText={(value) => { setName(value); setValidationError(null); }} placeholder="e.g. Boac Central TODA" autoCapitalize="words" />
       <View style={styles.stack}><Text style={styles.sectionTitle}>Transport type</Text><View style={styles.choiceWrap}><Chip comfortable label="TODA / Tricycle" selected={kind === 'toda'} onPress={() => { setKind('toda'); setValidationError(null); }} /><Chip comfortable label="Jeepney" selected={kind === 'jeepney'} onPress={() => { setKind('jeepney'); setValidationError(null); }} /></View></View>
       <View style={styles.stack}><Text style={styles.sectionTitle}>Municipality</Text><View style={styles.choiceWrap}>{municipalities.map((town) => <Chip key={town} comfortable label={town} selected={municipality === town} onPress={() => { setMunicipality(town); setValidationError(null); }} />)}</View></View>
@@ -86,10 +87,6 @@ export function AdminGroupEditor({ group, groups, chairpersons, saving, error, o
           </Pressable>;
         })}</View> : <Text style={styles.copy}>No chairperson matches that search.</Text>}</> : <Text style={styles.copy}>No unassigned chairperson accounts are available. Approve an account in Users & roles first.</Text>}
       </View>
-      <View style={styles.stack}><Text style={styles.sectionTitle}>Group status</Text><View style={styles.choiceWrap}><Chip comfortable label="Active" selected={active} onPress={() => setActive(true)} /><Chip comfortable label="Inactive" selected={!active} onPress={() => setActive(false)} /></View></View>
-      {group?.is_active && !active && <Text style={styles.warningCopy}>Deactivating hides this group and its terminals from public listings.</Text>}
-      {validationError && <ErrorBanner message={validationError} />}
-      {error && <ErrorBanner message={error} />}
     </View>
   </Panel>;
 }
@@ -114,7 +111,6 @@ export function AdminTerminalEditor({ groups, terminal, saving, error, onClose, 
   const [barangay, setBarangay] = useState(terminal?.barangay ?? '');
   const [address, setAddress] = useState(terminal?.address ?? '');
   const [contactPhone, setContactPhone] = useState(terminal?.contact_phone ?? '');
-  const [active, setActive] = useState(terminal?.is_active ?? true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const selectedGroup = selectableGroups.find((group) => group.id === groupId);
 
@@ -131,12 +127,14 @@ export function AdminTerminalEditor({ groups, terminal, saving, error, onClose, 
       barangay: barangay.trim(),
       address: address.trim(),
       contact_phone: contactPhone.trim() || null,
-      is_active: active,
+      is_active: terminal?.is_active ?? true,
     });
   };
 
-  return <Panel title={terminal ? 'Edit terminal' : 'Add terminal'} subtitle="Enter the address; its coordinates are found automatically when you save. Municipality follows the responsible transport group." onClose={() => { if (!saving) onClose(); }} footer={<><Button label="Cancel" variant="secondary" disabled={saving} onPress={onClose} /><Button label={terminal ? 'Save terminal' : 'Add terminal'} loading={saving} disabled={selectableGroups.length === 0} onPress={save} /></>}>
+  return <Panel title={terminal ? 'Edit terminal' : 'Add terminal'} subtitle="Enter the address; its coordinates are found automatically when you save. Municipality follows the responsible transport group." onClose={() => { if (!saving) onClose(); }} footer={<><Button label="Cancel" variant="secondary" disabled={saving} onPress={onClose} /><Button label={terminal ? 'Save terminal' : 'Add terminal'} loadingLabel="Saving terminal…" loading={saving} disabled={selectableGroups.length === 0} onPress={save} /></>}>
     <View style={styles.stack}>
+      {validationError && <ErrorBanner message={validationError} />}
+      {error && <ErrorBanner message={error} />}
       <Text style={styles.sectionTitle}>Responsible group</Text>
       {selectableGroups.length ? <View style={styles.choiceWrap}>{selectableGroups.map((group) => <Chip key={group.id} comfortable label={`${group.name} · ${group.kind === 'toda' ? 'TODA' : 'Jeepney'}`} selected={group.id === groupId} onPress={() => { setGroupId(group.id); setValidationError(null); }} />)}</View> : <Text style={styles.copy}>No active transport group is available. Add or activate a group before registering a terminal.</Text>}
       <View style={styles.readOnlyField}><Text style={styles.label}>Municipality</Text><Text style={styles.readOnlyValue}>{selectedGroup?.municipality ?? 'Choose a group'}</Text></View>
@@ -147,9 +145,6 @@ export function AdminTerminalEditor({ groups, terminal, saving, error, onClose, 
       <View style={styles.stack}>
         <Text style={styles.copy}>When you save, OpenStreetMap looks up the address once and the matching coordinates are stored for the map. © OpenStreetMap contributors. Use a public terminal address, not personal or confidential details.</Text>
       </View>
-      <View style={styles.stack}><Text style={styles.sectionTitle}>Terminal status</Text><View style={styles.choiceWrap}><Chip comfortable label="Active" selected={active} onPress={() => setActive(true)} /><Chip comfortable label="Inactive" selected={!active} onPress={() => setActive(false)} /></View></View>
-      {validationError && <ErrorBanner message={validationError} />}
-      {error && <ErrorBanner message={error} />}
     </View>
   </Panel>;
 }
@@ -194,7 +189,7 @@ function createStyles(colors: ThemeColors) {
     body: { padding: 24, gap: 24 }, footer: { padding: 20, gap: 12, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: colors.line },
     stack: { gap: 10 }, sectionTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' }, copy: { color: colors.muted, fontSize: 14, lineHeight: 21 },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, readOnlyField: { gap: 7, padding: 13, borderRadius: 11, backgroundColor: colors.canvas, borderWidth: 1, borderColor: colors.line }, readOnlyValue: { color: colors.ink, fontSize: 15, fontWeight: '600' },
-    candidateList: { gap: 8 }, candidateRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 11, borderWidth: 1, borderColor: colors.line }, candidateRowSelected: { borderColor: colors.green, backgroundColor: colors.greenLight }, candidateCopy: { flex: 1, minWidth: 0 }, candidateName: { color: colors.ink, fontSize: 14, fontWeight: '700' }, candidateEmail: { color: colors.muted, fontSize: 12, marginTop: 4 }, candidateSelected: { color: colors.greenDark, fontSize: 12, fontWeight: '800' }, warningCopy: { color: colors.orangeDark, backgroundColor: colors.orangeLight, padding: 12, borderRadius: 11, fontSize: 13, lineHeight: 19 },
+    candidateList: { gap: 8 }, candidateRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 11, borderWidth: 1, borderColor: colors.line }, candidateRowSelected: { borderColor: colors.green, backgroundColor: colors.greenLight }, candidateCopy: { flex: 1, minWidth: 0 }, candidateName: { color: colors.ink, fontSize: 14, fontWeight: '700' }, candidateEmail: { color: colors.muted, fontSize: 12, marginTop: 4 }, candidateSelected: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
     detailRow: { gap: 7, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: colors.line }, label: { color: colors.muted, fontSize: 13 }, value: { color: colors.ink, fontSize: 15, lineHeight: 22, fontWeight: '600' },
     code: { color: colors.ink, backgroundColor: colors.canvas, padding: 16, borderRadius: 12, fontSize: 13, lineHeight: 21, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
     roleChange: { padding: 20, gap: 10, borderRadius: 12, backgroundColor: colors.greenLight }, newRole: { color: colors.greenDark, fontSize: 22, fontWeight: '800' },

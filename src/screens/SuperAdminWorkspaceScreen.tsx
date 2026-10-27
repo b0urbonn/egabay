@@ -31,8 +31,18 @@ const initialData: PanelData = {
 };
 
 function errorMessage(cause: unknown): string {
-  if (typeof cause === 'object' && cause !== null && 'message' in cause && typeof cause.message === 'string') return cause.message;
-  return 'Dashboard data could not be loaded. Check the database setup and try again.';
+  if (typeof cause === 'string' && cause.trim()) return cause.trim();
+  if (typeof cause === 'object' && cause !== null) {
+    const error = cause as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown };
+    const parts = [
+      typeof error.message === 'string' && error.message.trim() ? error.message.trim() : null,
+      typeof error.code === 'string' && error.code.trim() ? `Code: ${error.code.trim()}` : null,
+      typeof error.details === 'string' && error.details.trim() ? `Details: ${error.details.trim()}` : null,
+      typeof error.hint === 'string' && error.hint.trim() ? `Hint: ${error.hint.trim()}` : null,
+    ].filter((part): part is string => part !== null);
+    if (parts.length) return parts.join('\n');
+  }
+  return 'The request could not be completed. Check your connection and try again.';
 }
 
 async function loadPanelData(): Promise<PanelData> {
@@ -184,9 +194,10 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
   };
 
   const saveTerminal = async (input: AdminTerminalInput) => {
-    if (!supabase) { setActionError('Supabase is not configured.'); return; }
+    if (!supabase) { setActionError('Database insert unavailable: Supabase is not configured.'); return; }
     const isEditing = Boolean(terminalEditor);
-    setSavingTerminal(true); setActionError(null);
+    let failureStage = 'Address geocoding';
+    setSavingTerminal(true); setActionError(null); setNotice(null);
     try {
       const address = input.address.trim().replace(/\s+/g, ' ');
       const normalize = (value: string | null | undefined) => (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -211,6 +222,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
         latitude,
         longitude,
       };
+      failureStage = terminalEditor ? 'Database terminal update' : 'Database terminal insert';
       if (terminalEditor) {
         const result = await supabase.from('terminals').update(values).eq('id', terminalEditor.id).select('id').maybeSingle();
         if (result.error) throw result.error;
@@ -220,17 +232,17 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
         if (result.error) throw result.error;
       }
       setTerminalEditor(undefined);
-      setNotice(`${isEditing ? 'Terminal details updated.' : 'Terminal added to the registry.'}${geocoded ? ` Address geocoded with OpenStreetMap: ${geocoded.displayName}.` : ''}`);
+      setNotice(`${isEditing ? 'Terminal saved successfully.' : 'Terminal added successfully.'}${geocoded ? ` Address matched: ${geocoded.displayName}.` : ''}`);
       setRevision((value) => value + 1);
     } catch (cause) {
-      setActionError(errorMessage(cause));
+      setActionError(`${failureStage} failed.\n${errorMessage(cause)}`);
     } finally { setSavingTerminal(false); }
   };
 
   const saveGroup = async (input: AdminGroupInput) => {
     if (!supabase) { setActionError('Supabase is not configured.'); return; }
     const isEditing = Boolean(groupEditor);
-    setSavingGroup(true); setActionError(null);
+    setSavingGroup(true); setActionError(null); setNotice(null);
     try {
       if (groupEditor) {
         const result = await supabase.from('groups').update(input).eq('id', groupEditor.id).select('id').maybeSingle();
@@ -241,10 +253,10 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
         if (result.error) throw result.error;
       }
       setGroupEditor(undefined);
-      setNotice(isEditing ? 'Transport group updated.' : 'Transport group created.');
+      setNotice(isEditing ? 'Transport group saved successfully.' : 'Transport group created successfully.');
       setRevision((value) => value + 1);
     } catch (cause) {
-      setActionError(errorMessage(cause));
+      setActionError(`Could not save transport group. ${errorMessage(cause)}`);
     } finally { setSavingGroup(false); }
   };
 
@@ -260,12 +272,12 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
       { label: 'Group ID', value: group.id },
     ],
     editLabel: 'Edit group',
-    onEdit: () => { setInspector(null); setActionError(null); setGroupEditor(group); },
+    onEdit: () => { setInspector(null); setActionError(null); setNotice(null); setGroupEditor(group); },
   });
 
   const sectionDescription: Record<Section, string> = {
     overview: 'A clear view of groups, terminals, vehicles, and operator accounts across Marinduque.',
-    groups: 'Create, edit, and deactivate operator groups, then assign or replace one chairperson per group.',
+    groups: 'Create and edit operator groups, then assign or replace one chairperson per group.',
     terminals: 'Register and maintain confirmed terminals, their responsible group, address, contact details, map pin, and status.',
     vehicles: 'View the island wide vehicle roster, assignment, and current service status.',
     users: 'Review accounts, approve chairperson access by email, and manage the other supported roles.',
@@ -306,14 +318,15 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
           </View>
         </View>
 
+        {notice && <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.successNotice}><Text style={styles.successText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={styles.dismissNotice}><Text style={styles.panelAction}>Dismiss</Text></Pressable></View>}
+
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <View style={styles.pageHeader}>
             <View style={styles.pageHeading}><Text style={styles.eyebrow}>MARINDUQUE TRANSPORT REGISTRY</Text><Text style={styles.pageTitle}>{section === 'overview' ? 'Network overview' : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text>{updatedAt && <Text style={styles.updatedAt}>{`Updated ${shortDate(updatedAt)}`}</Text>}</View>
-            {section === 'groups' && <Button label="Add transport group" onPress={() => { setActionError(null); setGroupEditor(null); }} disabled={loading} />}
-            {section === 'terminals' && <Button label="Add terminal" onPress={() => { setActionError(null); setTerminalEditor(null); }} disabled={loading || !data.groups.some((group) => group.is_active)} />}
+            {section === 'groups' && <Button label="Add transport group" onPress={() => { setActionError(null); setNotice(null); setGroupEditor(null); }} disabled={loading} />}
+            {section === 'terminals' && <Button label="Add terminal" onPress={() => { setActionError(null); setNotice(null); setTerminalEditor(null); }} disabled={loading || !data.groups.some((group) => group.is_active)} />}
           </View>
           {error && <ErrorBanner message={error} />}
-          {notice && <View accessibilityRole="alert" style={styles.successNotice}><Text style={styles.successText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={styles.dismissNotice}><Text style={styles.panelAction}>Dismiss</Text></Pressable></View>}
           {error && !loaded ? <Card><EmptyState title="Registry data is unavailable" body="We could not load the records. Check your connection and try again." styles={styles} /><Button label="Try again" onPress={() => setRevision((value) => value + 1)} loading={loading} /></Card> : <>
           {section === 'overview' && <OverviewPanel data={data} users={userById} loading={loading} styles={styles} onNavigate={changeSection} />}
           {section === 'groups' && <GroupsPanel groups={groups} loading={loading} filter={filter} setFilter={setFilter} styles={styles} users={data.chairpersons} onOpen={openGroup} />}
@@ -331,7 +344,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
               { label: 'Registered vehicles', value: String(data.vehicles.filter((vehicle) => vehicle.terminal_id === terminal.id).length) },
             ],
             editLabel: 'Edit terminal',
-            onEdit: () => { setInspector(null); setActionError(null); setTerminalEditor(terminal); },
+            onEdit: () => { setInspector(null); setActionError(null); setNotice(null); setTerminalEditor(terminal); },
           })} />}
           {section === 'vehicles' && <VehiclesPanel vehicles={vehicles} terminals={terminalById} groups={groupById} users={userById} loading={loading} filter={filter} setFilter={setFilter} styles={styles} onOpen={(vehicle) => setInspector({ title: vehicle.body_number, subtitle: 'Vehicle record', rows: [{ label: 'Plate number', value: vehicle.plate_number ?? 'Not recorded' }, { label: 'Transport type', value: vehicle.vehicle_type }, { label: 'Terminal', value: terminalById.get(vehicle.terminal_id)?.name ?? 'Unavailable' }, { label: 'Assigned driver', value: vehicle.assigned_driver_id ? userById.get(vehicle.assigned_driver_id)?.display_name ?? 'Assigned account' : 'Not assigned' }, { label: 'Status', value: vehicle.status.replaceAll('_', ' ') }] })} />}
           {section === 'users' && <UsersPanel users={users} loading={loading} filter={filter} setFilter={setFilter} choices={choices} setChoices={setChoices} saving={saving} saveRole={async (user) => { setActionError(null); setConfirmUser(user); }} chairEmail={chairEmail} chairEmailError={chairEmailError} onChairEmail={(value) => { setChairEmail(value); setChairEmailError(null); }} onApproveChair={submitChairApproval} approvingChair={approvingChair} styles={styles} />}
@@ -577,7 +590,7 @@ function createStyles(colors: ThemeColors, wide: boolean) {
     emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 42, paddingHorizontal: 22 }, emptyIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }, emptyTitle: { color: colors.ink, fontSize: 14, fontWeight: '800', textAlign: 'center' }, emptyBody: { color: colors.muted, fontSize: 12, lineHeight: 17, textAlign: 'center', maxWidth: 350, marginTop: 6 }, loadingRows: { minHeight: 120, alignItems: 'center', justifyContent: 'center', gap: 9 },
     reportGrid: { flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', alignItems: 'stretch', gap: 20 }, reportCard: { flex: wide ? 1 : undefined, minWidth: wide ? 260 : 0, padding: 24 }, reportBarRow: { marginTop: 17 }, reportBarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }, reportDivider: { height: 1, backgroundColor: colors.line, marginVertical: 15 }, reportFact: { color: colors.muted, fontSize: 12, marginTop: 7 }, reportFactNumber: { color: colors.ink, fontWeight: '800' }, summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.line }, summaryLabel: { color: colors.muted, fontSize: 12 }, summaryValue: { color: colors.ink, fontSize: 12, fontWeight: '800' }, auditHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
     updatedAt: { color: colors.muted, fontSize: 12, marginTop: 10 },
-    successNotice: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.greenLight },
+    successNotice: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 50, marginHorizontal: wide ? 34 : 18, marginTop: 10, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.greenLight },
     successText: { flex: 1, color: colors.greenDark, fontSize: 14, lineHeight: 21 }, dismissNotice: { minHeight: 44, justifyContent: 'center' },
     registryHeader: { flexDirection: 'row', gap: 12, alignItems: 'center', minHeight: 44, backgroundColor: colors.canvas, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
     registryPrimary: { flex: 1.25, color: colors.muted, fontSize: 12, fontWeight: '700' },

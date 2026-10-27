@@ -48,7 +48,7 @@ reuse the stored coordinates. A map pin picker remains future work for the chair
 ## Main flows
 
 1. **Register a group:** Transport groups → Add transport group → fill name and type → choose a municipality → optionally choose an available chairperson → Create group. The live registry and audit log update together.
-2. **Change a group:** View → Edit group → change fields or replace the chairperson → Save group. Choosing Inactive explains that the group and its terminals leave public listings.
+2. **Change a group:** View → Edit group → change fields or replace the chairperson → Save group. The form preserves the group's existing status.
 3. **Register or update a terminal:** Terminals → Add terminal, or View → Edit terminal → choose its responsible group → enter the barangay, address, and contact phone → Save. Municipality follows the selected group; OpenStreetMap looks up the address on create or location changes, and the returned coordinates are stored for the map.
 4. **Review a role:** Users & roles → choose a different role → Review change → inspect the account and new access → confirm or cancel. The last Super Admin is protected. Existing group and driver assignments must be resolved before incompatible role changes.
 5. **Inspect records:** Search/filter a directory → View → read details → Close. The list and filters remain in place.
