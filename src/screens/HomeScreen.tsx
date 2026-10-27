@@ -6,7 +6,6 @@ import { demoRoutes } from '../data/demo';
 import type { AppMode } from '../lib/appMode';
 import type { Session } from '../lib/session';
 import { useColors, useThemeStyles } from '../lib/theme';
-import { useWideLayout } from '../lib/useWideLayout';
 import type { ThemeColors } from '../theme';
 
 type HomeDestination = 'Map' | 'Profile';
@@ -42,7 +41,6 @@ export function HomeScreen({
 }) {
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
-  const isWide = useWideLayout();
   const [searchQuery, setSearchQuery] = useState('');
   const name = session.kind === 'account' ? session.name.split(' ')[0] : 'commuter';
   const today = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
@@ -59,121 +57,6 @@ export function HomeScreen({
     onNavigate(destination);
   };
 
-  const searchField = (
-    <View style={[styles.searchField, isWide && styles.searchFieldWide]}>
-      <MaterialIcon name="search" size={22} color={colors.green} />
-      <TextInput
-        accessibilityLabel="Search destinations"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        onSubmitEditing={() => onNavigate('Map')}
-        returnKeyType="search"
-        placeholder="Where do you want to go?"
-        placeholderTextColor={colors.muted}
-        style={styles.searchInput}
-      />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Search destinations on map"
-        onPress={() => onNavigate('Map')}
-        style={({ pressed }) => [styles.searchAction, pressed && styles.pressed]}
-      >
-        <MaterialIcon name="arrowForward" size={20} color="#FFFFFF" />
-      </Pressable>
-    </View>
-  );
-
-  const quickSection = (
-    <View style={[styles.section, isWide && styles.sectionFlat]}>
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Quick access</Text>
-      </View>
-      <View style={styles.tileGrid}>
-        {[0, 1].map((row) => (
-          <View key={row} style={styles.tileRow}>
-            {quickAccess.slice(row * 3, row * 3 + 3).map((item) => (
-              <Pressable
-                key={item.label}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-                onPress={() => handleQuickAccess(item.destination)}
-                style={({ pressed }) => [styles.quickTile, pressed && styles.tilePressed]}
-              >
-                <View style={[styles.tileIcon, item.label === 'AI Assistant' && styles.tileIconAccent]}>
-                  <MaterialIcon
-                    name={item.icon}
-                    size={22}
-                    color={item.label === 'AI Assistant' ? colors.quickIconAccent : colors.quickIcon}
-                  />
-                </View>
-                <Text style={styles.tileLabel}>{item.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  const exploreBanner = (
-    <ImageBackground
-      source={require('../../assets/marinduque-sta-cruz-boac-terminal-banner.jpg')}
-      resizeMode="cover"
-      style={[styles.exploreBanner, isWide && styles.exploreBannerWide]}
-      imageStyle={styles.bannerImage}
-      accessible={false}
-    >
-      <View pointerEvents="none" style={styles.bannerScrim} />
-      <View style={styles.bannerCopy}>
-        <Text style={styles.bannerEyebrow}>YOUR ISLAND, YOUR WAY</Text>
-        <Text style={styles.bannerTitle}>Explore{'\n'}Marinduque</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Explore Marinduque on the map"
-          onPress={() => onNavigate('Map')}
-          style={({ pressed }) => [styles.bannerButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.bannerButtonText}>Explore island</Text>
-          <MaterialIcon name="arrowForward" size={16} color={colors.lime} />
-        </Pressable>
-      </View>
-    </ImageBackground>
-  );
-
-  const routesSection = (
-    <View style={[styles.section, isWide && styles.sectionFlat]}>
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Recent Routes</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="See all routes" onPress={() => onNavigate('Map')}>
-          <Text style={styles.sectionAction}>See all</Text>
-        </Pressable>
-      </View>
-      <View style={styles.routeGroup}>
-        {demoRoutes.slice(0, 3).map((route, index) => (
-          <View key={route.id}>
-            {index > 0 && <View style={styles.separator} />}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${route.name}, ${route.duration}, ${route.fare}`}
-              onPress={() => onNavigate('Map')}
-              style={({ pressed }) => [styles.routeRow, pressed && styles.rowPressed]}
-            >
-              <View style={styles.routeIcon}>
-                <MaterialIcon name="route" size={21} color={colors.green} />
-              </View>
-              <View style={styles.routeCopy}>
-                <Text style={styles.routeName}>{route.name}</Text>
-                <Text style={styles.routeMeta}>{route.duration}  ·  {route.fare}</Text>
-              </View>
-              {route.status === 'Limited units' && <View style={styles.limitedBadge}><Text style={styles.limitedText}>Limited</Text></View>}
-              <MaterialIcon name="chevronRight" size={20} color={colors.muted} />
-            </Pressable>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
       <View style={styles.topRow}>
@@ -182,7 +65,6 @@ export function HomeScreen({
           <Text style={styles.largeTitle}>{greeting()},</Text>
           <Text style={styles.nameTitle}>{name}!</Text>
         </View>
-        {isWide && searchField}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open settings"
@@ -193,7 +75,27 @@ export function HomeScreen({
         </Pressable>
       </View>
 
-      {!isWide && searchField}
+      <View style={styles.searchField}>
+        <MaterialIcon name="search" size={22} color={colors.green} />
+        <TextInput
+          accessibilityLabel="Search destinations"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={() => onNavigate('Map')}
+          returnKeyType="search"
+          placeholder="Where do you want to go?"
+          placeholderTextColor={colors.muted}
+          style={styles.searchInput}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Search destinations on map"
+          onPress={() => onNavigate('Map')}
+          style={({ pressed }) => [styles.searchAction, pressed && styles.pressed]}
+        >
+          <MaterialIcon name="arrowForward" size={20} color="#FFFFFF" />
+        </Pressable>
+      </View>
 
       {mode === 'offline' && (
         <View style={styles.offlineCard}>
@@ -208,14 +110,90 @@ export function HomeScreen({
         </View>
       )}
 
-      {isWide ? (
-        <View style={styles.columns}>
-          <View style={styles.colMain}>{quickSection}{exploreBanner}</View>
-          <View style={styles.colSide}>{routesSection}</View>
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Quick access</Text>
         </View>
-      ) : (
-        <>{quickSection}{exploreBanner}{routesSection}</>
-      )}
+        <View style={styles.tileGrid}>
+          {[0, 1].map((row) => (
+            <View key={row} style={styles.tileRow}>
+              {quickAccess.slice(row * 3, row * 3 + 3).map((item) => (
+                <Pressable
+                  key={item.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.label}
+                  onPress={() => handleQuickAccess(item.destination)}
+                  style={({ pressed }) => [styles.quickTile, pressed && styles.tilePressed]}
+                >
+                  <View style={[styles.tileIcon, item.label === 'AI Assistant' && styles.tileIconAccent]}>
+                    <MaterialIcon
+                      name={item.icon}
+                      size={22}
+                      color={item.label === 'AI Assistant' ? colors.quickIconAccent : colors.quickIcon}
+                    />
+                  </View>
+                  <Text style={styles.tileLabel}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <ImageBackground
+        source={require('../../assets/marinduque-sta-cruz-boac-terminal-banner.jpg')}
+        resizeMode="cover"
+        style={styles.exploreBanner}
+        imageStyle={styles.bannerImage}
+        accessible={false}
+      >
+        <View pointerEvents="none" style={styles.bannerScrim} />
+        <View style={styles.bannerCopy}>
+          <Text style={styles.bannerEyebrow}>YOUR ISLAND, YOUR WAY</Text>
+          <Text style={styles.bannerTitle}>Explore{'\n'}Marinduque</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Explore Marinduque on the map"
+            onPress={() => onNavigate('Map')}
+            style={({ pressed }) => [styles.bannerButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.bannerButtonText}>Explore island</Text>
+            <MaterialIcon name="arrowForward" size={16} color={colors.lime} />
+          </Pressable>
+        </View>
+      </ImageBackground>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Recent Routes</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="See all routes" onPress={() => onNavigate('Map')}>
+            <Text style={styles.sectionAction}>See all</Text>
+          </Pressable>
+        </View>
+        <View style={styles.routeGroup}>
+          {demoRoutes.slice(0, 3).map((route, index) => (
+            <View key={route.id}>
+              {index > 0 && <View style={styles.separator} />}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${route.name}, ${route.duration}, ${route.fare}`}
+                onPress={() => onNavigate('Map')}
+                style={({ pressed }) => [styles.routeRow, pressed && styles.rowPressed]}
+              >
+                <View style={styles.routeIcon}>
+                  <MaterialIcon name="route" size={21} color={colors.green} />
+                </View>
+                <View style={styles.routeCopy}>
+                  <Text style={styles.routeName}>{route.name}</Text>
+                  <Text style={styles.routeMeta}>{route.duration}  ·  {route.fare}</Text>
+                </View>
+                {route.status === 'Limited units' && <View style={styles.limitedBadge}><Text style={styles.limitedText}>Limited</Text></View>}
+                <MaterialIcon name="chevronRight" size={20} color={colors.muted} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      </View>
 
       <Text style={styles.footer}>Sample data — live information coming soon.</Text>
     </ScrollView>
@@ -246,12 +224,6 @@ function createStyles(colors: ThemeColors) {
     tileIconAccent: { backgroundColor: colors.orangeLight },
     tileLabel: { color: colors.ink, fontSize: 12, lineHeight: 16, fontWeight: '600', textAlign: 'center' },
     exploreBanner: { height: 174, marginTop: 23, paddingLeft: 19, paddingVertical: 17, paddingRight: 14, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.green, justifyContent: 'center' },
-    searchFieldWide: { width: 390, marginTop: 0, marginLeft: 18, marginRight: 14 },
-    columns: { flexDirection: 'row', gap: 24, marginTop: 24, alignItems: 'flex-start' },
-    colMain: { flex: 1.55 },
-    colSide: { flex: 1 },
-    sectionFlat: { marginTop: 0 },
-    exploreBannerWide: { marginTop: 22, height: 208 },
     bannerImage: { borderRadius: 22 },
     bannerScrim: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(8,34,27,0.48)' },
     bannerCopy: { zIndex: 2, alignItems: 'flex-start' },

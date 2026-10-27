@@ -4,7 +4,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/ui';
 import type { AppearanceSetting } from '../lib/appearance';
 import { useThemeStyles } from '../lib/theme';
-import { useWideLayout } from '../lib/useWideLayout';
 import { radius, spacing, type ThemeColors } from '../theme';
 
 type AppearanceOption = {
@@ -31,7 +30,6 @@ export function SettingsScreen({
   onBack: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
-  const isWide = useWideLayout();
   const [resetArmed, setResetArmed] = useState(false);
 
   useEffect(() => {
@@ -54,62 +52,56 @@ export function SettingsScreen({
 
       <Text accessibilityRole="header" style={styles.pageTitle}>Settings</Text>
 
-      <View style={isWide && styles.columns}>
-        <View style={isWide && styles.column}>
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>Appearance</Text>
-              <Text style={styles.sectionDetail}>Choose how eGABAY looks.</Text>
-            </View>
-            <Card style={styles.optionCard}>
-              {appearanceOptions.map((option, index) => {
-                const selected = appearance === option.value;
-                return (
-                  <View key={option.value}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${option.title}, ${option.detail}`}
-                      accessibilityState={{ selected }}
-                      onPress={() => onChangeAppearance(option.value)}
-                      style={({ pressed }) => [styles.optionRow, selected && styles.optionRowSelected, pressed && styles.pressed]}
-                    >
-                      <View style={styles.optionCopy}>
-                        <Text style={styles.optionTitle}>{option.title}</Text>
-                        <Text style={styles.optionDetail}>{option.detail}</Text>
-                      </View>
-                      <View style={[styles.radio, selected && styles.radioSelected]}>
-                        {selected && <View style={styles.radioDot} />}
-                      </View>
-                    </Pressable>
-                    {index < appearanceOptions.length - 1 && <View style={styles.optionDivider} />}
+      <View style={styles.section}>
+        <View style={styles.sectionHeading}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <Text style={styles.sectionDetail}>Choose how eGABAY looks.</Text>
+        </View>
+        <Card style={styles.optionCard}>
+          {appearanceOptions.map((option, index) => {
+            const selected = appearance === option.value;
+            return (
+              <View key={option.value}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${option.title}, ${option.detail}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => onChangeAppearance(option.value)}
+                  style={({ pressed }) => [styles.optionRow, selected && styles.optionRowSelected, pressed && styles.pressed]}
+                >
+                  <View style={styles.optionCopy}>
+                    <Text style={styles.optionTitle}>{option.title}</Text>
+                    <Text style={styles.optionDetail}>{option.detail}</Text>
                   </View>
-                );
-              })}
-            </Card>
-          </View>
-        </View>
+                  <View style={[styles.radio, selected && styles.radioSelected]}>
+                    {selected && <View style={styles.radioDot} />}
+                  </View>
+                </Pressable>
+                {index < appearanceOptions.length - 1 && <View style={styles.optionDivider} />}
+              </View>
+            );
+          })}
+        </Card>
+      </View>
 
-        <View style={isWide && styles.column}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reset app</Text>
-            <Card style={styles.resetCard}>
-              <Text style={styles.resetDetail}>
-                Clears your session and settings on this device, then returns to setup. Mock accounts stay saved.
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={resetArmed ? 'Tap again to confirm app reset' : 'Reset app'}
-                accessibilityHint="Clears this device's session and preferences"
-                onPress={() => (resetArmed ? onReset() : setResetArmed(true))}
-                style={({ pressed }) => [styles.resetButton, resetArmed && styles.resetButtonArmed, pressed && styles.pressed]}
-              >
-                <Text style={[styles.resetButtonText, resetArmed && styles.resetButtonTextArmed]}>
-                  {resetArmed ? 'Tap again to confirm' : 'Reset eGABAY'}
-                </Text>
-              </Pressable>
-            </Card>
-          </View>
-        </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Reset app</Text>
+        <Card style={styles.resetCard}>
+          <Text style={styles.resetDetail}>
+            Clears your session and settings on this device, then returns to setup. Mock accounts stay saved.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={resetArmed ? 'Tap again to confirm app reset' : 'Reset app'}
+            accessibilityHint="Clears this device's session and preferences"
+            onPress={() => (resetArmed ? onReset() : setResetArmed(true))}
+            style={({ pressed }) => [styles.resetButton, resetArmed && styles.resetButtonArmed, pressed && styles.pressed]}
+          >
+            <Text style={[styles.resetButtonText, resetArmed && styles.resetButtonTextArmed]}>
+              {resetArmed ? 'Tap again to confirm' : 'Reset eGABAY'}
+            </Text>
+          </Pressable>
+        </Card>
       </View>
     </ScrollView>
   );
@@ -143,7 +135,5 @@ function createStyles(colors: ThemeColors) {
     resetButtonArmed: { backgroundColor: colors.red },
     resetButtonText: { color: colors.red, fontSize: 15, fontWeight: '600' },
     resetButtonTextArmed: { color: '#FFFFFF' },
-    columns: { flexDirection: 'row', gap: 22, alignItems: 'flex-start' },
-    column: { flex: 1 },
   });
 }

@@ -33,6 +33,11 @@ if (typeof maplibregl === 'undefined') {
   map.touchZoomRotate.disableRotation();
   if (EMBEDDED) map.scrollZoom.disable(); // don't trap page scroll when embedded
 
+  // MapLibre's compact attribution starts expanded; drop the -show class so
+  // it opens as just the "i" button — its own handler toggles it on tap.
+  const attribControl = document.querySelector('.maplibregl-ctrl-attrib');
+  if (attribControl) attribControl.classList.remove('maplibregl-compact-show');
+
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
 
