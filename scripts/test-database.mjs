@@ -24,10 +24,75 @@ try {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     grant usage on schema auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     create publication supabase_realtime;`);
-  await check('both migrations apply atomically to an empty database', async () => {
+  await check('all migrations apply atomically to an empty database', async () => {
     await db.exec('begin');
     for (const file of readdirSync('supabase/migrations').filter((f) => f.endsWith('.sql')).sort()) await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'));
     await db.exec('commit');
+  });
+  await check('sample groups, terminals, routes, and schedules are labelled and idempotent', async () => {
+    const seed = readFileSync('supabase/seed.sql', 'utf8');
+    await db.exec(seed);
+    await db.exec(seed);
+    const serviceRules = readFileSync('supabase/migrations/20261103000000_municipal_transit_service_rules.sql', 'utf8');
+    await db.exec(serviceRules);
+    await db.exec(serviceRules);
+    const barangayLinks = readFileSync('supabase/migrations/20261105000000_barangay_to_barangay_tricycle.sql', 'utf8');
+    await db.exec(barangayLinks);
+    await db.exec(barangayLinks);
+    assert.equal((await rows('select count(*)::int as count from public.groups where is_sample'))[0].count, 20);
+    assert.equal((await rows('select count(*)::int as count from public.terminals where is_sample'))[0].count, 675);
+    assert.equal((await rows(`select count(*)::int as count from (values
+      ('Boac'),('Mogpog'),('Gasan'),('Buenavista'),('Torrijos'),('Santa Cruz')
+    ) towns(municipality) where not exists (
+      select 1 from public.terminals terminal
+      join public.groups transport_group on transport_group.id = terminal.group_id
+      where terminal.municipality = towns.municipality and terminal.is_active
+        and terminal.is_sample and transport_group.kind = 'jeepney'
+    )`))[0].count, 0);
+    assert.deepEqual((await rows(`select terminal.municipality, count(distinct terminal.barangay)::int as count
+      from public.terminals terminal
+      join public.groups transport_group on transport_group.id = terminal.group_id
+      where terminal.is_sample and terminal.is_active and transport_group.kind = 'toda'
+        and terminal.name like 'Sample TODA%'
+      group by terminal.municipality order by terminal.municipality`))
+      .map((row) => [row.municipality, row.count]), [
+      ['Boac', 61], ['Buenavista', 15], ['Gasan', 25],
+      ['Mogpog', 37], ['Santa Cruz', 55], ['Torrijos', 25],
+    ]);
+    assert.equal((await rows(`select count(*)::int as count from (values
+      ('Boac'),('Mogpog'),('Gasan'),('Buenavista'),('Torrijos'),('Santa Cruz')
+    ) towns(municipality) where not exists (
+      select 1 from public.terminals terminal
+      join public.groups transport_group on transport_group.id = terminal.group_id
+      where terminal.municipality = towns.municipality and terminal.is_active
+        and terminal.is_sample and transport_group.kind = 'toda'
+        and terminal.name like '%TODA Service Hub (Sample)'
+    )`))[0].count, 0);
+    assert.equal((await rows(`select count(*)::int as count from public.terminals terminal
+      join public.groups transport_group on transport_group.id = terminal.group_id
+      where terminal.is_active and terminal.is_sample and transport_group.kind = 'jeepney'
+        and terminal.name like 'Sample jeepney service point:%'`))[0].count, 0);
+    assert.equal((await rows(`select count(*)::int as count from public.routes
+      where is_active and is_sample and mode = 'jeepney' and code like 'SAMPLE-JEP-BRG-%'`))[0].count, 0);
+    assert.equal((await rows(`select count(*)::int as count from public.routes
+      where is_active and is_sample and mode = 'tricycle' and code like 'SAMPLE-TRI-LNK-%'`))[0].count, 212);
+    assert.equal((await rows(`select count(*)::int as count from public.routes route
+      where route.code like 'SAMPLE-TRI-LNK-%'
+        and split_part(route.origin_label, ', ', 2) <> split_part(route.destination_label, ', ', 2)`))[0].count, 0);
+    assert.equal((await rows(`select count(*)::int as count from public.routes route
+      where route.code like 'SAMPLE-TRI-LNK-%' and exists (
+        select 1 from public.routes other
+        where other.id <> route.id and other.is_sample and other.mode = 'jeepney'
+          and other.origin_label = route.origin_label and other.destination_label = route.destination_label
+      )`))[0].count, 0);
+    assert.equal((await rows("select count(*)::int as count from public.terminals t join public.groups g on g.id=t.group_id where t.is_sample and not g.is_sample"))[0].count, 0);
+    assert.equal((await rows("select count(*)::int as count from public.vehicles where is_sample and (status <> 'offline' or assigned_driver_id is not null)"))[0].count, 0);
+    assert.equal((await rows('select count(*)::int as count from public.vehicles where is_sample'))[0].count, 4);
+    assert.ok((await rows('select count(*)::int as count from public.routes where is_sample'))[0].count > 200);
+    assert.equal((await rows('select count(*)::int as count from public.terminal_schedules where is_sample'))[0].count, 105);
+    assert.equal((await rows('select count(*)::int as count from public.routes r where not exists (select 1 from public.route_stops s where s.route_id=r.id)'))[0].count, 0);
+    assert.equal((await rows('select count(*)::int as count from public.routes r where not exists (select 1 from public.terminal_routes tr where tr.route_id=r.id)'))[0].count, 0);
+    assert.equal((await rows('select count(*)::int as count from auth.users'))[0].count, 0);
   });
   for (let n = 1; n <= 8; n++) await db.query('insert into auth.users values($1,$2,$3,$4)', [id(n), n === 1 ? 'owner@example.test' : n === 2 ? 'commuter@example.test' : `fixture${n}@example.test`, n === 1 ? null : new Date().toISOString(), JSON.stringify({ full_name: `User ${n}`, role: 'super_admin', avatar_url: 'https://example.test/avatar.png' })]);
   await check('all sign-ups ignore role metadata and start as commuters', async () => {
@@ -47,6 +112,9 @@ try {
   await db.query("insert into public.terminals(id,group_id,name,municipality,barangay) values($1,$2,'Terminal A','Boac','Poblacion'),($3,$4,'Terminal B','Mogpog','Poblacion')", [id(2001),id(1001),id(2002),id(1002)]);
   await db.query("insert into public.drivers(profile_id,group_id,license_number,contact_number,membership_status) values($1,$2,'PRIVATE-LICENSE-A','PRIVATE-PHONE-A','approved'),($3,$4,'PRIVATE-LICENSE-B','PRIVATE-PHONE-B','approved'),($5,$2,'PENDING-LICENSE','PENDING-PHONE','pending')", [id(5),id(1001),id(6),id(1002),id(7)]);
   await db.query("insert into public.vehicles(id,terminal_id,body_number,plate_number,assigned_driver_id) values($1,$2,'BODY-A','PRIVATE-PLATE-A',$3),($4,$5,'BODY-B','PRIVATE-PLATE-B',$6)", [id(3001),id(2001),id(5),id(3002),id(2002),id(6)]);
+  await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'unassigned-driver@example.test',now())", [id(10)]);
+  await db.query("update public.profiles set role='driver' where id=$1", [id(10)]);
+  await db.query("insert into public.drivers(profile_id,group_id,license_number,contact_number,membership_status) values($1,$2,'UNASSIGNED-LICENSE','UNASSIGNED-PHONE','approved')", [id(10),id(1001)]);
 
   await check('anonymous users only see the public-safe vehicle projection', () => asUser('anon', null, async () => {
     const vehicles = await rows('select * from public.public_vehicle_directory');
@@ -83,7 +151,7 @@ try {
   await check('the last super admin cannot be demoted and role writes are audited', () => asUser('authenticated', id(1), async () => {
     await denied(() => rows("select public.set_user_role($1,'commuter')", [id(1)]));
     await rows("select public.set_user_role($1,'chairperson')", [id(8)]);
-    assert.equal((await rows('select * from public.admin_user_directory()')).length, 8);
+    assert.equal((await rows('select * from public.admin_user_directory()')).length, 9);
     assert.ok((await rows("select * from public.audit_log where actor_id=$1 and table_name='profiles'", [id(1)])).length > 0);
   }));
   await check('chairperson access is approved by email and rejects unknown, active, and staff targets', async () => {
@@ -117,25 +185,73 @@ try {
     assert.equal((await rows('select role from public.profiles where id=$1',[id(2)]))[0].role, 'driver');
     await denied(() => rows("select public.apply_to_group($1,'OTHER','OTHER')", [id(1002)]));
   }));
-  await check('location writes require an active assigned trip and public reads stop with availability', async () => {
-    await asUser('authenticated', id(5), () => denied(() => rows('insert into public.vehicle_positions(vehicle_id,latitude,longitude) values($1,13.4,121.8)', [id(3001)])));
-    await db.query("update public.drivers set availability='on_trip' where profile_id=$1", [id(5)]);
-    await db.query("update public.vehicles set status='on_route' where id=$1", [id(3001)]);
+  await check('chairpersons can maintain only their own group weekly terminal hours', async () => {
+    const schedule = JSON.stringify(Array.from({ length: 7 }, (_, day_of_week) => ({
+      day_of_week,
+      status: 'open',
+      opens_at: '05:00',
+      closes_at: '18:00',
+    })));
+    await asUser('authenticated', id(3), async () => {
+      await rows('select public.save_terminal_schedule($1,$2::jsonb)', [id(2001), schedule]);
+      assert.equal((await rows('select count(*)::int as count from public.terminal_schedules where terminal_id=$1 and not is_sample', [id(2001)]))[0].count, 7);
+      await denied(() => rows('select public.save_terminal_schedule($1,$2::jsonb)', [id(2002), schedule]));
+      await denied(() => rows("insert into public.terminal_schedules(terminal_id,day_of_week,status) values($1,0,'closed')", [id(2001)]));
+    });
+    await asUser('authenticated', id(5), () => denied(() => rows('select public.save_terminal_schedule($1,$2::jsonb)', [id(2001), schedule])));
+    await asUser('authenticated', id(1), async () => {
+      await rows('select public.save_terminal_schedule($1,$2::jsonb)', [id(2002), schedule]);
+    });
+    await asUser('authenticated', id(3), () => denied(() => rows('select public.save_terminal_schedule($1,$2::jsonb)', [id(2001), JSON.stringify([{ day_of_week: 0, status: 'open', opens_at: '18:00', closes_at: '05:00' }])])));
+    await asUser('anon', null, () => denied(() => rows('select public.save_terminal_schedule($1,$2::jsonb)', [id(2001), schedule])));
+  });
+  await check('pending drivers must be reviewed before demotion; rejected drivers can return to commuter access', async () => {
+    await asUser('authenticated', id(1), () => denied(() => rows("select public.set_user_role($1,'commuter')", [id(2)])));
+    await asUser('authenticated', id(3), () => rows("select public.review_driver_application($1,'rejected')", [id(2)]));
+    await asUser('authenticated', id(1), async () => {
+      await rows("select public.set_user_role($1,'commuter')", [id(2)]);
+      assert.equal((await rows('select count(*)::int as count from public.drivers where profile_id=$1', [id(2)]))[0].count, 0);
+      assert.equal((await rows('select role from public.profiles where id=$1', [id(2)]))[0].role, 'commuter');
+    });
+    await asUser('authenticated', id(2), async () => {
+      await rows("select public.apply_to_group($1,'REAPPLY-LICENSE','REAPPLY-CONTACT')", [id(1002)]);
+      assert.equal((await rows('select group_id,membership_status from public.drivers where profile_id=$1', [id(2)]))[0].group_id, id(1002));
+    });
+  });
+  await check('driver trip state requires an assigned serviceable vehicle and uses the checked RPC', async () => {
+    await asUser('authenticated', id(7), () => denied(() => rows("select public.set_driver_availability('on_trip')")));
+    await asUser('authenticated', id(10), () => denied(() => rows("select public.set_driver_availability('on_trip')")));
     await asUser('authenticated', id(5), async () => {
+      await denied(() => rows("update public.drivers set availability='on_trip' where profile_id=$1", [id(5)]));
+      await denied(() => rows("select public.set_driver_availability('driving')"));
+      await rows("select public.set_driver_availability('on_trip')");
+      assert.equal((await rows('select availability from public.drivers where profile_id=$1', [id(5)]))[0].availability, 'on_trip');
       await rows('insert into public.vehicle_positions(vehicle_id,latitude,longitude) values($1,13.4,121.8)', [id(3001)]);
       await denied(() => rows('insert into public.vehicle_positions(vehicle_id,latitude,longitude) values($1,13.4,121.8)', [id(3002)]));
+      await denied(() => rows("select public.set_driver_availability('offline')"));
     });
+    assert.equal((await rows('select status from public.vehicles where id=$1', [id(3001)]))[0].status, 'on_route');
     assert.equal((await asUser('anon', null, () => rows('select * from public.vehicle_positions'))).length, 1);
-    await db.query("update public.drivers set availability='offline' where profile_id=$1", [id(5)]);
+    await asUser('authenticated', id(5), () => rows("select public.set_driver_availability('available')"));
+    await db.query("update public.vehicles set status='offline' where id=$1", [id(3001)]);
+    await asUser('authenticated', id(5), () => denied(() => rows("select public.set_driver_availability('on_trip')")));
+    await db.query("update public.vehicles set status='idle' where id=$1", [id(3001)]);
     assert.equal((await asUser('anon', null, () => rows('select * from public.vehicle_positions'))).length, 0);
   });
   await check('inactive groups disappear from public directories and lose chairperson write access', async () => {
     await db.query('update public.groups set is_active=false where id=$1', [id(1001)]);
     await asUser('anon', null, async () => {
-      assert.equal((await rows('select * from public.terminals')).length, 1);
+      assert.equal((await rows('select id from public.terminals where id=$1', [id(2001)])).length, 0);
+      assert.equal((await rows('select id from public.terminals where id=$1', [id(2002)])).length, 1);
       assert.equal((await rows('select * from public.public_vehicle_directory')).length, 1);
     });
     await asUser('authenticated', id(3), async () => assert.equal((await rows("update public.terminals set address='Blocked' where id=$1 returning id", [id(2001)])).length, 0));
+    await asUser('authenticated', id(1), async () => {
+      assert.equal((await rows('select * from public.terminal_schedules where terminal_id=$1', [id(2001)])).length, 7);
+    });
+    await asUser('authenticated', id(3), async () => {
+      assert.equal((await rows('select * from public.terminal_schedules where terminal_id=$1', [id(2001)])).length, 0);
+    });
   });
   console.log(`\n${passed} database integration checks passed.`);
 } finally { await db.close(); }
