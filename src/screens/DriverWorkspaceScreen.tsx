@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { MaterialIcon } from '../components/MaterialIcon';
+import { ScreenTransition } from '../components/ScreenTransition';
 import type { AppearanceSetting } from '../lib/appearance';
 import { useColors, useThemeStyles } from '../lib/theme';
 import { groupOptions, tabs } from './driver/data';
@@ -246,47 +247,49 @@ export function DriverWorkspaceScreen({
               </Pressable>
             ) : null}
 
-            {!page && tab === 'Home' && (
-              <DriverHome
-                profile={profile}
-                availability={availability}
-                onChangeAvailability={changeAvailability}
-                onStartTrip={() => { setConsentChecked(false); setTripConsentOpen(true); }}
-                onAnnouncements={() => { setTab('Updates'); setNotice(''); }}
-              />
-            )}
-            {!page && tab === 'Updates' && <AnnouncementsScreen />}
-            {!page && tab === 'Profile' && (
-              <DriverProfileScreen
-                profile={profile}
-                appearance={appearance}
-                onChangeAppearance={onChangeAppearance}
-                onEdit={openProfileEditor}
-                onApply={openApplication}
-              />
-            )}
-            {page === 'edit-profile' && (
-              <EditProfileScreen
-                profile={profileDraft}
-                error={profileError}
-                onChange={setProfileDraft}
-                onSave={saveProfile}
-                onPhoto={() => setNotice('Photo upload will connect when the backend is ready.')}
-                onCancel={() => { setPage(null); setProfileError(''); }}
-              />
-            )}
-            {page === 'application' && (
-              <GroupApplicationScreen
-                profile={applicationDraft}
-                group={applicationGroup}
-                error={applicationError}
-                submitted={applicationSubmitted}
-                onChange={setApplicationDraft}
-                onGroup={setApplicationGroup}
-                onSubmit={submitApplication}
-                onBack={() => setPage(null)}
-              />
-            )}
+            <ScreenTransition transitionKey={page ?? tab} style={{ flexGrow: 1 }}>
+              {!page && tab === 'Home' && (
+                <DriverHome
+                  profile={profile}
+                  availability={availability}
+                  onChangeAvailability={changeAvailability}
+                  onStartTrip={() => { setConsentChecked(false); setTripConsentOpen(true); }}
+                  onAnnouncements={() => { setTab('Updates'); setNotice(''); }}
+                />
+              )}
+              {!page && tab === 'Updates' && <AnnouncementsScreen />}
+              {!page && tab === 'Profile' && (
+                <DriverProfileScreen
+                  profile={profile}
+                  appearance={appearance}
+                  onChangeAppearance={onChangeAppearance}
+                  onEdit={openProfileEditor}
+                  onApply={openApplication}
+                />
+              )}
+              {page === 'edit-profile' && (
+                <EditProfileScreen
+                  profile={profileDraft}
+                  error={profileError}
+                  onChange={setProfileDraft}
+                  onSave={saveProfile}
+                  onPhoto={() => setNotice('Photo upload will connect when the backend is ready.')}
+                  onCancel={() => { setPage(null); setProfileError(''); }}
+                />
+              )}
+              {page === 'application' && (
+                <GroupApplicationScreen
+                  profile={applicationDraft}
+                  group={applicationGroup}
+                  error={applicationError}
+                  submitted={applicationSubmitted}
+                  onChange={setApplicationDraft}
+                  onGroup={setApplicationGroup}
+                  onSubmit={submitApplication}
+                  onBack={() => setPage(null)}
+                />
+              )}
+            </ScreenTransition>
 
             <Text style={styles.footer}>Sample data and preview actions only. Appearance preference is saved on this device.</Text>
           </ScrollView>

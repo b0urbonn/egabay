@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { MaterialIcon } from '../components/MaterialIcon';
 import { AdminChairpersonApproval, AdminGroupEditor, AdminRecordInspector, AdminRoleConfirmation, AdminTerminalEditor, type AdminGroupInput, type AdminTerminalInput } from '../components/admin/AdminPanels';
+import { ScreenTransition } from '../components/ScreenTransition';
 import { Button, Card, ErrorBanner } from '../components/ui';
 import { geocodeTerminalAddress } from '../lib/geocoding';
 import { type AccountRole, type AccountSession } from '../lib/session';
@@ -248,6 +249,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
         {notice && <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.successNotice}><Text style={styles.successText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss message" onPress={() => setNotice(null)} style={styles.dismissNotice}><Text style={styles.panelAction}>Dismiss</Text></Pressable></View>}
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+          <ScreenTransition transitionKey={section} style={{ flexGrow: 1, gap: 24 }}>
           <View style={styles.pageHeader}>
             <View style={styles.pageHeading}><Text style={styles.eyebrow}>MARINDUQUE TRANSPORT REGISTRY</Text><Text style={styles.pageTitle}>{section === 'overview' ? 'Network overview' : selectedSection.label}</Text><Text style={styles.pageIntro}>{sectionDescription[section]}</Text>{updatedAt && <Text style={styles.updatedAt}>{`Updated ${shortDate(updatedAt)}`}</Text>}</View>
             {section === 'groups' && <Button label="Add transport group" onPress={() => { setActionError(null); setNotice(null); setGroupEditor(null); }} disabled={loading} />}
@@ -279,6 +281,7 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
           {section === 'audit' && <AuditPanel events={audit} users={userById} loading={loading} styles={styles} onOpen={(event) => setInspector({ title: `${event.action} · ${event.table_name}`, subtitle: 'Recorded activity', rows: [{ label: 'Actor', value: event.actor_id ? userById.get(event.actor_id)?.display_name ?? 'Account' : 'System' }, { label: 'Recorded at', value: shortDate(event.created_at) }, { label: 'Record ID', value: event.record_id ?? 'Not recorded' }], detail: JSON.stringify(event.detail, null, 2) })} />}
           </>}
           <Text style={styles.footerNote}>Transport registry · Marinduque, Philippines</Text>
+          </ScreenTransition>
         </ScrollView>
       </View>
       {inspector && <AdminRecordInspector {...inspector} onClose={() => setInspector(null)} />}

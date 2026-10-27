@@ -3,6 +3,7 @@ import { BackHandler, Pressable, SafeAreaView, StyleSheet, Text, View } from 're
 
 import { MaterialIcon, type MaterialIconName } from '../components/MaterialIcon';
 import { MarinduqueMap } from '../components/MarinduqueMap';
+import { ScreenTransition } from '../components/ScreenTransition';
 import type { AppMode } from '../lib/appMode';
 import type { AppearanceSetting } from '../lib/appearance';
 import type { Session } from '../lib/session';
@@ -51,7 +52,6 @@ export function MainShell({
   const [activeTab, setActiveTab] = useState<Tab>('Home');
   const [showSettings, setShowSettings] = useState(false);
   const [showTerminals, setShowTerminals] = useState(false);
-
   useEffect(() => {
     if (!showSettings) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -63,7 +63,7 @@ export function MainShell({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.screen}>
+      <ScreenTransition transitionKey={`${activeTab}:${showSettings}:${showTerminals}`} duration={260} style={styles.screen}>
         {showSettings ? (
           <SettingsScreen
             appearance={appearance}
@@ -98,7 +98,7 @@ export function MainShell({
             )}
           </>
         )}
-      </View>
+      </ScreenTransition>
       <View style={styles.tabBar}>
         {tabs.map((tab) => {
           const selected = !showSettings && !showTerminals && activeTab === tab.label;

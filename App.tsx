@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Platform, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { Button, ErrorBanner } from './src/components/ui';
+import { ScreenTransition } from './src/components/ScreenTransition';
 import { signOut } from './src/lib/auth';
 import { useAuthSession } from './src/lib/useAuthSession';
 
@@ -78,6 +79,13 @@ export default function App() {
   const isWideWeb = Platform.OS === 'web' && width >= 1024 && stage !== 'chairperson' && stage !== 'driver';
   const staffAccount = session?.kind === 'account' && session.role !== 'commuter' ? session : null;
   const isAdminWorkspace = stage === 'app' && staffAccount?.role === 'super_admin' && !showCommuterView;
+  const appTransitionKey = auth.loading
+    ? 'auth-loading'
+    : auth.error
+      ? `auth-error:${stage}`
+      : auth.recovering && auth.userId
+        ? 'password-recovery'
+        : `${stage}:${staffAccount?.role ?? 'commuter'}:${showCommuterView ? 'commuter' : 'workspace'}`;
   const styles = createAppStyles(themeColors);
 
   const chooseMode = (next: AppMode) => { setStoredMode(next); setMode(next); };
@@ -128,44 +136,46 @@ export default function App() {
         <View style={isWideWeb && !isAdminWorkspace ? styles.appFrame : styles.appFrameFill}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           {actionError && <ErrorBanner message={actionError} />}
-          {auth.loading ? (
-            <View style={styles.authStatus}><ActivityIndicator color={themeColors.greenDark} /><Text style={styles.authStatusCopy}>Connecting your account…</Text></View>
-          ) : auth.error ? (
-            <View style={styles.authStatus}>
-              <Text style={styles.authStatusTitle}>We couldn’t open your account</Text>
-              <Text style={styles.authStatusCopy}>{auth.error}</Text>
-              <Button label="Retry" onPress={() => { if (!auth.userId) setStage('login'); auth.retry(); }} />
-              <Button label="Sign out" variant="ghost" onPress={() => void leaveSession()} loading={signingOut} />
-            </View>
-          ) : auth.recovering && auth.userId ? (
-            <PasswordRecoveryScreen onDone={() => { auth.finishRecovery(); setStage('app'); }} onCancel={() => void leaveSession()} />
-          ) : (
-            <>
-              {stage === 'onboarding' && <OnboardingScreen onDone={finishOnboarding} />}
-              {stage === 'welcome' && <WelcomeScreen onLogin={() => setStage('login')} onSignUp={() => setStage('signup')} onOffline={enterAsGuest} />}
-              {stage === 'login' && <LoginScreen
-                onBack={() => setStage('welcome')}
-                onSignUp={() => setStage('signup')}
-                onChairpersonPreview={() => setStage('chairperson')}
-                onDriverPreview={() => setStage('driver')}
-              />}
-              {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
-              {stage === 'driver' && <DriverWorkspaceScreen appearance={appearance} onChangeAppearance={chooseAppearance} onBack={() => setStage('login')} />}
-              {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
-              {stage === 'app' && session && (staffAccount && !showCommuterView ? (
-                staffAccount.role === 'super_admin' ? (
-                  <SuperAdminWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onRefreshSession={auth.retry} />
+          <ScreenTransition transitionKey={appTransitionKey} style={{ flex: 1 }}>
+            {auth.loading ? (
+              <View style={styles.authStatus}><ActivityIndicator color={themeColors.greenDark} /><Text style={styles.authStatusCopy}>Connecting your account…</Text></View>
+            ) : auth.error ? (
+              <View style={styles.authStatus}>
+                <Text style={styles.authStatusTitle}>We couldn’t open your account</Text>
+                <Text style={styles.authStatusCopy}>{auth.error}</Text>
+                <Button label="Retry" onPress={() => { if (!auth.userId) setStage('login'); auth.retry(); }} />
+                <Button label="Sign out" variant="ghost" onPress={() => void leaveSession()} loading={signingOut} />
+              </View>
+            ) : auth.recovering && auth.userId ? (
+              <PasswordRecoveryScreen onDone={() => { auth.finishRecovery(); setStage('app'); }} onCancel={() => void leaveSession()} />
+            ) : (
+              <>
+                {stage === 'onboarding' && <OnboardingScreen onDone={finishOnboarding} />}
+                {stage === 'welcome' && <WelcomeScreen onLogin={() => setStage('login')} onSignUp={() => setStage('signup')} onOffline={enterAsGuest} />}
+                {stage === 'login' && <LoginScreen
+                  onBack={() => setStage('welcome')}
+                  onSignUp={() => setStage('signup')}
+                  onChairpersonPreview={() => setStage('chairperson')}
+                  onDriverPreview={() => setStage('driver')}
+                />}
+                {stage === 'chairperson' && <ChairpersonConsoleScreen onBack={() => setStage('login')} />}
+                {stage === 'driver' && <DriverWorkspaceScreen appearance={appearance} onChangeAppearance={chooseAppearance} onBack={() => setStage('login')} />}
+                {stage === 'signup' && <SignUpScreen onBack={() => setStage('welcome')} onLogin={() => setStage('login')} />}
+                {stage === 'app' && session && (staffAccount && !showCommuterView ? (
+                  staffAccount.role === 'super_admin' ? (
+                    <SuperAdminWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onRefreshSession={auth.retry} />
+                  ) : (
+                    <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
+                  )
                 ) : (
-                  <RoleWorkspaceScreen account={staffAccount} onLogout={() => void leaveSession()} onOpenCommuter={() => setShowCommuterView(true)} onRefreshSession={auth.retry} />
-                )
-              ) : (
-                <>
-                  {staffAccount && <Button label="Return to your workspace" variant="secondary" onPress={() => setShowCommuterView(false)} />}
-                  <MainShell session={session} mode={mode} onChangeMode={chooseMode} appearance={appearance} onChangeAppearance={chooseAppearance} onReset={() => void resetApp()} onLogout={() => void leaveSession()} onAuthRequest={requestAuth} />
-                </>
-              ))}
-            </>
-          )}
+                  <>
+                    {staffAccount && <Button label="Return to your workspace" variant="secondary" onPress={() => setShowCommuterView(false)} />}
+                    <MainShell session={session} mode={mode} onChangeMode={chooseMode} appearance={appearance} onChangeAppearance={chooseAppearance} onReset={() => void resetApp()} onLogout={() => void leaveSession()} onAuthRequest={requestAuth} />
+                  </>
+                ))}
+              </>
+            )}
+          </ScreenTransition>
         </View>
       </View>
     </ColorsContext.Provider>

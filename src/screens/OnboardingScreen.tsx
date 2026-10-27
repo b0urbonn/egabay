@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/ui';
+import { ScreenTransition } from '../components/ScreenTransition';
 import { useThemeStyles } from '../lib/theme';
 import { radius, spacing, type ThemeColors } from '../theme';
 
@@ -102,12 +103,12 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           </Pressable>
         )}
       </View>
-      <View style={styles.body}>
+      <ScreenTransition transitionKey={String(index)} style={styles.body}>
         <SlideArt kind={slide.art} />
         <Text style={styles.eyebrow}>{slide.eyebrow.toUpperCase()}</Text>
         <Text style={styles.title}>{slide.title}</Text>
         <Text style={styles.bodyText}>{slide.body}</Text>
-      </View>
+      </ScreenTransition>
       <View style={styles.footer}>
         <Button
           label={last ? 'Get started' : 'Next'}

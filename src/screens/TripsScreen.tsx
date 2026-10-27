@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ScreenTransition } from '../components/ScreenTransition';
 import {
   demoOngoingTrips,
   demoTripHistory,
@@ -123,16 +124,18 @@ export function TripsScreen() {
         })}
       </View>
 
-      {selectedView === 'History' && (
-        <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>Past trips</Text>
-          <Text style={styles.tripCount}>{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</Text>
-        </View>
-      )}
+      <ScreenTransition transitionKey={selectedView} style={{ flexGrow: 1 }}>
+        {selectedView === 'History' && (
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>Past trips</Text>
+            <Text style={styles.tripCount}>{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</Text>
+          </View>
+        )}
 
-      {selectedView === 'Ongoing'
-        ? trips.map((trip) => <OngoingTripCard key={trip.id} trip={trip} />)
-        : trips.map((trip) => <HistoryTripCard key={trip.id} trip={trip} />)}
+        {selectedView === 'Ongoing'
+          ? trips.map((trip) => <OngoingTripCard key={trip.id} trip={trip} />)
+          : trips.map((trip) => <HistoryTripCard key={trip.id} trip={trip} />)}
+      </ScreenTransition>
     </ScrollView>
   );
 }

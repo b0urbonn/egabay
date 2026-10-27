@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Easing, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { MaterialIcon } from '../components/MaterialIcon';
 import { demoRoutes } from '../data/demo';
@@ -42,8 +42,35 @@ export function HomeScreen({
   const styles = useThemeStyles(createStyles);
   const colors = useColors();
   const [searchQuery, setSearchQuery] = useState('');
+  const sectionMotion = useRef(Array.from({ length: 5 }, () => new Animated.Value(0))).current;
+  const routeMarker = useRef(new Animated.Value(0)).current;
   const name = session.kind === 'account' ? session.name.split(' ')[0] : 'commuter';
   const today = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
+
+  useEffect(() => {
+    Animated.stagger(
+      75,
+      sectionMotion.map((value) => Animated.spring(value, {
+        toValue: 1,
+        speed: 18,
+        bounciness: 3,
+        useNativeDriver: true,
+      })),
+    ).start();
+
+    const markerTravel = Animated.loop(Animated.sequence([
+      Animated.timing(routeMarker, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(routeMarker, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ]));
+    markerTravel.start();
+
+    return () => markerTravel.stop();
+  }, [routeMarker, sectionMotion]);
+
+  const reveal = (index: number) => ({
+    opacity: sectionMotion[index],
+    transform: [{ translateY: sectionMotion[index].interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
+  });
 
   const handleQuickAccess = (destination: HomeDestination | 'Terminals' | 'assistant') => {
     if (destination === 'assistant') {
@@ -59,7 +86,7 @@ export function HomeScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
+      <Animated.View style={[styles.topRow, reveal(0)]}>
         <View style={styles.greetingCopy}>
           <Text style={styles.dateText}>{today}</Text>
           <Text style={styles.largeTitle}>{greeting()},</Text>
@@ -73,9 +100,9 @@ export function HomeScreen({
         >
           <MaterialIcon name="settings" size={22} color={colors.ink} />
         </Pressable>
-      </View>
+      </Animated.View>
 
-      <View style={styles.searchField}>
+      <Animated.View style={[styles.searchField, reveal(1)]}>
         <MaterialIcon name="search" size={22} color={colors.green} />
         <TextInput
           accessibilityLabel="Search destinations"
@@ -95,7 +122,7 @@ export function HomeScreen({
         >
           <MaterialIcon name="arrowForward" size={20} color="#FFFFFF" />
         </Pressable>
-      </View>
+      </Animated.View>
 
       {mode === 'offline' && (
         <View style={styles.offlineCard}>
@@ -110,7 +137,7 @@ export function HomeScreen({
         </View>
       )}
 
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, reveal(2)]}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Quick access</Text>
         </View>
@@ -138,32 +165,47 @@ export function HomeScreen({
             </View>
           ))}
         </View>
-      </View>
+      </Animated.View>
 
-      <ImageBackground
-        source={require('../../assets/marinduque-sta-cruz-boac-terminal-banner.jpg')}
-        resizeMode="cover"
-        style={styles.exploreBanner}
-        imageStyle={styles.bannerImage}
-        accessible={false}
-      >
-        <View pointerEvents="none" style={styles.bannerScrim} />
-        <View style={styles.bannerCopy}>
-          <Text style={styles.bannerEyebrow}>YOUR ISLAND, YOUR WAY</Text>
-          <Text style={styles.bannerTitle}>Explore{'\n'}Marinduque</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Explore Marinduque on the map"
-            onPress={() => onNavigate('Map')}
-            style={({ pressed }) => [styles.bannerButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.bannerButtonText}>Explore island</Text>
-            <MaterialIcon name="arrowForward" size={16} color={colors.lime} />
-          </Pressable>
-        </View>
-      </ImageBackground>
+      <Animated.View style={reveal(3)}>
+        <ImageBackground
+          source={require('../../assets/marinduque-sta-cruz-boac-terminal-banner.jpg')}
+          resizeMode="cover"
+          style={styles.exploreBanner}
+          imageStyle={styles.bannerImage}
+          accessible={false}
+        >
+          <View pointerEvents="none" style={styles.bannerScrim} />
+          <View pointerEvents="none" style={styles.routeGraphic}>
+            <View style={styles.routeTrack} />
+            <View style={[styles.routeWaypoint, styles.routeWaypointTop]} />
+            <View style={[styles.routeWaypoint, styles.routeWaypointBottom]} />
+            <Animated.View
+              style={[
+                styles.routeMarker,
+                { transform: [{ translateY: routeMarker.interpolate({ inputRange: [0, 1], outputRange: [-36, 36] }) }] },
+              ]}
+            >
+              <View style={styles.routeMarkerCore} />
+            </Animated.View>
+          </View>
+          <View style={styles.bannerCopy}>
+            <Text style={styles.bannerEyebrow}>YOUR ISLAND, YOUR WAY</Text>
+            <Text style={styles.bannerTitle}>Explore{'\n'}Marinduque</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Explore Marinduque on the map"
+              onPress={() => onNavigate('Map')}
+              style={({ pressed }) => [styles.bannerButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.bannerButtonText}>Explore island</Text>
+              <MaterialIcon name="arrowForward" size={16} color={colors.lime} />
+            </Pressable>
+          </View>
+        </ImageBackground>
+      </Animated.View>
 
-      <View style={styles.section}>
+      <Animated.View style={[styles.section, reveal(4)]}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Recent Routes</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="See all routes" onPress={() => onNavigate('Map')}>
@@ -193,7 +235,7 @@ export function HomeScreen({
             </View>
           ))}
         </View>
-      </View>
+      </Animated.View>
 
       <Text style={styles.footer}>Sample data — live information coming soon.</Text>
     </ScrollView>
@@ -226,11 +268,18 @@ function createStyles(colors: ThemeColors) {
     exploreBanner: { height: 174, marginTop: 23, paddingLeft: 19, paddingVertical: 17, paddingRight: 14, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.green, justifyContent: 'center' },
     bannerImage: { borderRadius: 22 },
     bannerScrim: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(8,34,27,0.48)' },
-    bannerCopy: { zIndex: 2, alignItems: 'flex-start' },
+    bannerCopy: { zIndex: 2, alignItems: 'flex-start', maxWidth: '74%' },
     bannerEyebrow: { color: '#D5E9D9', fontSize: 9, lineHeight: 12, fontWeight: '800', letterSpacing: 1.05, marginBottom: 5 },
     bannerTitle: { color: '#FFFFFF', fontSize: 25, lineHeight: 27, fontWeight: '800', letterSpacing: -0.55 },
     bannerButton: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, minHeight: 30 },
     bannerButtonText: { color: colors.lime, fontSize: 12, lineHeight: 16, fontWeight: '800' },
+    routeGraphic: { position: 'absolute', zIndex: 1, right: 24, top: 38, width: 58, height: 96, alignItems: 'center', justifyContent: 'space-between' },
+    routeTrack: { position: 'absolute', top: 7, bottom: 7, width: 2, borderRadius: 2, backgroundColor: 'rgba(214,239,198,0.6)' },
+    routeWaypoint: { position: 'absolute', width: 9, height: 9, borderRadius: 5, borderWidth: 2, borderColor: '#E5F3D5', backgroundColor: 'rgba(23,107,75,0.8)' },
+    routeWaypointTop: { top: 3 },
+    routeWaypointBottom: { bottom: 3 },
+    routeMarker: { position: 'absolute', top: 36, width: 23, height: 23, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.lime, shadowColor: '#10251D', shadowOpacity: 0.24, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
+    routeMarkerCore: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.greenDark },
     routeGroup: { borderRadius: 17, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 67 },
     routeRow: { minHeight: 70, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },

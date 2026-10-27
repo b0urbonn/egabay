@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { MaterialIcon } from '../components/MaterialIcon';
+import { ScreenTransition } from '../components/ScreenTransition';
 import { MarinduqueMap } from '../components/MarinduqueMap';
 import { demoOngoingTrips, demoRoutes, type CommuteRoute } from '../data/demo';
 import { useColors, useThemeStyles } from '../lib/theme';
@@ -92,10 +93,12 @@ export function TerminalsScreen({ onBack }: { onBack: () => void }) {
     });
   }, [activeFilter, searchQuery]);
 
-  return selectedTerminal ? (
-    <TerminalDetails terminal={selectedTerminal} onBack={() => setSelectedTerminal(null)} />
-  ) : (
-    <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
+  return (
+    <ScreenTransition transitionKey={selectedTerminal?.id ?? 'terminal-list'} style={{ flex: 1 }}>
+      {selectedTerminal ? (
+        <TerminalDetails terminal={selectedTerminal} onBack={() => setSelectedTerminal(null)} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.pageContent} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
@@ -157,40 +160,44 @@ export function TerminalsScreen({ onBack }: { onBack: () => void }) {
         <Text style={styles.countText}>{visibleTerminals.length} listed</Text>
       </View>
 
-      {visibleTerminals.length ? (
-        <View style={styles.terminalList}>
-          {visibleTerminals.map((terminal) => (
-            <Pressable
-              key={terminal.id}
-              accessibilityRole="button"
-              accessibilityLabel={`View details for ${terminal.name}`}
-              onPress={() => setSelectedTerminal(terminal)}
-              style={({ pressed }) => [styles.terminalCard, pressed && styles.cardPressed]}
-            >
-              <View style={styles.terminalIcon}>
-              <MaterialIcon name="terminals" size={21} color={colors.greenDark} />
-              </View>
-              <View style={styles.terminalCopy}>
-                <Text style={styles.terminalName}>{terminal.name}</Text>
-                <Text style={styles.terminalAddress}>{terminal.address}</Text>
-                <View style={styles.detailsLink}>
-                  <Text style={styles.detailsText}>View Details</Text>
-                  <MaterialIcon name="chevronRight" size={16} color={colors.greenDark} />
+      <ScreenTransition transitionKey={activeFilter} style={{ flexGrow: 1 }}>
+        {visibleTerminals.length ? (
+          <View style={styles.terminalList}>
+            {visibleTerminals.map((terminal) => (
+              <Pressable
+                key={terminal.id}
+                accessibilityRole="button"
+                accessibilityLabel={`View details for ${terminal.name}`}
+                onPress={() => setSelectedTerminal(terminal)}
+                style={({ pressed }) => [styles.terminalCard, pressed && styles.cardPressed]}
+              >
+                <View style={styles.terminalIcon}>
+                  <MaterialIcon name="terminals" size={21} color={colors.greenDark} />
                 </View>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptyCard}>
-          <View style={styles.emptyIcon}><MaterialIcon name="terminals" size={23} color={colors.muted} /></View>
-          <Text style={styles.emptyTitle}>No terminals listed here yet</Text>
-          <Text style={styles.emptyCopy}>Try another municipality or search for a different terminal.</Text>
-        </View>
-      )}
+                <View style={styles.terminalCopy}>
+                  <Text style={styles.terminalName}>{terminal.name}</Text>
+                  <Text style={styles.terminalAddress}>{terminal.address}</Text>
+                  <View style={styles.detailsLink}>
+                    <Text style={styles.detailsText}>View Details</Text>
+                    <MaterialIcon name="chevronRight" size={16} color={colors.greenDark} />
+                  </View>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyCard}>
+            <View style={styles.emptyIcon}><MaterialIcon name="terminals" size={23} color={colors.muted} /></View>
+            <Text style={styles.emptyTitle}>No terminals listed here yet</Text>
+            <Text style={styles.emptyCopy}>Try another municipality or search for a different terminal.</Text>
+          </View>
+        )}
+      </ScreenTransition>
 
       <Text style={styles.dataNote}>Sample transport hubs · exact terminal locations need confirmation.</Text>
-    </ScrollView>
+        </ScrollView>
+      )}
+    </ScreenTransition>
   );
 }
 
@@ -264,24 +271,26 @@ function TerminalDetails({ terminal, onBack }: { terminal: Terminal; onBack: () 
             );
           })}
         </View>
-        {activeMode === 'Jeepney' && servedRoutes.length > 0 ? (
-          <View style={styles.servedRoutes}>
-            {servedRoutes.map((route, index) => (
-              <View key={route.id}>
-                {index > 0 && <View style={styles.routeSeparator} />}
-                <RouteRow route={route} styles={styles} />
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.routeEmptyCard}>
-            <View style={styles.infoIcon}><MaterialIcon name="route" size={19} color={colors.greenDark} /></View>
-            <View style={styles.infoCopy}>
-              <Text style={styles.infoValue}>{activeMode === 'Tricycle' ? 'Tricycle routes are not mapped yet' : 'No sample routes listed'}</Text>
-              <Text style={styles.routeEmptyCopy}>Route paths and schedules need confirmation from local operators.</Text>
+        <ScreenTransition transitionKey={activeMode} style={{ flexGrow: 1 }}>
+          {activeMode === 'Jeepney' && servedRoutes.length > 0 ? (
+            <View style={styles.servedRoutes}>
+              {servedRoutes.map((route, index) => (
+                <View key={route.id}>
+                  {index > 0 && <View style={styles.routeSeparator} />}
+                  <RouteRow route={route} styles={styles} />
+                </View>
+              ))}
             </View>
-          </View>
-        )}
+          ) : (
+            <View style={styles.routeEmptyCard}>
+              <View style={styles.infoIcon}><MaterialIcon name="route" size={19} color={colors.greenDark} /></View>
+              <View style={styles.infoCopy}>
+                <Text style={styles.infoValue}>{activeMode === 'Tricycle' ? 'Tricycle routes are not mapped yet' : 'No sample routes listed'}</Text>
+                <Text style={styles.routeEmptyCopy}>Route paths and schedules need confirmation from local operators.</Text>
+              </View>
+            </View>
+          )}
+        </ScreenTransition>
       </View>
       <Text style={styles.dataNote}>Sample route data. Confirm pickup points, routes, and schedules locally before traveling.</Text>
     </ScrollView>

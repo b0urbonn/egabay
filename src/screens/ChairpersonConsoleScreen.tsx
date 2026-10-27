@@ -12,6 +12,7 @@ import {
 import type { ComponentRef } from 'react';
 
 import { MaterialIcon } from '../components/MaterialIcon';
+import { ScreenTransition } from '../components/ScreenTransition';
 import { useColors, useThemeStyles } from '../lib/theme';
 import { AssignmentsTab } from './chairperson/AssignmentsTab';
 import { DriversTab } from './chairperson/DriversTab';
@@ -247,6 +248,10 @@ export function ChairpersonConsoleScreen({ onBack }: { onBack: () => void }) {
       <ScrollView ref={scrollRef} style={styles.content} contentContainerStyle={[styles.contentInner, wide && styles.contentInnerWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {notice ? <View style={styles.notice} accessibilityRole="alert"><Text style={styles.noticeText}>{notice}</Text><Pressable onPress={() => setNotice('')} accessibilityRole="button" accessibilityLabel="Dismiss message" style={styles.dismissButton}><Text style={styles.formCancel}>Dismiss</Text></Pressable></View> : null}
 
+        <ScreenTransition
+          transitionKey={`${tab}:${terminalForm ? `terminal-${terminalForm.id ?? 'new'}` : 'terminal-list'}:${vehicleForm ? `vehicle-${vehicleForm.id ?? 'new'}` : 'vehicle-list'}`}
+          style={{ flexGrow: 1, gap: 18 }}
+        >
         {tab === 'Overview' && (
           <OverviewTab
             wide={wide}
@@ -344,6 +349,7 @@ export function ChairpersonConsoleScreen({ onBack }: { onBack: () => void }) {
             announcements={announcements}
           />
         )}
+        </ScreenTransition>
 
       </ScrollView>
       </View>
