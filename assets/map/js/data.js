@@ -18,12 +18,14 @@ let selectedOrigin = TOWNS.find((town) => town.name === 'Boac');
 // ---------- Points of interest ----------
 const POIS = [
   // Approximate town-center service areas, not verified street-level terminals.
-  { name: 'Boac Transport Hub',      lat: 13.4463, lng: 121.8406, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal' },
-  { name: 'Mogpog Transport Hub',    lat: 13.4745, lng: 121.8610, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal' },
-  { name: 'Gasan Transport Hub',     lat: 13.3224, lng: 121.8465, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal' },
-  { name: 'Buenavista Transport Hub',lat: 13.2407, lng: 121.9377, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal' },
-  { name: 'Torrijos Transport Hub',  lat: 13.3197, lng: 122.0849, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal' },
-  { name: 'Santa Cruz Transport Hub',lat: 13.4756, lng: 122.0525, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal' },
+  // kind 'both' = the hub serves jeepney and tricycle; used by the transport
+  // filter dropdown in markers.js.
+  { name: 'Boac Transport Hub',      lat: 13.4463, lng: 121.8406, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal', kind: 'both' },
+  { name: 'Mogpog Transport Hub',    lat: 13.4745, lng: 121.8610, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal', kind: 'both' },
+  { name: 'Gasan Transport Hub',     lat: 13.3224, lng: 121.8465, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal', kind: 'both' },
+  { name: 'Buenavista Transport Hub',lat: 13.2407, lng: 121.9377, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal', kind: 'both' },
+  { name: 'Torrijos Transport Hub',  lat: 13.3197, lng: 122.0849, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal', kind: 'both' },
+  { name: 'Santa Cruz Transport Hub',lat: 13.4756, lng: 122.0525, note: 'Sample jeepney / tricycle service area · verify pickup point', category: 'terminal', kind: 'both' },
   { name: 'Marinduque Airport',      lat: 13.3607, lng: 121.8257, note: 'Masiga · Gasan', category: 'place' },
   { name: 'Poctoy White Beach',      lat: 13.3033, lng: 122.0938, note: 'Beach · Torrijos', category: 'place' },
 ];

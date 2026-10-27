@@ -47,12 +47,22 @@
     width: min(340px, calc(100vw - 220px));
   }
   .search-wrap { position: relative; }
+  .search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    fill: var(--muted);
+    pointer-events: none;
+  }
   #search {
     width: 100%;
     height: 40px;
     border: 1px solid var(--line);
     border-radius: 20px;
-    padding: 0 16px;
+    padding: 0 16px 0 36px;
     font-size: 12.5px;
     font-family: inherit;
     color: var(--ink);
@@ -166,7 +176,8 @@
 
   /* Compact mode when embedded in the app */
   body.embedded .search-float { top: auto; bottom: 74px; left: 8px; transform: none; width: min(230px, calc(100vw - 76px)); }
-  body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; }
+  body.embedded #search { height: 32px; font-size: 11px; border-radius: 16px; padding-left: 30px; }
+  body.embedded .search-icon { left: 10px; width: 13px; height: 13px; }
   body.embedded #results { top: auto; bottom: 36px; }
   body.embedded .locate-fab, body.embedded .expand-btn, body.embedded .basemap-btn { width: 34px; height: 34px; font-size: 16px; line-height: 32px; }
 

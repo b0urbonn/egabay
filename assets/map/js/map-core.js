@@ -33,10 +33,16 @@ if (typeof maplibregl === 'undefined') {
   map.touchZoomRotate.disableRotation();
   if (EMBEDDED) map.scrollZoom.disable(); // don't trap page scroll when embedded
 
-  // MapLibre's compact attribution starts expanded; drop the -show class so
-  // it opens as just the "i" button — its own handler toggles it on tap.
+  // Fold the attribution to just the "i" button. While sources are still
+  // loading the control carries no .compact class, so a later _updateCompact
+  // would add -compact-show and expand the credit by itself; pinning
+  // .maplibregl-compact makes every future check short-circuit, so only the
+  // button's own tap handler can open the credit.
   const attribControl = document.querySelector('.maplibregl-ctrl-attrib');
-  if (attribControl) attribControl.classList.remove('maplibregl-compact-show');
+  if (attribControl) {
+    attribControl.classList.add('maplibregl-compact');
+    attribControl.classList.remove('maplibregl-compact-show');
+  }
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
