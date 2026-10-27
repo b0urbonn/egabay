@@ -39,6 +39,12 @@ try {
     const barangayLinks = readFileSync('supabase/migrations/20261105000000_barangay_to_barangay_tricycle.sql', 'utf8');
     await db.exec(barangayLinks);
     await db.exec(barangayLinks);
+    const barangayPins = readFileSync('supabase/migrations/20261106000000_barangay_terminal_pins.sql', 'utf8');
+    await db.exec(barangayPins);
+    await db.exec(barangayPins);
+    const pinFixups = readFileSync('supabase/migrations/20261107000000_service_point_and_hub_pins.sql', 'utf8');
+    await db.exec(pinFixups);
+    await db.exec(pinFixups);
     assert.equal((await rows('select count(*)::int as count from public.groups where is_sample'))[0].count, 20);
     assert.equal((await rows('select count(*)::int as count from public.terminals where is_sample'))[0].count, 675);
     assert.equal((await rows(`select count(*)::int as count from (values
@@ -90,6 +96,14 @@ try {
     assert.equal((await rows('select count(*)::int as count from public.vehicles where is_sample'))[0].count, 4);
     assert.ok((await rows('select count(*)::int as count from public.routes where is_sample'))[0].count > 200);
     assert.equal((await rows('select count(*)::int as count from public.terminal_schedules where is_sample'))[0].count, 105);
+    assert.equal((await rows(`select count(*)::int as count from public.terminals
+      where is_sample and is_active and (latitude is null or longitude is null)`))[0].count, 0);
+    assert.equal((await rows(`select count(*)::int as count from public.terminals
+      where is_sample and latitude is not null
+        and (latitude not between 13.05 and 13.72 or longitude not between 121.62 and 122.32)`))[0].count, 0);
+    assert.equal((await rows(`select count(*)::int as count from public.route_stops stop
+      join public.routes route on route.id = stop.route_id and route.is_sample and route.mode = 'tricycle'
+      where stop.locality like '%, %' and stop.latitude is null`))[0].count, 0);
     assert.equal((await rows('select count(*)::int as count from public.routes r where not exists (select 1 from public.route_stops s where s.route_id=r.id)'))[0].count, 0);
     assert.equal((await rows('select count(*)::int as count from public.routes r where not exists (select 1 from public.terminal_routes tr where tr.route_id=r.id)'))[0].count, 0);
     assert.equal((await rows('select count(*)::int as count from auth.users'))[0].count, 0);
