@@ -2,6 +2,12 @@
 
 This file records repository changes visible in local Git history and `origin/main`. The [checklist](CHECKLIST.md) tracks implementation and the branch differences.
 
+## 2026-10-27
+
+- **Desktop layout removed for non-admin workspaces (`d60407c`)** — Reverted the `62a6f15` wide-web treatment for the commuter shell: the left navigation rail (and its brand-mark collapse animation), the centered 1240 px content column, and every wide multi-column variant in Home/Trips/Terminals/Profile/Settings are gone; `src/lib/useWideLayout.ts` was deleted. The signed-in app renders the single-column layout with the bottom tab bar on all widths. On ≥1024 px web the landing chrome (intro panel + phone frame) now wraps every stage — including the signed-in commuter app — except the Super Admin workspace, which keeps the full-width layout (`isAdminWorkspace`).
+- **Map attribution starts collapsed (`d60407c`)** — MapLibre's compact attribution control opened expanded by default and covered the map corner; `map-core.js` now drops `maplibregl-compact-show` so it renders as just the "i" button and still expands on tap.
+- **Dependency audit remediation (`d60407c`)** — `npm audit fix` (non-breaking upgrades only) plus `expo ~58.0.17 → ^58.0.19`; lockfile regenerated. Resolves 13 of 18 advisories. The remaining 5 highs are confined to the `@expo/cli` dev toolchain — none ship in the app bundle: `node-forge ≤1.4.0` (RSA signature forgery; no patched release exists upstream) and `zod <4.6.6` (fixed only in zod 4, which `@expo/cli` cannot take — it requires `^3`). `npm audit fix --force` offers no real fix: it clears the tree by downgrading `expo` to 44.x, which was not applied.
+
 ## 2026-10-26
 
 - **Merge: driver appearance + terminals bridge (`53d160a` → local)** — Pulled `origin/main` (driver preview appearance selector); conflicts in `CHANGELOG.md`/`CHECKLIST.md` resolved by keeping the union of both sides' entries.
