@@ -24,34 +24,33 @@ on conflict (id) do update set
   municipality = excluded.municipality,
   is_sample = excluded.is_sample;
 
-insert into public.terminals (id, group_id, name, municipality, barangay, address, latitude, longitude, is_sample) values
+insert into public.terminals (id, name, municipality, barangay, address, latitude, longitude, is_sample) values
   -- OSM bus_station node 4258037365
-  ('f1000000-0000-4000-8000-000000000001', 'f0000000-0000-4000-8000-000000000001',
+  ('f1000000-0000-4000-8000-000000000001',
    'Boac Jeepney Terminal (Sample)', 'Boac', 'Tabi', 'OpenStreetMap mapped point; confirm pickup location', 13.4489754, 121.8394186, true),
   -- OSM bus_stop node 5159982022
-  ('f1000000-0000-4000-8000-000000000002', 'f0000000-0000-4000-8000-000000000001',
+  ('f1000000-0000-4000-8000-000000000002',
    'Boac–Balanacan Jeepney Stop (Sample)', 'Boac', 'Tabi', 'OpenStreetMap mapped stop; confirm boarding point', 13.4468627, 121.8388047, true),
   -- Town-center placeholder, verify locally.
-  ('f1000000-0000-4000-8000-000000000003', 'f0000000-0000-4000-8000-000000000007',
+  ('f1000000-0000-4000-8000-000000000003',
    'Boac Central TODA Stand (Sample)', 'Boac', 'Poblacion', 'Approximate town-center pin; verify with chairperson', 13.4463, 121.8406, true),
   -- OSM bus_station node 1769483762 (named "Mogpog - Boac")
-  ('f1000000-0000-4000-8000-000000000004', 'f0000000-0000-4000-8000-000000000002',
+  ('f1000000-0000-4000-8000-000000000004',
    'Mogpog–Boac Terminal (Sample)', 'Mogpog', 'Poblacion', 'OpenStreetMap mapped point; confirm pickup location', 13.4732093, 121.8603931, true),
   -- Town-center placeholders, verify locally.
-  ('f1000000-0000-4000-8000-000000000005', 'f0000000-0000-4000-8000-000000000008',
+  ('f1000000-0000-4000-8000-000000000005',
    'Gasan Jeepney Stop (Sample)', 'Gasan', 'Poblacion', 'Approximate town-center pin; verify with chairperson', 13.3224, 121.8465, true),
-  ('f1000000-0000-4000-8000-000000000006', 'f0000000-0000-4000-8000-000000000003',
+  ('f1000000-0000-4000-8000-000000000006',
    'Gasan Public Tricycle Stand (Sample)', 'Gasan', 'Poblacion', 'Approximate town-center pin; verify with chairperson', 13.3231, 121.8456, true),
-  ('f1000000-0000-4000-8000-000000000007', 'f0000000-0000-4000-8000-000000000004',
+  ('f1000000-0000-4000-8000-000000000007',
    'Buenavista Public Tricycle Stand (Sample)', 'Buenavista', 'Poblacion', 'Approximate town-center pin; verify with chairperson', 13.2567, 121.9440, true),
   -- OSM amenity=taxi way 420305960
-  ('f1000000-0000-4000-8000-000000000008', 'f0000000-0000-4000-8000-000000000005',
+  ('f1000000-0000-4000-8000-000000000008',
    'Torrijos Tricycle Terminal (Sample)', 'Torrijos', 'Poblacion', 'OpenStreetMap mapped point; confirm pickup location', 13.2705682, 122.0417180, true),
   -- Town-center placeholder, verify locally.
-  ('f1000000-0000-4000-8000-000000000009', 'f0000000-0000-4000-8000-000000000006',
+  ('f1000000-0000-4000-8000-000000000009',
    'Santa Cruz Public Tricycle Stand (Sample)', 'Santa Cruz', 'Poblacion', 'Approximate town-center pin; verify with chairperson', 13.4749, 122.0508, true)
 on conflict (id) do update set
-  group_id = excluded.group_id,
   name = excluded.name,
   municipality = excluded.municipality,
   barangay = excluded.barangay,
@@ -59,6 +58,34 @@ on conflict (id) do update set
   latitude = excluded.latitude,
   longitude = excluded.longitude,
   is_sample = excluded.is_sample;
+
+-- Transport types each seeded terminal serves. Type rows must exist before
+-- the group links below: a link is rejected when the terminal does not serve
+-- the group's kind.
+insert into public.terminal_transport_types (terminal_id, kind) values
+  ('f1000000-0000-4000-8000-000000000001', 'jeepney'),
+  ('f1000000-0000-4000-8000-000000000002', 'jeepney'),
+  ('f1000000-0000-4000-8000-000000000003', 'toda'),
+  ('f1000000-0000-4000-8000-000000000004', 'jeepney'),
+  ('f1000000-0000-4000-8000-000000000005', 'jeepney'),
+  ('f1000000-0000-4000-8000-000000000006', 'toda'),
+  ('f1000000-0000-4000-8000-000000000007', 'toda'),
+  ('f1000000-0000-4000-8000-000000000008', 'toda'),
+  ('f1000000-0000-4000-8000-000000000009', 'toda')
+on conflict do nothing;
+
+-- Each seeded terminal belongs to the matching transport group above.
+insert into public.terminal_groups (terminal_id, group_id) values
+  ('f1000000-0000-4000-8000-000000000001', 'f0000000-0000-4000-8000-000000000001'),
+  ('f1000000-0000-4000-8000-000000000002', 'f0000000-0000-4000-8000-000000000001'),
+  ('f1000000-0000-4000-8000-000000000003', 'f0000000-0000-4000-8000-000000000007'),
+  ('f1000000-0000-4000-8000-000000000004', 'f0000000-0000-4000-8000-000000000002'),
+  ('f1000000-0000-4000-8000-000000000005', 'f0000000-0000-4000-8000-000000000008'),
+  ('f1000000-0000-4000-8000-000000000006', 'f0000000-0000-4000-8000-000000000003'),
+  ('f1000000-0000-4000-8000-000000000007', 'f0000000-0000-4000-8000-000000000004'),
+  ('f1000000-0000-4000-8000-000000000008', 'f0000000-0000-4000-8000-000000000005'),
+  ('f1000000-0000-4000-8000-000000000009', 'f0000000-0000-4000-8000-000000000006')
+on conflict do nothing;
 
 -- Sample routes linking the seeded terminals. Stops reuse the town-center
 -- points; real path, fares, and travel times are unverified.

@@ -41,13 +41,19 @@ async function loadWorkspace(account: AccountSession): Promise<Workspace> {
     membership = driver.data ? `${driver.data.membership_status} · ${driver.data.availability}` : null;
   }
   if (!groupId) return empty;
-  const [groups, terminals] = await Promise.all([
+  const [groups, links] = await Promise.all([
     supabase.from('groups').select('id,name,kind,municipality,is_active').eq('id', groupId),
-    supabase.from('terminals').select('id,name,municipality,barangay,is_active').eq('group_id', groupId).order('name'),
+    supabase.from('terminal_groups').select('terminals(id,name,municipality,barangay,is_active)').eq('group_id', groupId),
   ]);
   if (groups.error) throw groups.error;
-  if (terminals.error) throw terminals.error;
-  return { ...empty, groups: groups.data ?? [], terminals: terminals.data ?? [], terminalCount: terminals.data?.length ?? 0, membership };
+  if (links.error) throw links.error;
+  const terminals = (links.data ?? [])
+    .flatMap((link) => {
+      const terminal = Array.isArray(link.terminals) ? link.terminals[0] : link.terminals;
+      return terminal ? [terminal] : [];
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return { ...empty, groups: groups.data ?? [], terminals, terminalCount: terminals.length, membership };
 }
 
 export function RoleWorkspaceScreen({ account, onLogout, onOpenCommuter, onRefreshSession }: {

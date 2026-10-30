@@ -2,7 +2,7 @@ import type { AccountRole } from '../lib/session';
 
 export type AdminGroup = { id: string; name: string; kind: 'toda' | 'jeepney'; municipality: string; is_active: boolean; chairperson_id: string | null };
 export type AdminTerminal = {
-  id: string; group_id: string; name: string; municipality: string; barangay: string;
+  id: string; group_ids: string[]; kinds: ('toda' | 'jeepney')[]; name: string; municipality: string; barangay: string;
   address: string | null; contact_phone: string | null; latitude: number | null; longitude: number | null; is_active: boolean;
 };
 export type AdminVehicle = { id: string; terminal_id: string; body_number: string; plate_number: string | null; vehicle_type: 'jeepney' | 'tricycle'; status: string; assigned_driver_id: string | null };

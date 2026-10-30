@@ -76,9 +76,9 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
     return status && matching(`${group.name} ${group.kind} ${group.municipality} ${chairperson?.display_name ?? ''} ${chairperson?.email ?? ''}`);
   });
   const terminals = data.terminals.filter((terminal) => {
-    const group = groupById.get(terminal.group_id);
+    const groupNames = terminal.group_ids.map((id) => groupById.get(id)?.name ?? '').join(' ');
     const status = filter === 'Active' ? terminal.is_active : filter === 'Inactive' ? !terminal.is_active : true;
-    return status && matching(`${terminal.name} ${terminal.barangay} ${terminal.municipality} ${terminal.address ?? ''} ${terminal.contact_phone ?? ''} ${group?.name ?? ''}`);
+    return status && matching(`${terminal.name} ${terminal.kinds.join(' ')} ${terminal.barangay} ${terminal.municipality} ${terminal.address ?? ''} ${terminal.contact_phone ?? ''} ${groupNames}`);
   });
   const vehicles = data.vehicles.filter((vehicle) => {
     const terminal = terminalById.get(vehicle.terminal_id);
@@ -152,14 +152,44 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
       const longitude = geocoded?.longitude ?? terminalEditor?.longitude;
       if (latitude == null || longitude == null) throw new Error('The terminal address needs a successful location lookup before it can be saved.');
       const values = {
-        ...input,
         name: input.name.trim(),
+        municipality: input.municipality,
         barangay: input.barangay.trim(),
         address,
         contact_phone: input.contact_phone?.trim() || null,
         latitude,
         longitude,
+        is_active: input.is_active,
       };
+      const wanted = new Set(input.group_ids);
+      const wantedKinds = new Set(input.kinds);
+      let linkedIds: string[] = [];
+      let servedKinds: ('toda' | 'jeepney')[] = [];
+      let terminalId = terminalEditor?.id ?? null;
+      // Order matters: dropped group links must clear before type rows can be
+      // removed (a type is locked while a group of that kind is linked), and
+      // new type rows must exist before new group links (a link is rejected
+      // when the terminal does not serve the group's kind).
+      if (terminalId) {
+        failureStage = 'Terminal group links';
+        const linked = await supabase.from('terminal_groups').select('group_id').eq('terminal_id', terminalId);
+        if (linked.error) throw linked.error;
+        linkedIds = (linked.data ?? []).map((link) => link.group_id);
+        const stale = linkedIds.filter((groupId) => !wanted.has(groupId));
+        if (stale.length) {
+          const result = await supabase.from('terminal_groups').delete().eq('terminal_id', terminalId).in('group_id', stale);
+          if (result.error) throw result.error;
+        }
+        failureStage = 'Terminal transport types';
+        const served = await supabase.from('terminal_transport_types').select('kind').eq('terminal_id', terminalId);
+        if (served.error) throw served.error;
+        servedKinds = (served.data ?? []).map((row) => row.kind as 'toda' | 'jeepney');
+        const removed = servedKinds.filter((kind) => !wantedKinds.has(kind));
+        if (removed.length) {
+          const result = await supabase.from('terminal_transport_types').delete().eq('terminal_id', terminalId).in('kind', removed);
+          if (result.error) throw result.error;
+        }
+      }
       failureStage = terminalEditor ? 'Database terminal update' : 'Database terminal insert';
       if (terminalEditor) {
         const result = await supabase.from('terminals').update(values).eq('id', terminalEditor.id).select('id').maybeSingle();
@@ -168,9 +198,23 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
       } else {
         const result = await supabase.from('terminals').insert(values).select('id').single();
         if (result.error) throw result.error;
+        terminalId = result.data?.id ?? null;
+      }
+      if (!terminalId) throw new Error('The terminal could not be saved.');
+      failureStage = 'Terminal transport types';
+      const missingKinds = input.kinds.filter((kind) => !servedKinds.includes(kind));
+      if (missingKinds.length) {
+        const result = await supabase.from('terminal_transport_types').insert(missingKinds.map((kind) => ({ terminal_id: terminalId, kind })));
+        if (result.error) throw result.error;
+      }
+      failureStage = 'Terminal group links';
+      const missing = input.group_ids.filter((groupId) => !linkedIds.includes(groupId));
+      if (missing.length) {
+        const result = await supabase.from('terminal_groups').insert(missing.map((group_id) => ({ terminal_id: terminalId, group_id })));
+        if (result.error) throw result.error;
       }
       setTerminalEditor(undefined);
-      setNotice(`${isEditing ? 'Terminal saved successfully.' : 'Terminal added successfully.'}${geocoded ? ` Address matched: ${geocoded.displayName}.` : ''}`);
+      setNotice(`${isEditing ? 'Terminal saved successfully.' : 'Terminal added successfully.'}${geocoded ? (geocoded.approximate ? ` Approximate pin: ${geocoded.displayName}.` : ` Address matched: ${geocoded.displayName}.`) : ''}`);
       setRevision((value) => value + 1);
     } catch (cause) {
       setActionError(`${failureStage} failed.\n${errorMessage(cause)}`);
@@ -204,8 +248,8 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
     rows: [
       { label: 'Status', value: group.is_active ? 'Active' : 'Inactive' },
       { label: 'Chairperson', value: group.chairperson_id ? userById.get(group.chairperson_id)?.display_name || userById.get(group.chairperson_id)?.email || 'Assigned account' : 'Not assigned' },
-      { label: 'Terminals', value: String(data.terminals.filter((terminal) => terminal.group_id === group.id).length) },
-      { label: 'Vehicles', value: String(data.vehicles.filter((vehicle) => data.terminals.some((terminal) => terminal.id === vehicle.terminal_id && terminal.group_id === group.id)).length) },
+      { label: 'Terminals', value: String(data.terminals.filter((terminal) => terminal.group_ids.includes(group.id)).length) },
+      { label: 'Vehicles', value: String(data.vehicles.filter((vehicle) => data.terminals.some((terminal) => terminal.id === vehicle.terminal_id && terminal.group_ids.includes(group.id))).length) },
       { label: 'Drivers', value: String(data.drivers.filter((driver) => driver.group_id === group.id).length) },
       { label: 'Group ID', value: group.id },
     ],
@@ -263,7 +307,8 @@ export function SuperAdminWorkspaceScreen({ account, onLogout, onRefreshSession 
             title: terminal.name,
             subtitle: 'Terminal record',
             rows: [
-              { label: 'Responsible group', value: groupById.get(terminal.group_id)?.name ?? 'Unavailable' },
+              { label: 'Transport types', value: terminal.kinds.map((entry) => entry === 'toda' ? 'TODA / Tricycle' : 'Jeepney').join(' + ') || 'Not recorded' },
+              { label: 'Responsible groups', value: terminal.group_ids.map((id) => groupById.get(id)?.name).filter((name): name is string => Boolean(name)).join(', ') || 'None linked' },
               { label: 'Municipality', value: terminal.municipality },
               { label: 'Barangay', value: terminal.barangay },
               { label: 'Street address or landmark', value: terminal.address || 'Not recorded' },

@@ -1,9 +1,9 @@
 // Live terminal markers fed by the host app over postMessage.
 // The app reads public.terminals through Supabase and posts
 // { type: 'egabay:terminals', terminals: [{ id, name, municipality,
-//   barangay, address, latitude, longitude, groupKind }] }.
-// groupKind is the owning transport group's kind ('jeepney' | 'toda') and
-// drives the terminal-type filter dropdown.
+//   barangay, address, latitude, longitude, kinds }] }.
+// kinds lists the transport types the terminal serves ('jeepney', 'toda',
+// or both) and drives the terminal-type filter dropdown.
 // When directory rows arrive they replace the sample transport hubs so the
 // map only shows operator-backed terminal locations.
 
@@ -38,7 +38,9 @@ function applyDbTerminals(terminals) {
   }
 
   for (const t of valid) {
-    const kind = t.groupKind === 'toda' ? 'tricycle' : t.groupKind === 'jeepney' ? 'jeepney' : null;
+    const served = Array.isArray(t.kinds) ? t.kinds : (t.kind ? [t.kind] : []);
+    const kind = served.includes('toda') && served.includes('jeepney') ? 'both'
+      : served.includes('toda') ? 'tricycle' : served.includes('jeepney') ? 'jeepney' : null;
     const poi = {
       name: t.name,
       lat: t.latitude,

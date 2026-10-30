@@ -1,9 +1,10 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 
 // Public columns of `public.terminals` — readable by anon through the
-// `terminals_public` RLS policy (active terminals in active groups only).
-// `groupKind` comes from the owning transport group ('jeepney' | 'toda') and
-// lets the map filter terminals by transport type.
+// `terminals_public` RLS policy (active terminals linked to an active group).
+// `kinds` lists the transport types the terminal serves ('jeepney', 'toda',
+// or both) from the terminal_transport_types junction, and lets the map
+// filter terminals by transport type.
 export type PublicTerminal = {
   id: string;
   name: string;
@@ -12,7 +13,7 @@ export type PublicTerminal = {
   address: string | null;
   latitude: number;
   longitude: number;
-  groupKind: string | null;
+  kinds: string[];
 };
 
 type PublicTerminalRow = {
@@ -23,14 +24,14 @@ type PublicTerminalRow = {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  groups: { kind: string } | { kind: string }[] | null;
+  terminal_transport_types: { kind: string }[] | null;
 };
 
 export async function fetchPublicTerminals(): Promise<PublicTerminal[]> {
   if (!isSupabaseConfigured || !supabase) return [];
   const { data, error } = await supabase
     .from('terminals')
-    .select('id,name,municipality,barangay,address,latitude,longitude,groups(kind)')
+    .select('id,name,municipality,barangay,address,latitude,longitude,terminal_transport_types(kind)')
     .eq('is_active', true)
     .not('latitude', 'is', null)
     .order('municipality');
@@ -40,7 +41,6 @@ export async function fetchPublicTerminals(): Promise<PublicTerminal[]> {
   }
   return ((data ?? []) as PublicTerminalRow[]).flatMap((t) => {
     if (typeof t.latitude !== 'number' || typeof t.longitude !== 'number') return [];
-    const group = Array.isArray(t.groups) ? t.groups[0] : t.groups;
     return [{
       id: t.id,
       name: t.name,
@@ -49,7 +49,7 @@ export async function fetchPublicTerminals(): Promise<PublicTerminal[]> {
       address: t.address,
       latitude: t.latitude,
       longitude: t.longitude,
-      groupKind: group?.kind ?? null,
+      kinds: (t.terminal_transport_types ?? []).flatMap((served) => served.kind ? [served.kind] : []),
     }];
   });
 }

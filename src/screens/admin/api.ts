@@ -7,7 +7,7 @@ export async function loadPanelData(): Promise<AdminPanelData> {
   const [groups, activeGroups, terminals, vehicles, onTripVehicles, drivers, pendingDrivers, approvedDrivers, users, chairpersons, routes, audit] = await Promise.all([
     supabase.from('groups').select('id,name,kind,municipality,is_active,is_sample,chairperson_id', { count: 'exact' }).order('name').limit(250),
     supabase.from('groups').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('terminals').select('id,group_id,name,municipality,barangay,address,contact_phone,latitude,longitude,is_active,is_sample,terminal_schedules(day_of_week,status,opens_at,closes_at,is_sample)', { count: 'exact' }).order('name').limit(1000),
+    supabase.from('terminals').select('id,name,municipality,barangay,address,contact_phone,latitude,longitude,is_active,is_sample,terminal_transport_types(kind),terminal_groups(group_id),terminal_schedules(day_of_week,status,opens_at,closes_at,is_sample)', { count: 'exact' }).order('name').limit(1000),
     supabase.from('vehicles').select('id,terminal_id,body_number,plate_number,vehicle_type,status,assigned_driver_id,is_sample', { count: 'exact' }).order('body_number').limit(250),
     supabase.from('vehicles').select('id', { count: 'exact', head: true }).eq('status', 'on_route'),
     supabase.from('drivers').select('profile_id,group_id,membership_status,availability', { count: 'exact' }).limit(250),
@@ -22,8 +22,13 @@ export async function loadPanelData(): Promise<AdminPanelData> {
     if (result.error) throw result.error;
   }
   const terminalRecords = (terminals.data ?? []).map((row) => {
-    const { terminal_schedules, ...terminal } = row as typeof row & { terminal_schedules: TerminalScheduleRow[] };
-    return { ...terminal, schedules: normalizeWeeklySchedule(terminal_schedules ?? []) };
+    const { terminal_schedules, terminal_groups, terminal_transport_types, ...terminal } = row as typeof row & { terminal_schedules: TerminalScheduleRow[]; terminal_groups: { group_id: string }[]; terminal_transport_types: { kind: 'toda' | 'jeepney' }[] };
+    return {
+      ...terminal,
+      kinds: (terminal_transport_types ?? []).flatMap((served) => served.kind ? [served.kind] : []),
+      group_ids: (terminal_groups ?? []).map((link) => link.group_id),
+      schedules: normalizeWeeklySchedule(terminal_schedules ?? []),
+    };
   });
   return {
     groups: groups.data ?? [], terminals: terminalRecords, vehicles: vehicles.data ?? [], drivers: drivers.data ?? [],

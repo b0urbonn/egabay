@@ -92,7 +92,8 @@ export function AdminGroupEditor({ group, groups, chairpersons, saving, error, o
 }
 
 export type AdminTerminalInput = {
-  group_id: string;
+  group_ids: string[];
+  kinds: ('toda' | 'jeepney')[];
   name: string;
   municipality: string;
   barangay: string;
@@ -105,25 +106,42 @@ export function AdminTerminalEditor({ groups, terminal, saving, error, onClose, 
   groups: AdminGroup[]; terminal: AdminTerminal | null; saving: boolean; error: string | null; onClose: () => void; onSave: (input: AdminTerminalInput) => void;
 }) {
   const styles = useThemeStyles(createStyles);
-  const selectableGroups = groups.filter((group) => group.is_active || group.id === terminal?.group_id);
-  const [groupId, setGroupId] = useState(terminal?.group_id ?? selectableGroups.find((group) => group.is_active)?.id ?? '');
+  const [kinds, setKinds] = useState<('toda' | 'jeepney')[]>(terminal?.kinds ?? ['toda']);
+  const [groupIds, setGroupIds] = useState<string[]>(terminal?.group_ids ?? []);
   const [name, setName] = useState(terminal?.name ?? '');
+  const [municipality, setMunicipality] = useState(terminal?.municipality ?? 'Boac');
   const [barangay, setBarangay] = useState(terminal?.barangay ?? '');
   const [address, setAddress] = useState(terminal?.address ?? '');
   const [contactPhone, setContactPhone] = useState(terminal?.contact_phone ?? '');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const selectedGroup = selectableGroups.find((group) => group.id === groupId);
+  const selectableGroups = groups.filter((group) => kinds.includes(group.kind) && (group.is_active || groupIds.includes(group.id)));
+
+  const toggleKind = (next: 'toda' | 'jeepney') => {
+    if (kinds.includes(next)) {
+      if (kinds.length === 1) { setValidationError('A terminal needs at least one transport type.'); return; }
+      setKinds(kinds.filter((entry) => entry !== next));
+      setGroupIds((current) => current.filter((id) => groups.some((group) => group.id === id && group.kind !== next)));
+    } else {
+      setKinds((['toda', 'jeepney'] as const).filter((entry) => entry === next || kinds.includes(entry)));
+    }
+    setValidationError(null);
+  };
+  const toggleGroup = (id: string) => {
+    setGroupIds((current) => current.includes(id) ? current.filter((groupId) => groupId !== id) : [...current, id]);
+    setValidationError(null);
+  };
 
   const save = () => {
     if (!name.trim()) { setValidationError('Enter the terminal name.'); return; }
-    if (!selectedGroup) { setValidationError('Choose an active transport group.'); return; }
+    if (!groupIds.length) { setValidationError('Link at least one transport group.'); return; }
     if (!barangay.trim()) { setValidationError('Enter the barangay where the terminal is located.'); return; }
     if (!address.trim()) { setValidationError('Enter a street address or recognizable landmark so its map location can be found.'); return; }
     setValidationError(null);
     onSave({
-      group_id: selectedGroup.id,
+      group_ids: groupIds,
+      kinds,
       name: name.trim(),
-      municipality: selectedGroup.municipality,
+      municipality,
       barangay: barangay.trim(),
       address: address.trim(),
       contact_phone: contactPhone.trim() || null,
@@ -131,13 +149,16 @@ export function AdminTerminalEditor({ groups, terminal, saving, error, onClose, 
     });
   };
 
-  return <Panel title={terminal ? 'Edit terminal' : 'Add terminal'} subtitle="Enter the address; its coordinates are found automatically when you save. Municipality follows the responsible transport group." onClose={() => { if (!saving) onClose(); }} footer={<><Button label="Cancel" variant="secondary" disabled={saving} onPress={onClose} /><Button label={terminal ? 'Save terminal' : 'Add terminal'} loadingLabel="Saving terminal…" loading={saving} disabled={selectableGroups.length === 0} onPress={save} /></>}>
+  return <Panel title={terminal ? 'Edit terminal' : 'Add terminal'} subtitle="Terminals can serve one or more transport types and link to one or more groups of those types. Enter the address; its coordinates are found automatically when you save." onClose={() => { if (!saving) onClose(); }} footer={<><Button label="Cancel" variant="secondary" disabled={saving} onPress={onClose} /><Button label={terminal ? 'Save terminal' : 'Add terminal'} loadingLabel="Saving terminal…" loading={saving} disabled={!groups.some((group) => group.is_active)} onPress={save} /></>}>
     <View style={styles.stack}>
       {validationError && <ErrorBanner message={validationError} />}
       {error && <ErrorBanner message={error} />}
-      <Text style={styles.sectionTitle}>Responsible group</Text>
-      {selectableGroups.length ? <View style={styles.choiceWrap}>{selectableGroups.map((group) => <Chip key={group.id} comfortable label={`${group.name} · ${group.kind === 'toda' ? 'TODA' : 'Jeepney'}`} selected={group.id === groupId} onPress={() => { setGroupId(group.id); setValidationError(null); }} />)}</View> : <Text style={styles.copy}>No active transport group is available. Add or activate a group before registering a terminal.</Text>}
-      <View style={styles.readOnlyField}><Text style={styles.label}>Municipality</Text><Text style={styles.readOnlyValue}>{selectedGroup?.municipality ?? 'Choose a group'}</Text></View>
+      <View style={styles.stack}><Text style={styles.sectionTitle}>Transport types</Text><Text style={styles.copy}>Select every type this terminal serves.</Text><View style={styles.choiceWrap}><Chip comfortable label="TODA / Tricycle" selected={kinds.includes('toda')} onPress={() => toggleKind('toda')} /><Chip comfortable label="Jeepney" selected={kinds.includes('jeepney')} onPress={() => toggleKind('jeepney')} /></View></View>
+      <View style={styles.stack}>
+        <View><Text style={styles.sectionTitle}>Responsible groups</Text><Text style={styles.copy}>Link one or more groups. Groups of any selected type can share this terminal.</Text></View>
+        {selectableGroups.length ? <View style={styles.choiceWrap}>{selectableGroups.map((group) => <Chip key={group.id} comfortable label={kinds.length > 1 ? `${group.name} · ${group.kind === 'toda' ? 'TODA' : 'Jeepney'}` : group.name} selected={groupIds.includes(group.id)} onPress={() => toggleGroup(group.id)} />)}</View> : <Text style={styles.copy}>No active {kinds.includes('toda') ? kinds.includes('jeepney') ? 'TODA or jeepney' : 'TODA' : 'jeepney'} group is available. Add or activate a matching group before registering this terminal.</Text>}
+      </View>
+      <View style={styles.stack}><Text style={styles.sectionTitle}>Municipality</Text><View style={styles.choiceWrap}>{municipalities.map((town) => <Chip key={town} comfortable label={town} selected={municipality === town} onPress={() => { setMunicipality(town); setValidationError(null); }} />)}</View></View>
       <TextField comfortable label="Terminal name" value={name} onChangeText={(value) => { setName(value); setValidationError(null); }} placeholder="e.g. Boac Public Market Terminal" autoCapitalize="words" />
       <TextField comfortable label="Barangay" value={barangay} onChangeText={(value) => { setBarangay(value); setValidationError(null); }} placeholder="Terminal barangay" autoCapitalize="words" />
       <TextField comfortable label="Street address or landmark" value={address} onChangeText={setAddress} placeholder="Street, landmark, or local directions" />

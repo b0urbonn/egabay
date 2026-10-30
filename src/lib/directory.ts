@@ -36,9 +36,9 @@ export type PublicTerminal = {
   contactPhone: string | null;
   latitude: number | null;
   longitude: number | null;
-  groupId: string;
-  groupName: string | null;
-  groupKind: string | null;
+  kinds: string[];
+  groupIds: string[];
+  groupNames: string[];
   isSample: boolean;
   schedules: TerminalScheduleEntry[];
   routeIds: string[];
@@ -85,10 +85,12 @@ function isPublicTerminal(value: unknown): value is PublicTerminal {
   const row = value as Record<string, unknown>;
   return typeof row.id === 'string' && typeof row.name === 'string'
     && typeof row.municipality === 'string' && typeof row.barangay === 'string'
-    && typeof row.groupId === 'string' && typeof row.isSample === 'boolean'
+    && typeof row.isSample === 'boolean'
     && nullableString(row.address) && nullableString(row.contactPhone)
-    && nullableString(row.groupName) && nullableString(row.groupKind)
+    && Array.isArray(row.kinds) && row.kinds.every((entry) => typeof entry === 'string')
     && nullableNumber(row.latitude) && nullableNumber(row.longitude)
+    && Array.isArray(row.groupIds) && row.groupIds.every((id) => typeof id === 'string')
+    && Array.isArray(row.groupNames) && row.groupNames.every((name) => typeof name === 'string')
     && Array.isArray(row.routeIds) && row.routeIds.every((id) => typeof id === 'string')
     && Array.isArray(row.schedules) && row.schedules.every(isScheduleEntry);
 }
@@ -184,7 +186,7 @@ export async function fetchTerminalDirectory(): Promise<PublicTerminal[]> {
   const [terminals, links] = await Promise.all([
     supabase
       .from('terminals')
-      .select('id,name,municipality,barangay,address,contact_phone,latitude,longitude,group_id,is_sample,groups(name,kind),terminal_schedules(day_of_week,status,opens_at,closes_at,is_sample)')
+      .select('id,name,municipality,barangay,address,contact_phone,latitude,longitude,is_sample,terminal_transport_types(kind),terminal_groups(group_id,groups(name)),terminal_schedules(day_of_week,status,opens_at,closes_at,is_sample)')
       .eq('is_active', true)
       .order('municipality')
       .order('name'),
@@ -207,13 +209,14 @@ export async function fetchTerminalDirectory(): Promise<PublicTerminal[]> {
   type TerminalRow = {
     id: string; name: string; municipality: string; barangay: string;
     address: string | null; contact_phone: string | null;
-    latitude: number | null; longitude: number | null; group_id: string;
+    latitude: number | null; longitude: number | null;
     is_sample: boolean;
-    groups: { name: string; kind: string } | { name: string; kind: string }[] | null;
+    terminal_transport_types: { kind: string }[] | null;
+    terminal_groups: { group_id: string; groups: { name: string } | { name: string }[] | null }[] | null;
     terminal_schedules: TerminalScheduleRow[];
   };
   const result = (terminals.data ?? []).map((row: TerminalRow) => {
-    const group = Array.isArray(row.groups) ? row.groups[0] : row.groups;
+    const links = row.terminal_groups ?? [];
     return {
       id: row.id,
       name: row.name,
@@ -223,9 +226,12 @@ export async function fetchTerminalDirectory(): Promise<PublicTerminal[]> {
       contactPhone: row.contact_phone,
       latitude: row.latitude,
       longitude: row.longitude,
-      groupId: row.group_id,
-      groupName: group?.name ?? null,
-      groupKind: group?.kind ?? null,
+      kinds: (row.terminal_transport_types ?? []).flatMap((served) => served.kind ? [served.kind] : []),
+      groupIds: links.map((link) => link.group_id),
+      groupNames: links.flatMap((link) => {
+        const group = Array.isArray(link.groups) ? link.groups[0] : link.groups;
+        return group?.name ? [group.name] : [];
+      }),
       isSample: row.is_sample,
       schedules: normalizeWeeklySchedule(row.terminal_schedules ?? []),
       routeIds: routeIds.get(row.id) ?? [],

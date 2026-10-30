@@ -51,13 +51,15 @@ try {
       ('Boac'),('Mogpog'),('Gasan'),('Buenavista'),('Torrijos'),('Santa Cruz')
     ) towns(municipality) where not exists (
       select 1 from public.terminals terminal
-      join public.groups transport_group on transport_group.id = terminal.group_id
+      join public.terminal_groups tg on tg.terminal_id = terminal.id
+      join public.groups transport_group on transport_group.id = tg.group_id
       where terminal.municipality = towns.municipality and terminal.is_active
         and terminal.is_sample and transport_group.kind = 'jeepney'
     )`))[0].count, 0);
     assert.deepEqual((await rows(`select terminal.municipality, count(distinct terminal.barangay)::int as count
       from public.terminals terminal
-      join public.groups transport_group on transport_group.id = terminal.group_id
+      join public.terminal_groups tg on tg.terminal_id = terminal.id
+      join public.groups transport_group on transport_group.id = tg.group_id
       where terminal.is_sample and terminal.is_active and transport_group.kind = 'toda'
         and terminal.name like 'Sample TODA%'
       group by terminal.municipality order by terminal.municipality`))
@@ -69,13 +71,15 @@ try {
       ('Boac'),('Mogpog'),('Gasan'),('Buenavista'),('Torrijos'),('Santa Cruz')
     ) towns(municipality) where not exists (
       select 1 from public.terminals terminal
-      join public.groups transport_group on transport_group.id = terminal.group_id
+      join public.terminal_groups tg on tg.terminal_id = terminal.id
+      join public.groups transport_group on transport_group.id = tg.group_id
       where terminal.municipality = towns.municipality and terminal.is_active
         and terminal.is_sample and transport_group.kind = 'toda'
         and terminal.name like '%TODA Service Hub (Sample)'
     )`))[0].count, 0);
     assert.equal((await rows(`select count(*)::int as count from public.terminals terminal
-      join public.groups transport_group on transport_group.id = terminal.group_id
+      join public.terminal_groups tg on tg.terminal_id = terminal.id
+      join public.groups transport_group on transport_group.id = tg.group_id
       where terminal.is_active and terminal.is_sample and transport_group.kind = 'jeepney'
         and terminal.name like 'Sample jeepney service point:%'`))[0].count, 0);
     assert.equal((await rows(`select count(*)::int as count from public.routes
@@ -91,7 +95,9 @@ try {
         where other.id <> route.id and other.is_sample and other.mode = 'jeepney'
           and other.origin_label = route.origin_label and other.destination_label = route.destination_label
       )`))[0].count, 0);
-    assert.equal((await rows("select count(*)::int as count from public.terminals t join public.groups g on g.id=t.group_id where t.is_sample and not g.is_sample"))[0].count, 0);
+    assert.equal((await rows("select count(*)::int as count from public.terminals t join public.terminal_groups tg on tg.terminal_id=t.id join public.groups g on g.id=tg.group_id where t.is_sample and not g.is_sample"))[0].count, 0);
+    assert.equal((await rows("select count(*)::int as count from public.terminals t where t.is_sample and not exists (select 1 from public.terminal_groups tg where tg.terminal_id=t.id)"))[0].count, 0);
+    assert.equal((await rows("select count(*)::int as count from public.terminals t where not exists (select 1 from public.terminal_transport_types tt where tt.terminal_id=t.id) or exists (select 1 from public.terminal_groups tg join public.groups g on g.id=tg.group_id where tg.terminal_id=t.id and not exists (select 1 from public.terminal_transport_types tt where tt.terminal_id=t.id and tt.kind=g.kind))"))[0].count, 0);
     assert.equal((await rows("select count(*)::int as count from public.vehicles where is_sample and (status <> 'offline' or assigned_driver_id is not null)"))[0].count, 0);
     assert.equal((await rows('select count(*)::int as count from public.vehicles where is_sample'))[0].count, 4);
     assert.ok((await rows('select count(*)::int as count from public.routes where is_sample'))[0].count > 200);
@@ -123,7 +129,9 @@ try {
   });
   await db.exec(`update public.profiles set role='chairperson' where id in ('${id(3)}','${id(4)}'); update public.profiles set role='driver' where id in ('${id(5)}','${id(6)}','${id(7)}');`);
   await db.query("insert into public.groups(id,name,kind,municipality,chairperson_id) values($1,'Group A','jeepney','Boac',$2),($3,'Group B','toda','Mogpog',$4)", [id(1001),id(3),id(1002),id(4)]);
-  await db.query("insert into public.terminals(id,group_id,name,municipality,barangay) values($1,$2,'Terminal A','Boac','Poblacion'),($3,$4,'Terminal B','Mogpog','Poblacion')", [id(2001),id(1001),id(2002),id(1002)]);
+  await db.query("insert into public.terminals(id,name,municipality,barangay) values($1,'Terminal A','Boac','Poblacion'),($2,'Terminal B','Mogpog','Poblacion')", [id(2001),id(2002)]);
+  await db.query("insert into public.terminal_transport_types(terminal_id,kind) values($1,'jeepney'),($2,'toda')", [id(2001),id(2002)]);
+  await db.query("insert into public.terminal_groups(terminal_id,group_id) values($1,$2),($3,$4)", [id(2001),id(1001),id(2002),id(1002)]);
   await db.query("insert into public.drivers(profile_id,group_id,license_number,contact_number,membership_status) values($1,$2,'PRIVATE-LICENSE-A','PRIVATE-PHONE-A','approved'),($3,$4,'PRIVATE-LICENSE-B','PRIVATE-PHONE-B','approved'),($5,$2,'PENDING-LICENSE','PENDING-PHONE','pending')", [id(5),id(1001),id(6),id(1002),id(7)]);
   await db.query("insert into public.vehicles(id,terminal_id,body_number,plate_number,assigned_driver_id) values($1,$2,'BODY-A','PRIVATE-PLATE-A',$3),($4,$5,'BODY-B','PRIVATE-PLATE-B',$6)", [id(3001),id(2001),id(5),id(3002),id(2002),id(6)]);
   await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'unassigned-driver@example.test',now())", [id(10)]);
@@ -135,6 +143,7 @@ try {
     assert.equal(vehicles.length, 2);
     assert.deepEqual(Object.keys(vehicles[0]).sort(), ['id','terminal_id','body_number','vehicle_type','status','driver_name','driver_photo_url'].sort());
     for (const table of ['profiles','drivers','vehicles','vehicle_driver_assignments']) await denied(() => rows(`select * from public.${table}`));
+    assert.ok((await rows('select * from public.terminal_transport_types')).length > 0);
   }));
   await check('commuters can edit display fields but cannot change roles or approve drivers', () => asUser('authenticated', id(2), async () => {
     assert.equal((await rows('select * from public.profiles')).length, 1);
@@ -148,7 +157,7 @@ try {
   await check('chairpersons can edit their own terminal and cannot edit another group', () => asUser('authenticated', id(3), async () => {
     assert.equal((await rows("update public.terminals set address='Allowed' where id=$1 returning id", [id(2001)])).length, 1);
     assert.equal((await rows("update public.terminals set address='Denied' where id=$1 returning id", [id(2002)])).length, 0);
-    await denied(() => rows("insert into public.terminals(group_id,name,municipality,barangay) values($1,'Cross group','Mogpog','Poblacion')", [id(1002)]));
+    await denied(() => rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2001),id(1002)]));
     await denied(() => rows("update public.vehicles set assigned_driver_id=$1 where id=$2", [id(6),id(3001)]));
     await denied(() => rows("update public.vehicles set assigned_driver_id=$1 where id=$2", [id(7),id(3001)]));
     await denied(() => rows("select public.review_driver_application($1,'rejected')", [id(6)]));
@@ -183,7 +192,38 @@ try {
   await check('role and terminal changes cannot invalidate group assignments', async () => {
     await asUser('authenticated', id(1), async () => {
       await denied(() => rows("select public.set_user_role($1,'commuter')", [id(3)]));
-      await denied(() => rows("update public.terminals set group_id=$1 where id=$2", [id(1002),id(2001)]));
+      await denied(() => rows("delete from public.terminal_transport_types where terminal_id=$1 and kind='jeepney'", [id(2001)]));
+      await denied(() => rows("update public.groups set kind='jeepney' where id=$1", [id(1002)]));
+    });
+  });
+  await check('terminals link to many groups of the types they serve and keep vehicle integrity', async () => {
+    await db.query("insert into public.groups(id,name,kind,municipality) values($1,'Group C','toda','Gasan')", [id(1003)]);
+    await asUser('authenticated', id(1), async () => {
+      await rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2002),id(1003)]);
+      assert.equal((await rows('select count(*)::int as count from public.terminal_groups where terminal_id=$1', [id(2002)]))[0].count, 2);
+      await denied(() => rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2001),id(1003)]));
+      await denied(() => rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2002),id(1001)]));
+      await denied(() => rows("delete from public.terminal_groups where terminal_id=$1 and group_id=$2", [id(2002),id(1002)]));
+      await rows("delete from public.terminal_groups where terminal_id=$1 and group_id=$2", [id(2002),id(1003)]);
+    });
+    await asUser('authenticated', id(4), async () => {
+      await rows("insert into public.terminals(id,name,municipality,barangay) values($1,'Terminal C','Gasan','Poblacion')", [id(2003)]);
+      await rows("insert into public.terminal_transport_types(terminal_id,kind) values($1,'toda')", [id(2003)]);
+      await rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2003),id(1002)]);
+      await denied(() => rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2003),id(1001)]));
+    });
+  });
+  await check('a multi-type terminal hosts different group kinds and cannot drop a used type', async () => {
+    await asUser('authenticated', id(1), async () => {
+      await rows("insert into public.terminal_transport_types(terminal_id,kind) values($1,'toda')", [id(2001)]);
+      await rows("insert into public.terminal_groups(terminal_id,group_id) values($1,$2)", [id(2001),id(1003)]);
+      assert.equal((await rows('select count(*)::int as count from public.terminal_groups where terminal_id=$1', [id(2001)]))[0].count, 2);
+      await denied(() => rows("delete from public.terminal_transport_types where terminal_id=$1 and kind='toda'", [id(2001)]));
+      await denied(() => rows("update public.terminal_transport_types set kind='jeepney' where terminal_id=$1 and kind='toda'", [id(2001)]));
+      await assert.rejects(() => rows("insert into public.terminal_transport_types(terminal_id,kind) values($1,'jeepney')", [id(2001)]), (error) => error.code === '23505');
+      await assert.rejects(() => rows("insert into public.terminal_transport_types(terminal_id,kind) values($1,'van')", [id(2001)]), (error) => error.code === '23514');
+      await rows("delete from public.terminal_groups where terminal_id=$1 and group_id=$2", [id(2001),id(1003)]);
+      await rows("delete from public.terminal_transport_types where terminal_id=$1 and kind='toda'", [id(2001)]);
     });
   });
   await check('a commuter can submit their own feedback but cannot forge its author', () => asUser('authenticated', id(2), async () => {

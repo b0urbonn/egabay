@@ -1,3 +1,5 @@
+import barangayPins from '../../scripts/generated/barangay-pins.json';
+
 export type TerminalGeocodeInput = {
   name: string;
   address: string;
@@ -9,6 +11,10 @@ export type GeocodedTerminal = {
   latitude: number;
   longitude: number;
   displayName: string;
+  // True when the pin is a centroid (barangay/municipality or local directory
+  // pin) rather than a street-level address match.
+  approximate: boolean;
+  matchedLevel: 'address' | 'barangay' | 'municipality' | 'directory';
 };
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
@@ -31,18 +37,18 @@ function fetchNominatim(url: string): Promise<Response> {
   return request;
 }
 
-export async function geocodeTerminalAddress(input: TerminalGeocodeInput): Promise<GeocodedTerminal> {
-  const query = [input.name, input.address, input.barangay, input.municipality, 'Marinduque', 'Philippines']
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(', ');
+type NominatimHit = { lat?: string; lon?: string; display_name?: string };
+
+// One bounded Nominatim lookup; returns null when nothing inside Marinduque
+// matches. Throws only when the service itself is unreachable or rate-limited.
+async function searchNominatim(parts: string[]): Promise<NominatimHit | null> {
   const params = new URLSearchParams({
     format: 'jsonv2',
     limit: '1',
     countrycodes: 'ph',
     viewbox: MARINDUQUE_VIEWBOX,
     bounded: '1',
-    q: query,
+    q: parts.map((part) => part.trim()).filter(Boolean).join(', '),
   });
 
   let response: Response;
@@ -57,23 +63,74 @@ export async function geocodeTerminalAddress(input: TerminalGeocodeInput): Promi
       : 'Address lookup failed. Please try again.');
   }
 
-  let results: { lat?: string; lon?: string; display_name?: string }[];
+  let results: NominatimHit[];
   try {
-    results = await response.json() as { lat?: string; lon?: string; display_name?: string }[];
+    results = await response.json() as NominatimHit[];
   } catch {
     throw new Error('Address lookup returned an invalid response. Please try again.');
   }
-  const result = results[0];
-  if (!result) throw new Error('No Marinduque location matched this address. Add a clearer street address or landmark and try again.');
-
-  const latitude = Number(result.lat);
-  const longitude = Number(result.lon);
+  const hit = results[0];
+  if (!hit) return null;
+  const latitude = Number(hit.lat);
+  const longitude = Number(hit.lon);
   const bounds = MARINDUQUE_BOUNDS;
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
     || latitude < bounds.south || latitude > bounds.north
-    || longitude < bounds.west || longitude > bounds.east) {
-    throw new Error('The address result is outside the Marinduque coverage area. Refine the address and try again.');
+    || longitude < bounds.west || longitude > bounds.east) return null;
+  return hit;
+}
+
+const pinLookup = new Map(
+  Object.entries(barangayPins).map(([key, pin]) => [key.toLowerCase(), pin]),
+);
+
+function localBarangayPin(input: TerminalGeocodeInput): GeocodedTerminal | null {
+  const pin = pinLookup.get(`${input.municipality.trim().toLowerCase()}|${input.barangay.trim().toLowerCase()}`);
+  if (!pin) return null;
+  return {
+    latitude: pin.lat,
+    longitude: pin.lng,
+    displayName: `Approximate ${input.barangay.trim()}, ${input.municipality.trim()} barangay pin`,
+    approximate: true,
+    matchedLevel: 'directory',
+  };
+}
+
+// Resolves the terminal location with progressively looser queries: street
+// address, then barangay, then municipality, and finally the locally cached
+// barangay pin so a save never depends on OpenStreetMap coverage alone.
+// The terminal name is deliberately excluded — Nominatim cannot match
+// invented record names and including it returns empty result sets.
+export async function geocodeTerminalAddress(input: TerminalGeocodeInput): Promise<GeocodedTerminal> {
+  const town = [input.municipality, 'Marinduque', 'Philippines'];
+  const attempts: { parts: string[]; level: GeocodedTerminal['matchedLevel']; approximate: boolean }[] = [
+    { parts: [input.address, input.barangay, ...town], level: 'address', approximate: false },
+    { parts: [input.barangay, ...town], level: 'barangay', approximate: true },
+    { parts: town, level: 'municipality', approximate: true },
+  ];
+  let lookupError: Error | null = null;
+  for (const attempt of attempts) {
+    if (!attempt.parts[0].trim()) continue; // skip empty leading terms
+    try {
+      const hit = await searchNominatim(attempt.parts);
+      if (hit) {
+        return {
+          latitude: Number(hit.lat),
+          longitude: Number(hit.lon),
+          displayName: hit.display_name ?? attempt.parts.join(', '),
+          approximate: attempt.approximate,
+          matchedLevel: attempt.level,
+        };
+      }
+    } catch (cause) {
+      // Service-level failure (offline, rate-limited, bad response): stop
+      // querying and let the local directory pin cover the save if it can.
+      lookupError ??= cause instanceof Error ? cause : new Error('Address lookup failed.');
+      break;
+    }
   }
 
-  return { latitude, longitude, displayName: result.display_name ?? query };
+  const pin = localBarangayPin(input);
+  if (pin) return pin;
+  throw lookupError ?? new Error('No Marinduque location matched this barangay. Check the barangay spelling against the official list and try again.');
 }
